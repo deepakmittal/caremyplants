@@ -27,6 +27,8 @@ class Garden(Base):
     __tablename__ = "gardens"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), nullable=False)
+    # Status lifecycle: 'New' -> 'Processing Garden' -> 'Processing Plants' -> 'Ready'
+    status = Column(String(50), default="New", nullable=False)
     created_at = Column(TIMESTAMP, default=datetime.datetime.utcnow)
     updated_at = Column(TIMESTAMP, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
 
@@ -47,12 +49,14 @@ class Plant(Base):
     image_url = Column(String(512)) # Path in GCS
 
     garden = relationship("Garden", back_populates="plants")
+    updates = relationship("PlantUpdate", back_populates="plant", cascade="all, delete-orphan")
 
 class GardenUpdate(Base):
     __tablename__ = "garden_updates"
     id = Column(Integer, primary_key=True, index=True)
     garden_id = Column(Integer, ForeignKey("gardens.id", ondelete="CASCADE"), nullable=False)
-    status = Column(String(255))
+    # Status lifecycle: 'New' -> 'Processing Garden' -> 'Processing Plants' -> 'Ready'
+    status = Column(String(50), default="New", nullable=False)
     recommendation = Column(Text)
     created_at = Column(TIMESTAMP, default=datetime.datetime.utcnow)
 
@@ -69,3 +73,17 @@ class GardenPhoto(Base):
 
     garden = relationship("Garden", back_populates="photos")
     update = relationship("GardenUpdate", back_populates="photos")
+
+class PlantUpdate(Base):
+    __tablename__ = "plant_updates"
+    id = Column(Integer, primary_key=True, index=True)
+    plant_id = Column(Integer, ForeignKey("plants.id", ondelete="CASCADE"), nullable=False)
+    condition_text = Column(String(255))
+    recommendation = Column(Text)
+    image_url = Column(String(512))
+    # Status lifecycle: 'New' -> 'Processing' -> 'Ready'
+    status = Column(String(50), default="New", nullable=False)
+    created_at = Column(TIMESTAMP, default=datetime.datetime.utcnow)
+    updated_at = Column(TIMESTAMP, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+
+    plant = relationship("Plant", back_populates="updates")

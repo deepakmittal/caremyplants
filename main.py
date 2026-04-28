@@ -1,18 +1,41 @@
 from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Form, BackgroundTasks
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 import os
 import uuid
 
 from database import engine, Base, get_db
 import models, schemas
-from services import auth, gcs, gemini, garden_logic
+from services import auth, gcs, gemini
 from utils import image as image_utils
 
 # Create database tables if they don't exist
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Garden Backend API")
+
+# Configure CORS
+origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:5174",
+    "http://127.0.0.1:5174",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Mount static images directory for local photo serving
+if not os.path.exists("static_images"):
+    os.makedirs("static_images")
+app.mount("/static", StaticFiles(directory="static_images"), name="static")
 
 @app.get("/")
 def read_root():
@@ -24,30 +47,137 @@ def login(login_data: schemas.UserLogin, db: Session = Depends(get_db)):
     user, token = auth.authenticate_external_user(db, login_data)
     return {"access_token": token, "token_type": "bearer"}
 
-# 2, 3, 4. Garden Creation & Photo Upload Endpoint
+# New: Simple Email Authentication (returns user_id)
+@app.post("/auth/email")
+def login_with_email(login_data: schemas.UserEmailLogin, db: Session = Depends(get_db)):
+    user = db.query(models.User).filter(models.User.user_email == login_data.email).first()
+    if not user:
+        # Create new user if not found
+        user = models.User(user_email=login_data.email)
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+    return {"user_id": user.id, "email": user.user_email}
+
+# 2, 3, 4. Garden Creation & Photo Upload Endpoint (legacy – requires explicit name)
 @app.post("/gardens", response_model=schemas.GardenResponse)
 async def create_garden(
     name: str = Form(...),
     photos: List[UploadFile] = File(...),
+    user_id: Optional[int] = Form(None),
     db: Session = Depends(get_db)
 ):
-    # 3. Create new entry in garden table
-    db_garden = models.Garden(name=name)
+    # Create new entry in garden table
+    db_garden = models.Garden(name=name, status="New")
     db.add(db_garden)
     db.commit()
     db.refresh(db_garden)
 
     # Create ONE garden update for this session
-    db_update = models.GardenUpdate(garden_id=db_garden.id, status="Initial Creation")
+    db_update = models.GardenUpdate(garden_id=db_garden.id, status="New")
     db.add(db_update)
     db.commit()
     db.refresh(db_update)
 
+    # Standardize on asynchronous processing: upload photos to GCS 
+    # and let the cronjob handle AI analysis.
     for photo in photos:
         content = await photo.read()
-        await garden_logic.process_garden_photo(db, db_garden.id, db_update.id, content, photo.filename)
+        unique_filename = f"garden_{db_garden.id}/{uuid.uuid4()}_{photo.filename}"
+        url = gcs.upload_to_gcs(content, unique_filename)
+        
+        db_photo = models.GardenPhoto(
+            garden_id=db_garden.id,
+            update_id=db_update.id,
+            photo_url=url
+        )
+        db.add(db_photo)
+    db.commit()
+
+    db.refresh(db_garden)
 
     # Build response with garden_update_id
+    db.commit()
+    db.refresh(db_garden)
+
+    # Ensure user-garden association if user_id provided
+    if user_id is not None:
+        db_user = db.query(models.User).get(user_id)
+        if db_user and db_user not in db_garden.users:
+            db_garden.users.append(db_user)
+            db.commit()
+            db.refresh(db_garden)
+
+    # Return response
+    response = schemas.GardenResponse.from_orm(db_garden)
+    response.garden_update_id = db_update.id
+    return response
+
+
+# New: Upload photos – auto-create garden if garden_id not provided
+@app.post("/gardens/upload", response_model=schemas.GardenResponse)
+async def upload_garden_photos(
+    photos: List[UploadFile] = File(...),
+    garden_id: Optional[int] = Form(None),
+    garden_name: Optional[str] = Form(None),
+    user_id: Optional[int] = Form(None),
+    db: Session = Depends(get_db)
+):
+    """
+    Upload multiple garden photos and create a new garden update entry.
+
+    - If **garden_id** is provided: uses an existing garden (returns 404 if not found).
+    - If **garden_id** is omitted: creates a new garden (name defaults to 'My Garden'
+      if garden_name is also omitted). Optionally associates it with a user via user_id.
+
+    Garden status transitions during processing:
+      New → Processing Garden → Processing Plants → Ready
+    """
+    if garden_id is not None:
+        # Use existing garden
+        db_garden = db.query(models.Garden).filter(models.Garden.id == garden_id).first()
+        if not db_garden:
+            raise HTTPException(status_code=404, detail=f"Garden with id {garden_id} not found")
+    else:
+        # Auto-create a new garden
+        name = garden_name or "My Garden"
+        db_garden = models.Garden(name=name, status="New")
+        db.add(db_garden)
+        db.commit()
+        db.refresh(db_garden)
+
+
+
+    # Create a garden update entry for this upload session
+    db_update = models.GardenUpdate(garden_id=db_garden.id, status="New")
+    db.add(db_update)
+    db.commit()
+    db.refresh(db_update)
+
+    # Standardize on asynchronous processing: upload photos to GCS 
+    # and let the cronjob handle AI analysis.
+    for photo in photos:
+        content = await photo.read()
+        unique_filename = f"garden_{db_garden.id}/{uuid.uuid4()}_{photo.filename}"
+        url = gcs.upload_to_gcs(content, unique_filename)
+        
+        db_photo = models.GardenPhoto(
+            garden_id=db_garden.id,
+            update_id=db_update.id,
+            photo_url=url
+        )
+        db.add(db_photo)
+    db.commit()
+    db.refresh(db_garden)
+
+    # Ensure user-garden association if user_id provided
+    if user_id is not None:
+        db_user = db.query(models.User).get(user_id)
+        if db_user and db_user not in db_garden.users:
+            db_garden.users.append(db_user)
+            db.commit()
+            db.refresh(db_garden)
+
     response = schemas.GardenResponse.from_orm(db_garden)
     response.garden_update_id = db_update.id
     return response
@@ -63,9 +193,23 @@ async def push_photos_to_update(
     if not db_update:
         raise HTTPException(status_code=404, detail="Garden update not found")
     
+    # Standardize on asynchronous processing: upload photos to GCS 
+    # and let the cronjob handle AI analysis.
     for photo in photos:
         content = await photo.read()
-        await garden_logic.process_garden_photo(db, db_update.garden_id, update_id, content, photo.filename)
+        unique_filename = f"garden_{db_update.garden_id}/{uuid.uuid4()}_{photo.filename}"
+        url = gcs.upload_to_gcs(content, unique_filename)
+        
+        db_photo = models.GardenPhoto(
+            garden_id=db_update.garden_id,
+            update_id=update_id,
+            photo_url=url
+        )
+        db.add(db_photo)
+    
+    # Set status to New so cronjob picks it up
+    db_update.status = "New"
+    db.commit()
     
     return {"message": "Photos added and processed", "update_id": update_id, "count": len(photos)}
 
@@ -83,7 +227,41 @@ def get_garden_details(garden_id: int, db: Session = Depends(get_db)):
     garden = db.query(models.Garden).filter(models.Garden.id == garden_id).first()
     if not garden:
         raise HTTPException(status_code=404, detail="Garden not found")
-    return garden
+    
+    plant_responses = []
+    for plant in garden.plants:
+        # Get latest update for this specific plant
+        latest_update = db.query(models.PlantUpdate).filter(
+            models.PlantUpdate.plant_id == plant.id
+        ).order_by(models.PlantUpdate.created_at.desc()).first()
+        
+        # Use image_url from update if available, otherwise from plant
+        image_url = latest_update.image_url if (latest_update and latest_update.image_url) else plant.image_url
+        
+        plant_responses.append(schemas.PlantLatestUpdateResponse(
+            id=plant.id,
+            name=plant.name,
+            plant_variety=plant.plant_variety,
+            image_url=image_url,
+            latest_condition=latest_update.condition_text if latest_update else None,
+            latest_recommendation=latest_update.recommendation if latest_update else None,
+            last_update_date=latest_update.created_at if latest_update else None
+        ))
+    
+    # Get latest garden-level recommendation from updates
+    latest_update = db.query(models.GardenUpdate).filter(
+        models.GardenUpdate.garden_id == garden_id,
+        models.GardenUpdate.recommendation.is_not(None)
+    ).order_by(models.GardenUpdate.created_at.desc()).first()
+
+    return {
+        "id": garden.id,
+        "name": garden.name,
+        "status": garden.status,
+        "recommendation": latest_update.recommendation if latest_update else None,
+        "created_at": garden.created_at,
+        "plants": plant_responses
+    }
 
 # New: Get all gardens for a specific user
 @app.get("/users/{user_id}/gardens", response_model=List[schemas.GardenResponse])
@@ -92,3 +270,63 @@ def get_user_gardens(user_id: int, db: Session = Depends(get_db)):
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user.gardens
+
+# New: Get all gardens for a specific user with their photos
+@app.get("/users/{user_id}/gardens/detailed", response_model=List[schemas.GardenWithPhotosResponse])
+def get_user_gardens_detailed(user_id: int, db: Session = Depends(get_db)):
+    # Fetch gardens for the user, ordered by created_at DESC
+    # Use a direct query on Garden with a join on the junction table for efficient ordering
+    gardens = db.query(models.Garden).join(models.garden_users).filter(
+        models.garden_users.c.user_id == user_id
+    ).order_by(models.Garden.created_at.desc()).all()
+
+    if not gardens:
+        # Check if user exists but has no gardens
+        user = db.query(models.User).filter(models.User.id == user_id).first()
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        return []
+
+    results = []
+    for garden in gardens:
+        # Get latest recommendation
+        latest_update = db.query(models.GardenUpdate).filter(
+            models.GardenUpdate.garden_id == garden.id,
+            models.GardenUpdate.recommendation.is_not(None)
+        ).order_by(models.GardenUpdate.created_at.desc()).first()
+
+        # Get plants with their latest updates
+        plant_responses = []
+        for plant in garden.plants:
+            latest_p_update = db.query(models.PlantUpdate).filter(
+                models.PlantUpdate.plant_id == plant.id
+            ).order_by(models.PlantUpdate.created_at.desc()).first()
+
+            plant_responses.append(schemas.PlantLatestUpdateResponse(
+                id=plant.id,
+                name=plant.name,
+                plant_variety=plant.plant_variety,
+                image_url=plant.image_url,
+                latest_condition=latest_p_update.condition_text if latest_p_update else None,
+                latest_recommendation=latest_p_update.recommendation if latest_p_update else None,
+                last_update_date=latest_p_update.created_at if latest_p_update else None
+            ))
+
+        results.append({
+            "id": garden.id,
+            "name": garden.name,
+            "status": garden.status,
+            "recommendation": latest_update.recommendation if latest_update else None,
+            "created_at": garden.created_at,
+            "photos": garden.photos,
+            "plants": plant_responses
+        })
+    return results
+
+# New: Get all health updates for a specific plant
+@app.get("/plants/{plant_id}/updates", response_model=List[schemas.PlantUpdateResponse])
+def get_plant_updates(plant_id: int, db: Session = Depends(get_db)):
+    plant = db.query(models.Plant).filter(models.Plant.id == plant_id).first()
+    if not plant:
+        raise HTTPException(status_code=404, detail="Plant not found")
+    return plant.updates

@@ -18,9 +18,14 @@ CREATE TABLE users (
 CREATE TABLE gardens (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
+    -- Status lifecycle: 'New' -> 'Processing Garden' -> 'Processing Plants' -> 'Ready'
+    status VARCHAR(50) NOT NULL DEFAULT 'New',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
+
+-- Migration: add status to existing gardens table
+-- ALTER TABLE gardens ADD COLUMN status VARCHAR(50) NOT NULL DEFAULT 'New';
 
 -- GardenUser Table (Junction Table)
 -- Handles the many-to-many relationship between users and gardens.
@@ -69,3 +74,19 @@ CREATE TABLE garden_photos (
     FOREIGN KEY (garden_id) REFERENCES gardens(id) ON DELETE CASCADE,
     FOREIGN KEY (update_id) REFERENCES garden_updates(id) ON DELETE SET NULL
 );
+
+CREATE TABLE plant_updates (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    plant_id INT NOT NULL,
+    condition_text VARCHAR(255),
+    recommendation TEXT,
+    image_url VARCHAR(512),
+    -- Status lifecycle: 'New' -> 'Processing' -> 'Ready'
+    status VARCHAR(50) NOT NULL DEFAULT 'New',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (plant_id) REFERENCES plants(id) ON DELETE CASCADE
+);
+
+-- Migration: add status to existing plant_updates table
+-- ALTER TABLE plant_updates ADD COLUMN status VARCHAR(50) NOT NULL DEFAULT 'New';
