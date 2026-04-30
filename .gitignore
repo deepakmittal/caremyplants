@@ -1,0 +1,33 @@
+# Secret & credential files — NEVER commit these
+service_account.json
+main.json
+*.json.key
+.env
+.env.*
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+venv/
+env/
+.venv/
+*.egg-info/
+dist/
+build/
+
+# Node / React Native
+node_modules/
+.expo/
+dist/
+.next/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
