@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--   
+   Copyright (c) 2018, 2022, Oracle and/or its affiliates. All rights reserved.
+   
+   DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+   
+   The contents of this file are subject to the terms of either the Universal Permissive License 
+   v 1.0 as shown at http://oss.oracle.com/licenses/upl
+   
+   or the following license:
+   
+   Redistribution and use in source and binary forms, with or without modification, are permitted
+   provided that the following conditions are met:
+   
+   1. Redistributions of source code must retain the above copyright notice, this list of conditions
+   and the following disclaimer.
+   
+   2. Redistributions in binary form must reproduce the above copyright notice, this list of
+   conditions and the following disclaimer in the documentation and/or other materials provided with
+   the distribution.
+   
+   3. Neither the name of the copyright holder nor the names of its contributors may be used to
+   endorse or promote products derived from this software without specific prior written permission.
+   
+   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+   IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+   FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+   CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+   DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+   DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+   WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
+   WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<feature
+      id="org.openjdk.jmc.feature.rcp"
+      label="%name"
+      version="8.3.1.202302280942"
+      provider-name="%provider">
+
+   <description url="%descriptionUrl">
+      %description
+   </description>
+
+   <copyright>
+      %copyright
+   </copyright>
+
+   <includes
+         id="org.openjdk.jmc.feature.console"
+         version="8.3.1.202302280942"/>
+
+   <includes
+         id="org.openjdk.jmc.feature.rcp.ja"
+         version="8.3.1.202302280942"/>
+
+   <includes
+         id="org.openjdk.jmc.feature.core"
+         version="8.3.1.202302280942"/>
+
+   <includes
+         id="org.openjdk.jmc.feature.rcp.zh_CN"
+         version="8.3.1.202302280942"/>
+
+   <includes
+         id="org.openjdk.jmc.feature.flightrecorder"
+         version="8.3.1.202302280942"/>
+
+   <includes
+         id="org.openjdk.jmc.feature.joverflow"
+         version="1.0.1.202302280942"/>
+
+   <includes
+         id="org.openjdk.jmc.feature.console.agent"
+         version="8.3.1.202302280942"/>
+
+   <requires>
+      <import feature="org.eclipse.rcp" version="3.8.0" match="greaterOrEqual"/>
+      <import feature="org.eclipse.help" version="1.4.0" match="greaterOrEqual"/>
+      <import feature="org.eclipse.equinox.p2.rcp.feature" version="1.1.0" match="greaterOrEqual"/>
+      <import plugin="org.eclipse.core.resources"/>
+      <import plugin="org.eclipse.jface.text"/>
+      <import plugin="org.eclipse.ui"/>
+      <import plugin="org.eclipse.ui.forms"/>
+      <import plugin="org.eclipse.ui.views"/>
+      <import plugin="org.eclipse.core.filesystem"/>
+      <import plugin="org.eclipse.osgi.services"/>
+      <import plugin="org.eclipse.text"/>
+      <import plugin="org.eclipse.core.net"/>
+      <import plugin="org.eclipse.equinox.security"/>
+      <import plugin="org.eclipse.ui.intro"/>
+      <import plugin="org.eclipse.ui.net"/>
+      <import plugin="org.eclipse.equinox.event"/>
+      <import plugin="org.eclipse.equinox.p2.director.app"/>
+   </requires>
+
+   <plugin
+         id="org.openjdk.jmc.osgi.extension"
+         download-size="8"
+         install-size="13"
+         version="8.3.1.202302280942"
+         fragment="true"
+         unpack="false"/>
+
+   <plugin
+         id="org.openjdk.jmc.rcp.application"
+         download-size="2034"
+         install-size="3061"
+         version="8.3.1.202302280942"
+         unpack="false"/>
+
+   <plugin
+         id="org.openjdk.jmc.rcp.application.ja"
+         nl="ja_JP,ja"
+         download-size="11"
+         install-size="49"
+         version="8.3.1.202302280942"
+         fragment="true"
+         unpack="false"/>
+
+   <plugin
+         id="org.openjdk.jmc.rcp.application.zh_CN"
+         nl="zh_CN"
+         download-size="11"
+         install-size="47"
+         version="8.3.1.202302280942"
+         fragment="true"
+         unpack="false"/>
+
+   <plugin
+         id="org.openjdk.jmc.rcp.intro"
+         download-size="105"
+         install-size="161"
+         version="8.3.1.202302280942"
+         unpack="false"/>
+
+   <plugin
+         id="org.openjdk.jmc.commands"
+         download-size="44"
+         install-size="91"
+         version="8.3.1.202302280942"
+         unpack="false"/>
+
+   <plugin
+         id="org.eclipse.equinox.simpleconfigurator"
+         download-size="45"
+         install-size="85"
+         version="1.4.0.v20210315-2228"
+         unpack="false"/>
+
+   <plugin
+         id="org.eclipse.update.configurator"
+         download-size="94"
+         install-size="189"
+         version="3.4.800.v20210415-1314"
+         unpack="false"/>
+
+   <plugin
+         id="org.eclipse.equinox.launcher"
+         download-size="52"
+         install-size="92"
+         version="1.6.400.v20210924-0641"
+         unpack="false"/>
+
+   <plugin
+         id="org.eclipse.core.runtime"
+         download-size="71"
+         install-size="151"
+         version="3.25.0.v20220506-1157"
+         unpack="false"/>
+
+   <plugin
+         id="org.eclipse.equinox.common"
+         download-size="144"
+         install-size="277"
+         version="3.16.100.v20220315-2327"
+         unpack="false"/>
+
+   <plugin
+         id="org.apache.felix.scr"
+         download-size="411"
+         install-size="960"
+         version="2.1.24.v20200924-1939"
+         unpack="false"/>
+
+   <plugin
+         id="org.eclipse.equinox.p2.reconciler.dropins"
+         download-size="50"
+         install-size="108"
+         version="1.4.100.v20211217-1131"
+         unpack="false"/>
+
+<license url="%licenseUrl">
+      %license
+   </license></feature>

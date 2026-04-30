@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 import os
 import uuid
+import datetime
 
 from database import engine, Base, get_db
 import models, schemas
@@ -330,3 +331,36 @@ def get_plant_updates(plant_id: int, db: Session = Depends(get_db)):
     if not plant:
         raise HTTPException(status_code=404, detail="Plant not found")
     return plant.updates
+
+@app.put("/gardens/{garden_id}/access")
+def update_garden_access(garden_id: int, db: Session = Depends(get_db)):
+    """Update the last_accessed_at timestamp for a garden."""
+    garden = db.query(models.Garden).filter(models.Garden.id == garden_id).first()
+    if not garden:
+        raise HTTPException(status_code=404, detail="Garden not found")
+    garden.last_accessed_at = datetime.datetime.utcnow()
+    db.commit()
+    return {"status": "ok"}
+
+@app.get("/gardens/{garden_id}/environment")
+def get_garden_environment(garden_id: int, db: Session = Depends(get_db)):
+    """Return the latest environment metrics (hydration, exposure, vibrancy) for a garden."""
+    garden = db.query(models.Garden).filter(models.Garden.id == garden_id).first()
+    if not garden:
+        raise HTTPException(status_code=404, detail="Garden not found")
+    latest_update = (
+        db.query(models.GardenUpdate)
+        .filter(
+            models.GardenUpdate.garden_id == garden_id,
+            models.GardenUpdate.hydration.isnot(None),
+        )
+        .order_by(models.GardenUpdate.created_at.desc())
+        .first()
+    )
+    if not latest_update:
+        return {"hydration": None, "exposure": None, "vibrancy": None}
+    return {
+        "hydration": latest_update.hydration,
+        "exposure": latest_update.exposure,
+        "vibrancy": latest_update.vibrancy,
+    }

@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<plist version="1.0">
+  
+  <dict>
+    	
+    <key>NSRequiresAquaSystemAppearance</key>
+    		
+    <true/>
+    	
+    <key>CFBundleExecutable</key>
+    		
+    <string>jmc</string>
+    	
+    <key>CFBundleGetInfoString</key>
+    		
+    <string>Eclipse 4.24 for Mac OS X, Copyright IBM Corp. and others 2002, 2022. All rights reserved.</string>
+    	
+    <key>CFBundleIconFile</key>
+    		
+    <string>mission_control.icns</string>
+    	
+    <key>CFBundleIdentifier</key>
+    		
+    <string>org.openjdk.jmc</string>
+    	
+    <key>CFBundleInfoDictionaryVersion</key>
+    		
+    <string>6.0</string>
+    	
+    <key>CFBundleName</key>
+    		
+    <string>Jmc</string>
+    	
+    <key>CFBundlePackageType</key>
+    		
+    <string>APPL</string>
+    	
+    <key>CFBundleShortVersionString</key>
+    		
+    <string>8.3.1</string>
+    	
+    <key>CFBundleSignature</key>
+    		
+    <string>????</string>
+    	
+    <key>CFBundleVersion</key>
+    		
+    <string>8.3.1</string>
+    	
+    <key>NSHighResolutionCapable</key>
+    		
+    <true/>
+    	
+    <key>CFBundleDevelopmentRegion</key>
+    		
+    <string>English</string>
+    		
+	
+    <key>Eclipse</key>
+    		
+    <array>
+      			
+      <string>-keyring</string>
+      <string>~/.eclipse_keyring</string>
+      		
+    </array>
+    
+    <key>CFBundleDisplayName</key>
+    <string>Jmc</string>
+  </dict>
+  
+</plist>

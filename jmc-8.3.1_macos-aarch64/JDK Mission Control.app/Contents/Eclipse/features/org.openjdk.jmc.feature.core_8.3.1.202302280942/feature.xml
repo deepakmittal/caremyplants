@@ -1,0 +1,199 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--   
+   Copyright (c) 2018, 2023, Oracle and/or its affiliates. All rights reserved.
+   
+   DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+   
+   The contents of this file are subject to the terms of either the Universal Permissive License 
+   v 1.0 as shown at http://oss.oracle.com/licenses/upl
+   
+   or the following license:
+   
+   Redistribution and use in source and binary forms, with or without modification, are permitted
+   provided that the following conditions are met:
+   
+   1. Redistributions of source code must retain the above copyright notice, this list of conditions
+   and the following disclaimer.
+   
+   2. Redistributions in binary form must reproduce the above copyright notice, this list of
+   conditions and the following disclaimer in the documentation and/or other materials provided with
+   the distribution.
+   
+   3. Neither the name of the copyright holder nor the names of its contributors may be used to
+   endorse or promote products derived from this software without specific prior written permission.
+   
+   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR
+   IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND
+   FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR
+   CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+   DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+   DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+   WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY
+   WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<feature
+      id="org.openjdk.jmc.feature.core"
+      label="%name"
+      version="8.3.1.202302280942"
+      provider-name="%provider"
+      plugin="org.openjdk.jmc.ui">
+
+   <description url="%descriptionUrl">
+      %description
+   </description>
+
+   <copyright>
+      %copyright
+   </copyright>
+
+   <requires>
+      <import plugin="org.eclipse.ui"/>
+      <import plugin="org.eclipse.core.runtime"/>
+      <import plugin="org.eclipse.ui.forms"/>
+      <import plugin="org.eclipse.ui.views"/>
+      <import plugin="org.eclipse.help"/>
+      <import plugin="org.eclipse.help.ui"/>
+      <import plugin="org.eclipse.help.webapp"/>
+      <import plugin="org.eclipse.osgi"/>
+      <import plugin="org.apache.commons.codec"/>
+      <import plugin="org.eclipse.e4.core.di"/>
+      <import plugin="org.eclipse.e4.core.contexts"/>
+   </requires>
+
+   <plugin
+         id="org.openjdk.jmc.attach"
+         download-size="5"
+         install-size="9"
+         version="8.3.1.202302280942"
+         unpack="false"/>
+
+   <plugin
+         id="org.openjdk.jmc.browser"
+         download-size="161"
+         install-size="316"
+         version="8.3.1.202302280942"
+         unpack="false"/>
+
+   <plugin
+         id="org.openjdk.jmc.common"
+         download-size="428"
+         install-size="960"
+         version="8.3.1.202302281040"
+         unpack="false"/>
+
+   <plugin
+         id="lz4-java"
+         download-size="695"
+         install-size="1763"
+         version="1.8.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.openjdk.jmc.ui"
+         download-size="705"
+         install-size="1417"
+         version="8.3.1.202302280942"
+         unpack="false"/>
+
+   <plugin
+         id="org.openjdk.jmc.docs"
+         download-size="184"
+         install-size="483"
+         version="8.3.1.202302280942"
+         unpack="false"/>
+
+   <plugin
+         id="org.openjdk.jmc.jdp"
+         download-size="27"
+         install-size="50"
+         version="8.3.1.202302281041"
+         unpack="false"/>
+
+   <plugin
+         id="org.openjdk.jmc.rjmx"
+         download-size="447"
+         install-size="1188"
+         version="8.3.1.202302280942"/>
+
+   <plugin
+         id="org.openjdk.jmc.greychart"
+         download-size="134"
+         install-size="252"
+         version="8.3.1.202302280942"
+         unpack="false"/>
+
+   <plugin
+         id="org.openjdk.jmc.browser.jdp"
+         download-size="21"
+         install-size="56"
+         version="8.3.1.202302280942"
+         unpack="false"/>
+
+   <plugin
+         id="org.openjdk.jmc.browser.attach"
+         download-size="44"
+         install-size="105"
+         version="8.3.1.202302280942"
+         unpack="false"/>
+
+   <plugin
+         id="org.openjdk.jmc.rjmx.ui"
+         download-size="281"
+         install-size="590"
+         version="8.3.1.202302280942"
+         unpack="false"/>
+
+   <plugin
+         id="org.openjdk.jmc.commands"
+         download-size="44"
+         install-size="91"
+         version="8.3.1.202302280942"
+         unpack="false"/>
+
+   <plugin
+         id="org.openjdk.jmc.ui.common"
+         download-size="85"
+         install-size="147"
+         version="8.3.1.202302280942"
+         unpack="false"/>
+
+   <plugin
+         id="org.openjdk.jmc.ui.celleditors"
+         download-size="42"
+         install-size="96"
+         version="8.3.1.202302280942"
+         unpack="false"/>
+
+   <plugin
+         id="org.openjdk.jmc.rjmx.ext"
+         download-size="12"
+         install-size="25"
+         version="8.3.1.202302280942"
+         fragment="true"
+         unpack="false"/>
+
+   <plugin
+         id="angus-activation"
+         download-size="37"
+         install-size="61"
+         version="2.0.0"
+         unpack="false"/>
+
+   
+   <plugin
+         id="jakarta.activation-api"
+         download-size="78"
+         install-size="152"
+         version="2.1.1"
+         unpack="false"/>
+
+   <plugin
+         id="org.eclipse.angus.jakarta.mail"
+         download-size="748"
+         install-size="1466"
+         version="2.0.1"
+         unpack="false"/>
+
+<license url="%licenseUrl">
+      %license
+   </license></feature>

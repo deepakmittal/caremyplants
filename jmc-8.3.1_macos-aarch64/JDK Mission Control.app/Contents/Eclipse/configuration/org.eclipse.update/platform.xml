@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config date="1677577688414" transient="false">
+	<site updateable="true" url="platform:/base/" enabled="true" policy="USER-EXCLUDE">
+		<feature id="org.eclipse.e4.rcp" version="4.24.0.v20220530-1036" url="features/org.eclipse.e4.rcp_4.24.0.v20220530-1036/">
+		</feature>
+		<feature id="org.openjdk.jmc.feature.rcp" version="8.3.1.202302280942" url="features/org.openjdk.jmc.feature.rcp_8.3.1.202302280942/">
+		</feature>
+		<feature id="org.eclipse.babel.nls_eclipse_zh" version="4.22.0.v20211218020001" url="features/org.eclipse.babel.nls_eclipse_zh_4.22.0.v20211218020001/">
+		</feature>
+		<feature id="org.eclipse.emf.common" version="2.26.0.v20220325-0806" url="features/org.eclipse.emf.common_2.26.0.v20220325-0806/">
+		</feature>
+		<feature id="org.openjdk.jmc.feature.console" version="8.3.1.202302280942" url="features/org.openjdk.jmc.feature.console_8.3.1.202302280942/">
+		</feature>
+		<feature id="org.eclipse.ecf.core.feature" version="1.6.1.v20211005-1944" url="features/org.eclipse.ecf.core.feature_1.6.1.v20211005-1944/">
+		</feature>
+		<feature id="org.openjdk.jmc.feature.rcp.zh_CN" version="8.3.1.202302280942" url="features/org.openjdk.jmc.feature.rcp.zh_CN_8.3.1.202302280942/">
+		</feature>
+		<feature id="org.eclipse.ecf.core.ssl.feature" version="1.1.501.v20210409-2301" url="features/org.eclipse.ecf.core.ssl.feature_1.1.501.v20210409-2301/">
+		</feature>
+		<feature id="org.eclipse.equinox.p2.rcp.feature" version="1.4.1600.v20220518-1326" url="features/org.eclipse.equinox.p2.rcp.feature_1.4.1600.v20220518-1326/">
+		</feature>
+		<feature id="org.eclipse.babel.nls_eclipse_ja" version="4.22.0.v20211218020001" url="features/org.eclipse.babel.nls_eclipse_ja_4.22.0.v20211218020001/">
+		</feature>
+		<feature id="org.eclipse.help" version="2.3.1000.v20220819-0827" url="features/org.eclipse.help_2.3.1000.v20220819-0827/" plugin-identifier="org.eclipse.help.base">
+		</feature>
+		<feature id="org.openjdk.jmc.feature.flightrecorder" version="8.3.1.202302280942" url="features/org.openjdk.jmc.feature.flightrecorder_8.3.1.202302280942/">
+		</feature>
+		<feature id="org.eclipse.emf.ecore" version="2.28.0.v20220426-0617" url="features/org.eclipse.emf.ecore_2.28.0.v20220426-0617/">
+		</feature>
+		<feature id="org.eclipse.ecf.filetransfer.httpclient5.feature" version="1.1.600.v20220215-0126" url="features/org.eclipse.ecf.filetransfer.httpclient5.feature_1.1.600.v20220215-0126/">
+		</feature>
+		<feature id="org.eclipse.rcp" version="4.24.0.v20220819-0827" url="features/org.eclipse.rcp_4.24.0.v20220819-0827/">
+		</feature>
+		<feature id="org.openjdk.jmc.feature.rcp.ja" version="8.3.1.202302280942" url="features/org.openjdk.jmc.feature.rcp.ja_8.3.1.202302280942/">
+		</feature>
+		<feature id="org.eclipse.ecf.filetransfer.ssl.feature" version="1.1.401.v20210409-2301" url="features/org.eclipse.ecf.filetransfer.ssl.feature_1.1.401.v20210409-2301/">
+		</feature>
+		<feature id="org.eclipse.equinox.p2.core.feature" version="1.6.1400.v20220518-1326" url="features/org.eclipse.equinox.p2.core.feature_1.6.1400.v20220518-1326/">
+		</feature>
+		<feature id="org.openjdk.jmc.feature.core" version="8.3.1.202302280942" url="features/org.openjdk.jmc.feature.core_8.3.1.202302280942/" plugin-identifier="org.openjdk.jmc.ui">
+		</feature>
+		<feature id="org.eclipse.ecf.filetransfer.feature" version="3.14.1800.v20220215-0126" url="features/org.eclipse.ecf.filetransfer.feature_3.14.1800.v20220215-0126/">
+		</feature>
+		<feature id="org.openjdk.jmc.feature.console.agent" version="8.3.1.202302280942" url="features/org.openjdk.jmc.feature.console.agent_8.3.1.202302280942/">
+		</feature>
+		<feature id="org.openjdk.jmc.feature.joverflow" version="1.0.1.202302280942" url="features/org.openjdk.jmc.feature.joverflow_1.0.1.202302280942/">
+		</feature>
+	</site>
+</config>
