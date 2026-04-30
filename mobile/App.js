@@ -12,12 +12,13 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
-  RefreshControl
+  RefreshControl,
+  Alert
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { theme } from './src/theme';
-import { getDetailedGardens, uploadGardenPhotos, updateGardenAccess, getGardenEnvironment } from './src/services/api';
-import { Leaf, ChevronRight, ArrowLeft, Droplets, Sun, Plus, Image as ImageIcon, Sparkles, Thermometer, MapPin } from 'lucide-react-native';
+import { getDetailedGardens, uploadGardenPhotos, updateGardenAccess, getGardenEnvironment, deleteGarden } from './src/services/api';
+import { Leaf, ChevronRight, ArrowLeft, Droplets, Sun, Plus, Image as ImageIcon, Sparkles, Thermometer, MapPin, Trash2 } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import * as Font from 'expo-font';
@@ -27,7 +28,7 @@ const { width } = Dimensions.get('window');
 const CARD_WIDTH = width * 0.85;
 const SPACER = (width - CARD_WIDTH) / 2;
 
-const SanctuaryCard = ({ garden, index, onPress }) => {
+const SanctuaryCard = ({ garden, index, onPress, onDelete }) => {
   const photoUrl = garden.photos && garden.photos.length > 0
     ? garden.photos[0].photo_url
     : 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?auto=format&fit=crop&q=80&w=800';
@@ -38,16 +39,31 @@ const SanctuaryCard = ({ garden, index, onPress }) => {
       onPress={() => onPress(garden)}
       style={[styles.card, { marginLeft: index === 0 ? theme.spacing.margin : 16 }]}
     >
-      <Image source={{ uri: photoUrl }} style={styles.cardImage} />
+      <Image source={{ uri: photoUrl }} style={styles.cardImage} resizeMode="cover" />
       <View style={styles.cardContent}>
         <View style={styles.cardHeader}>
-          <Text style={styles.gardenName}>{garden.name}</Text>
-          <View style={[styles.statusChip, garden.status === 'Ready' ? styles.statusReady : styles.statusProcessing]}>
-            <Text style={styles.statusText}>{garden.status || 'New'}</Text>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.gardenName}>{garden.name}</Text>
+            <View style={[styles.statusChip, garden.status === 'Ready' ? styles.statusReady : styles.statusProcessing, { alignSelf: 'flex-start', marginTop: 4 }]}>
+              <Text style={styles.statusText}>{garden.status || 'New'}</Text>
+            </View>
           </View>
+          <TouchableOpacity 
+            onPress={(e) => {
+              e.stopPropagation();
+              onDelete(garden);
+            }}
+            style={{ padding: 8 }}
+          >
+            <Trash2 size={20} color={theme.colors.vibrantPink} />
+          </TouchableOpacity>
         </View>
 
-        <Text style={styles.recommendation} numberOfLines={3}>
+        <Text style={[styles.recommendation, { color: theme.colors.primary, fontFamily: 'PlusJakartaSans_600SemiBold', marginBottom: 4 }]} numberOfLines={1}>
+          {garden.summary || "Analyzing..."}
+        </Text>
+
+        <Text style={styles.recommendation} numberOfLines={2}>
           {garden.recommendation || "Our AI is analyzing your botanical sanctuary to provide personalized care recommendations..."}
         </Text>
 
@@ -104,11 +120,24 @@ const PlantCard = ({ plant, index, gardenStatus }) => {
 };
 
 export default function App() {
-  const [fontsLoaded] = Font.useFonts({
-    PlusJakartaSans_400Regular,
-    PlusJakartaSans_600SemiBold,
-    PlusJakartaSans_700Bold,
-  });
+  const [fontsLoaded, setFontsLoaded] = useState(false);
+
+  useEffect(() => {
+    async function loadFonts() {
+      try {
+        await Font.loadAsync({
+          PlusJakartaSans_400Regular,
+          PlusJakartaSans_600SemiBold,
+          PlusJakartaSans_700Bold,
+        });
+        setFontsLoaded(true);
+      } catch (e) {
+        console.warn("Font loading failed, proceeding with system fonts", e);
+        setFontsLoaded(true); // Proceed anyway to avoid stuck screen
+      }
+    }
+    loadFonts();
+  }, []);
 
   const [gardens, setGardens] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -236,6 +265,33 @@ export default function App() {
     } catch (e) {
       console.error(e);
     }
+  };
+
+  const handleDeleteGarden = (garden) => {
+    Alert.alert(
+      "Delete Sanctuary",
+      `Are you sure you want to delete "${garden.name}"? This action cannot be undone.`,
+      [
+        { text: "Cancel", style: "cancel" },
+        { 
+          text: "Delete", 
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await deleteGarden(garden.id);
+              const data = await getDetailedGardens(4);
+              setGardens(data);
+              if (selectedGarden && selectedGarden.id === garden.id) {
+                setSelectedGarden(null);
+              }
+            } catch (error) {
+              console.error("Delete failed", error);
+              Alert.alert("Error", "Failed to delete garden. Please try again.");
+            }
+          }
+        }
+      ]
+    );
   };
 
   const fetchData = async (silent = false) => {
@@ -366,7 +422,24 @@ export default function App() {
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>Plant Photos</Text>
               <TouchableOpacity style={styles.uploadZone} onPress={pickImage}>
-                <ImageIcon size={40} color={theme.colors.outline} style={{ marginBottom: 16 }} />
+                {uploadData.photos.length > 0 ? (
+                  <ScrollView 
+                    horizontal 
+                    showsHorizontalScrollIndicator={false} 
+                    style={{ width: '100%', marginBottom: 16 }}
+                    contentContainerStyle={{ gap: 8 }}
+                  >
+                    {uploadData.photos.map((photo, index) => (
+                      <Image 
+                        key={index} 
+                        source={{ uri: photo.uri }} 
+                        style={{ width: 80, height: 80, borderRadius: 8 }} 
+                      />
+                    ))}
+                  </ScrollView>
+                ) : (
+                  <ImageIcon size={40} color={theme.colors.outline} style={{ marginBottom: 16 }} />
+                )}
                 <Text style={styles.uploadText}>
                   {uploadData.photos.length > 0 
                     ? `${uploadData.photos.length} photos selected` 
@@ -428,27 +501,48 @@ export default function App() {
             </TouchableOpacity>
           </View>
 
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingRight: theme.spacing.margin }}
-            snapToInterval={CARD_WIDTH + 16}
-            decelerationRate="fast"
-            onScroll={(e) => {
-              const x = e.nativeEvent.contentOffset.x;
-              setScrollX(x);
-            }}
-            scrollEventThrottle={16}
-          >
-            {gardens.map((garden, index) => (
-              <SanctuaryCard
-                key={garden.id}
-                garden={garden}
-                index={index}
-                onPress={setSelectedGarden}
-              />
-            ))}
-          </ScrollView>
+          {gardens.length > 0 ? (
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={{ paddingRight: theme.spacing.margin }}
+              snapToInterval={CARD_WIDTH + 16}
+              decelerationRate="fast"
+              onScroll={(e) => {
+                const x = e.nativeEvent.contentOffset.x;
+                setScrollX(x);
+              }}
+              scrollEventThrottle={16}
+            >
+              {gardens.map((garden, index) => (
+                <SanctuaryCard
+                  key={garden.id}
+                  garden={garden}
+                  index={index}
+                  onPress={setSelectedGarden}
+                  onDelete={handleDeleteGarden}
+                />
+              ))}
+            </ScrollView>
+          ) : (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 40, marginTop: 40 }}>
+              <View style={{ width: 120, height: 120, borderRadius: 60, backgroundColor: theme.colors.surfaceContainerLowest, justifyContent: 'center', alignItems: 'center', marginBottom: 24 }}>
+                <Leaf size={60} color={theme.colors.primary} opacity={0.5} />
+              </View>
+              <Text style={[styles.title, { textAlign: 'center', marginBottom: 12 }]}>Bring Your Garden to Life</Text>
+              <Text style={[styles.recommendation, { textAlign: 'center', fontSize: 16, lineHeight: 24 }]}>
+                It looks like you haven't started your botanical journey yet. Upload photos of your sanctuary to get personalized AI care recommendations.
+              </Text>
+              
+              <TouchableOpacity 
+                style={[styles.btnPrimary, { marginTop: 32, width: '100%', backgroundColor: theme.colors.vibrantPink }]} 
+                onPress={() => setIsUploading(true)}
+              >
+                <Plus size={20} color="#ffffff" />
+                <Text style={[styles.btnPrimaryText, { color: '#ffffff' }]}>Initialize First Analysis</Text>
+              </TouchableOpacity>
+            </View>
+          )}
 
           <View style={styles.progressBarContainer}>
             <View style={styles.progressBar}>
@@ -468,20 +562,32 @@ export default function App() {
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} />}
         >
           {gardens.length === 1 ? (
-            <TouchableOpacity style={styles.backButton} onPress={() => setIsUploading(true)}>
-              <Plus size={20} color={theme.colors.primary} />
-              <Text style={styles.backText}>Add Sanctuary</Text>
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingRight: theme.spacing.margin }}>
+              <TouchableOpacity style={styles.backButton} onPress={() => setIsUploading(true)}>
+                <Plus size={20} color={theme.colors.primary} />
+                <Text style={styles.backText}>Add Sanctuary</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.backButton, { backgroundColor: 'transparent' }]} onPress={() => handleDeleteGarden(selectedGarden)}>
+                <Trash2 size={20} color={theme.colors.vibrantPink} />
+                <Text style={[styles.backText, { color: theme.colors.vibrantPink }]}>Delete</Text>
+              </TouchableOpacity>
+            </View>
           ) : (
-            <TouchableOpacity style={styles.backButton} onPress={() => setSelectedGarden(null)}>
-              <ArrowLeft size={20} color={theme.colors.primary} />
-              <Text style={styles.backText}>Back to Sanctuaries</Text>
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingRight: theme.spacing.margin }}>
+              <TouchableOpacity style={styles.backButton} onPress={() => setSelectedGarden(null)}>
+                <ArrowLeft size={20} color={theme.colors.primary} />
+                <Text style={styles.backText}>Back to Sanctuaries</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.backButton, { backgroundColor: 'transparent' }]} onPress={() => handleDeleteGarden(selectedGarden)}>
+                <Trash2 size={20} color={theme.colors.vibrantPink} />
+                <Text style={[styles.backText, { color: theme.colors.vibrantPink }]}>Delete</Text>
+              </TouchableOpacity>
+            </View>
           )}
 
           <View style={styles.heroContainer}>
             {selectedGarden.photos && selectedGarden.photos.length > 0 ? (
-              <Image source={{ uri: selectedGarden.photos[0].photo_url }} style={styles.heroImage} />
+              <Image source={{ uri: selectedGarden.photos[0].photo_url }} style={styles.heroImage} resizeMode="cover" />
             ) : (
               <View style={[styles.heroImage, { backgroundColor: theme.colors.surfaceContainerHigh }]} />
             )}
@@ -504,10 +610,6 @@ export default function App() {
               </View>
             </View>
           )}
-
-          <View style={[styles.header, { marginTop: 20 }]}>
-            <Text style={[styles.title, { fontSize: 28 }]}>Botanical Residents</Text>
-          </View>
 
           <View style={styles.tilesGrid}>
             <View style={styles.envTile}>
@@ -542,6 +644,40 @@ export default function App() {
               </View>
               <Text style={styles.envTileValue}>{environmentData?.vibrancy || '--'}</Text>
             </View>
+          </View>
+
+          {selectedGarden.status === 'Ready' && (
+            <View style={{ paddingHorizontal: theme.spacing.margin, marginTop: 10 }}>
+              <View style={[styles.analysisContainer, { backgroundColor: theme.colors.surfaceContainerLowest, flexDirection: 'column', alignItems: 'flex-start' }]}>
+                <Text style={[styles.analysisText, { color: theme.colors.primary, fontFamily: 'PlusJakartaSans_700Bold' }]}>Sanctuary Overview</Text>
+                <Text style={[styles.analysisText, { marginTop: 4, color: theme.colors.onSurface }]}>{selectedGarden.recommendation}</Text>
+                
+                {selectedGarden.immediate_changes && (
+                  <>
+                    <Text style={[styles.analysisText, { marginTop: 16, color: theme.colors.vibrantPink, fontFamily: 'PlusJakartaSans_700Bold' }]}>Immediate Changes</Text>
+                    <Text style={[styles.analysisText, { marginTop: 4, color: theme.colors.onSurface }]}>{selectedGarden.immediate_changes}</Text>
+                  </>
+                )}
+                
+                {selectedGarden.disease_overview && (
+                  <>
+                    <Text style={[styles.analysisText, { marginTop: 16, color: theme.colors.tertiary, fontFamily: 'PlusJakartaSans_700Bold' }]}>Disease Overview</Text>
+                    <Text style={[styles.analysisText, { marginTop: 4, color: theme.colors.onSurface }]}>{selectedGarden.disease_overview}</Text>
+                  </>
+                )}
+
+                {selectedGarden.growth_trend && (
+                  <>
+                    <Text style={[styles.analysisText, { marginTop: 16, color: theme.colors.primary, fontFamily: 'PlusJakartaSans_700Bold' }]}>Growth Trend</Text>
+                    <Text style={[styles.analysisText, { marginTop: 4, color: theme.colors.onSurface }]}>{selectedGarden.growth_trend}</Text>
+                  </>
+                )}
+              </View>
+            </View>
+          )}
+
+          <View style={[styles.header, { marginTop: 20 }]}>
+            <Text style={[styles.title, { fontSize: 28 }]}>Botanical Residents</Text>
           </View>
 
           <ScrollView
@@ -628,7 +764,7 @@ const styles = StyleSheet.create({
   cardImage: {
     width: '100%',
     height: 300,
-    backgroundColor: theme.colors.surfaceContainer,
+    backgroundColor: theme.colors.surfaceContainerLowest,
   },
   cardContent: {
     padding: 20,
@@ -925,6 +1061,7 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.primaryContainer,
     marginHorizontal: theme.spacing.margin,
     marginTop: theme.spacing.md,
+    marginBottom: theme.spacing.md,
     padding: theme.spacing.md,
     borderRadius: theme.roundness.lg,
     gap: 12,

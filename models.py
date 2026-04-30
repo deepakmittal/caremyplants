@@ -36,6 +36,10 @@ class Garden(Base):
     plants = relationship("Plant", back_populates="garden", cascade="all, delete-orphan")
     updates = relationship("GardenUpdate", back_populates="garden", cascade="all, delete-orphan")
     photos = relationship("GardenPhoto", back_populates="garden", cascade="all, delete-orphan")
+    location = Column(String(512))
+    summary = Column(String(512))
+    upload_commentry = Column(String(512))
+    last_accessed_at = Column(TIMESTAMP)
 
 class Plant(Base):
     __tablename__ = "plants"
@@ -58,6 +62,16 @@ class GardenUpdate(Base):
     # Status lifecycle: 'New' -> 'Processing Garden' -> 'Processing Plants' -> 'Ready'
     status = Column(String(50), default="New", nullable=False)
     recommendation = Column(Text)
+    summary = Column(String(512))
+    immediate_changes = Column(Text)
+    disease_overview = Column(Text)
+    growth_trend = Column(Text)
+    upload_commentry = Column(String(512))
+    hydration = Column(String(255))
+    exposure = Column(String(255))
+    vibrancy = Column(String(255))
+    temperature = Column(String(255))
+    humidity = Column(String(255))
     created_at = Column(TIMESTAMP, default=datetime.datetime.utcnow)
 
     garden = relationship("Garden", back_populates="updates")
@@ -78,7 +92,7 @@ class PlantUpdate(Base):
     __tablename__ = "plant_updates"
     id = Column(Integer, primary_key=True, index=True)
     plant_id = Column(Integer, ForeignKey("plants.id", ondelete="CASCADE"), nullable=False)
-    condition_text = Column(String(255))
+    condition_text = Column(Text)
     recommendation = Column(Text)
     image_url = Column(String(512))
     # Status lifecycle: 'New' -> 'Processing' -> 'Ready'

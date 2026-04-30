@@ -3,7 +3,8 @@ import { Platform } from 'react-native';
 
 // Note: When running on a real device on Wi-Fi, use your machine's local IP address (e.g., 192.168.1.x)
 // For Android Emulators, 10.0.2.2 automatically routes to the host computer's localhost
-const API_URL = Platform.OS === 'android' ? 'http://10.0.2.2:8000' : 'http://localhost:8000';
+const API_URL = 'http://192.168.1.4:8000'; // Machine local IP for emulator/device connectivity
+
 
 const api = axios.create({
     baseURL: API_URL,
@@ -62,6 +63,16 @@ export const getGardenEnvironment = async (gardenId) => {
         return response.data;
     } catch (error) {
         console.error('Error fetching garden environment:', error);
+        throw error;
+    }
+};
+
+export const deleteGarden = async (gardenId) => {
+    try {
+        const response = await api.delete(`/gardens/${gardenId}`);
+        return response.data;
+    } catch (error) {
+        console.error('Error deleting garden:', error);
         throw error;
     }
 };
