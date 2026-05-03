@@ -9,7 +9,7 @@ import datetime
 
 from database import engine, Base, get_db
 import models, schemas
-from services import auth, gcs, gemini
+from services import auth, gcs, gemini, garden_processor
 from utils import image as image_utils
 
 # Create database tables if they don't exist
@@ -414,4 +414,21 @@ def delete_garden(garden_id: int, db: Session = Depends(get_db)):
     db.delete(garden)
     db.commit()
     return {"status": "ok", "message": f"Garden {garden_id} deleted successfully"}
+
+@app.post("/jobs/process")
+def trigger_garden_processing(db: Session = Depends(get_db)):
+    """
+    Manually trigger the garden AI processing pipeline.
+    This replaces the background cronjob for Cloud Run compatibility.
+    """
+    try:
+        print("Manual trigger: Starting garden processing...")
+        count = garden_processor.process_new_gardens(db)
+        print(f"Manual trigger: Processed {count} garden(s).")
+        return {"status": "success", "processed_count": count}
+    except Exception as e:
+        print(f"ERROR in manual trigger: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
 
