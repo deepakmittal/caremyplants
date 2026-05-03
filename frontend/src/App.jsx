@@ -131,14 +131,54 @@ const App = () => {
     </div>
   );
 
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [logs, setLogs] = useState([]);
+  const [showLogs, setShowLogs] = useState(false);
+
+  const handleStartProcessing = () => {
+    setLogs([]);
+    setShowLogs(true);
+    setIsProcessing(true);
+    
+    // In a real app, API_BASE_URL would be used
+    const eventSource = new EventSource('https://caremyplants-1059916488233.europe-west1.run.app/jobs/process?stream=true');
+    
+    eventSource.onmessage = (event) => {
+      if (event.data === '[DONE]') {
+        eventSource.close();
+        setIsProcessing(false);
+        fetchGardens();
+        return;
+      }
+      setLogs(prev => [...prev.slice(-20), event.data]); // Keep last 20 logs
+    };
+
+    eventSource.onerror = (err) => {
+      console.error("SSE Error:", err);
+      eventSource.close();
+      setIsProcessing(false);
+      setLogs(prev => [...prev, "Connection lost or finished."]);
+    };
+  };
+
   const GardensPage = () => (
     <div className="min-h-screen p-6 md:p-12 max-w-7xl mx-auto">
-      <header className="flex justify-between items-center mb-16">
+      <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-16">
         <div>
           <h2 className="text-text-muted text-sm font-bold uppercase tracking-widest mb-1">Your Collection</h2>
           <h1 className="text-4xl font-extrabold gradient-text">My Oasis</h1>
         </div>
-        <div className="flex items-center gap-6">
+        <div className="flex flex-wrap items-center gap-4">
+          {gardens.some(g => g.status === 'Ready to Process' || g.status === 'New') && (
+            <button 
+              onClick={handleStartProcessing} 
+              disabled={isProcessing}
+              className="btn-secondary flex items-center gap-2"
+            >
+              <Sparkles size={20} className={isProcessing ? "animate-spin" : ""} />
+              {isProcessing ? 'Processing...' : 'Initialize AI Analysis'}
+            </button>
+          )}
           <button onClick={() => setCurrentPage('create_garden')} className="btn-primary flex items-center gap-2">
             <Plus size={20} />
             Add Garden
@@ -148,6 +188,33 @@ const App = () => {
           </button>
         </div>
       </header>
+
+      <AnimatePresence>
+        {showLogs && (
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            className="mb-8 glass-card p-6 overflow-hidden"
+          >
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-sm font-bold uppercase tracking-widest text-primary flex items-center gap-2">
+                <Loader2 size={16} className="animate-spin" />
+                Live AI Logs
+              </h3>
+              <button onClick={() => setShowLogs(false)} className="text-xs text-text-muted hover:text-white">Close</button>
+            </div>
+            <div className="bg-black/40 rounded-xl p-4 font-mono text-xs space-y-1 max-h-40 overflow-y-auto">
+              {logs.length === 0 && <p className="text-text-muted">Connecting to AI core...</p>}
+              {logs.map((log, i) => (
+                <div key={i} className="text-emerald-400/80 border-l-2 border-emerald-500/30 pl-3 py-1">
+                  {log}
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <Carousel>
         {gardens.map((garden) => (

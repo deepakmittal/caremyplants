@@ -352,8 +352,8 @@ def get_user_gardens_detailed(user_id: int, db: Session = Depends(get_db)):
                 "name": garden.name,
                 "status": garden.status,
                 "summary": garden.summary,
-                "upload_commentry": latest_overall_update.upload_commentry if latest_overall_update else None,
-                "recommendation": latest_update_with_rec.recommendation if latest_update_with_rec else None,
+                "upload_commentry": getattr(latest_overall_update, 'upload_commentry', None),
+                "recommendation": getattr(latest_update_with_rec, 'recommendation', None),
                 "created_at": garden.created_at,
                 "photos": photo_responses,
                 "plants": plant_responses
@@ -428,7 +428,7 @@ class LogQueueHandler(logging.Handler):
         log_entry = self.format(record)
         self.log_queue.put(log_entry)
 
-@app.post("/jobs/process")
+@app.api_route("/jobs/process", methods=["GET", "POST"])
 async def trigger_garden_processing(stream: bool = True, db: Session = Depends(get_db)):
     """
     Trigger the garden AI processing pipeline.

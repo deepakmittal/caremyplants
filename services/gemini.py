@@ -31,7 +31,8 @@ genai.configure(api_key=GEMINI_API_KEY)
 
 def _call_gemini(contents: list) -> dict:
     """Helper to call Gemini and parse JSON response."""
-    model = genai.GenerativeModel('gemini-2.5-flash')
+    model_name = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
+    model = genai.GenerativeModel(model_name)
     try:
         response = model.generate_content(contents)
         text = response.text.strip()
