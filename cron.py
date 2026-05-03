@@ -22,13 +22,24 @@ from datetime import datetime
 from dotenv import load_dotenv
 from apscheduler.schedulers.blocking import BlockingScheduler
 
-# Try loading from the new 'keys' directory first
-dotenv_path = os.path.join(os.path.dirname(__file__), 'keys', '.env')
-if not os.path.exists(dotenv_path):
-    # Fallback for Docker or when run from root
-    dotenv_path = os.path.join(os.getcwd(), 'keys', '.env')
+# Try loading from various possible locations for the .env file
+dotenv_locations = [
+    os.path.join('/keys', '.env'),                          # Cloud Run mount
+    os.path.join(os.path.dirname(__file__), 'keys', '.env'), # Local dev (relative to file)
+    os.path.join(os.getcwd(), 'keys', '.env'),              # Docker /app/keys/
+]
 
-load_dotenv(dotenv_path)
+for loc in dotenv_locations:
+    if os.path.exists(loc):
+        load_dotenv(loc)
+        break
+else:
+    load_dotenv() # Fallback to default behavior
+
+# Set Google credentials if they exist in the /keys mount
+gcp_cred_path = '/keys/service_account.json'
+if os.path.exists(gcp_cred_path):
+    os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = gcp_cred_path
 
 # ── Logging setup ─────────────────────────────────────────────────────────────
 LOG_DIR = os.path.join(os.getcwd(), "logs", "cron")
