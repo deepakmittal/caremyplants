@@ -32,17 +32,42 @@ genai.configure(api_key=GEMINI_API_KEY)
 def _call_gemini(contents: list) -> dict:
     """Helper to call Gemini and parse JSON response."""
     model_name = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
-    model = genai.GenerativeModel(model_name)
+    api_key = os.getenv("GEMINI_API_KEY")
+    
+    if not api_key:
+        print("ERROR: GEMINI_API_KEY is not set!")
+        return {}
+
     try:
+        model = genai.GenerativeModel(model_name)
         response = model.generate_content(contents)
-        text = response.text.strip()
+        
+        if not response:
+            print("Error: Gemini returned no response.")
+            return {}
+
+        # Safely handle potential empty or blocked responses
+        try:
+            text = response.text.strip()
+        except Exception as e:
+            print(f"Error: Could not retrieve text from Gemini response (possibly blocked). Error: {e}")
+            if hasattr(response, 'prompt_feedback'):
+                print(f"Prompt Feedback: {response.prompt_feedback}")
+            return {}
+
+        # Clean up Markdown JSON blocks
         if text.startswith("```json"):
-            text = text[7:-3].strip()
+            text = text[7:].split("```")[0].strip()
         elif text.startswith("```"):
-            text = text[3:-3].strip()
-        return json.loads(text)
+            text = text[3:].split("```")[0].strip()
+            
+        try:
+            return json.loads(text)
+        except json.JSONDecodeError:
+            print(f"Error: Failed to parse Gemini response as JSON. Raw text: {text[:500]}...")
+            return {}
     except Exception as e:
-        print(f"Error calling Gemini: {e}")
+        print(f"Exception during Gemini call: {str(e)}")
         return {}
 
 def identify_plants_with_gemini(image_list: List[bytes]):
