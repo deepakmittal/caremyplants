@@ -22,12 +22,18 @@ from datetime import datetime
 from dotenv import load_dotenv
 from apscheduler.schedulers.blocking import BlockingScheduler
 
+# Determine environment
+IS_CLOUD_RUN = os.getenv('K_SERVICE') is not None
+
 # Try loading from various possible locations for the .env file
-dotenv_locations = [
-    os.path.join('/keys', '.env'),                          # Cloud Run mount
+dotenv_locations = []
+if IS_CLOUD_RUN:
+    dotenv_locations.append(os.path.join('/keys', '.env'))
+    
+dotenv_locations.extend([
     os.path.join(os.path.dirname(__file__), 'keys', '.env'), # Local dev (relative to file)
     os.path.join(os.getcwd(), 'keys', '.env'),              # Docker /app/keys/
-]
+])
 
 for loc in dotenv_locations:
     if os.path.exists(loc):
@@ -36,8 +42,8 @@ for loc in dotenv_locations:
 else:
     load_dotenv() # Fallback to default behavior
 
-# Set Google credentials if they exist in the /keys mount
-gcp_cred_path = '/keys/service_account.json'
+# Set Google credentials if they exist
+gcp_cred_path = '/keys/service_account.json' if IS_CLOUD_RUN else os.path.join(os.getcwd(), 'keys', 'service_account.json')
 if os.path.exists(gcp_cred_path):
     os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = gcp_cred_path
 

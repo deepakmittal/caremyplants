@@ -291,61 +291,75 @@ def get_user_gardens(user_id: int, db: Session = Depends(get_db)):
 # New: Get all gardens for a specific user with their photos
 @app.get("/users/{user_id}/gardens/detailed", response_model=List[schemas.GardenWithPhotosResponse])
 def get_user_gardens_detailed(user_id: int, db: Session = Depends(get_db)):
-    # Fetch gardens for the user, ordered by created_at DESC
-    # Use a direct query on Garden with a join on the junction table for efficient ordering
-    gardens = db.query(models.Garden).join(models.garden_users).filter(
-        models.garden_users.c.user_id == user_id
-    ).order_by(models.Garden.created_at.desc()).all()
+    try:
+        # Fetch gardens for the user, ordered by created_at DESC
+        gardens = db.query(models.Garden).join(models.garden_users).filter(
+            models.garden_users.c.user_id == user_id
+        ).order_by(models.Garden.created_at.desc()).all()
 
-    if not gardens:
-        # Check if user exists but has no gardens
-        user = db.query(models.User).filter(models.User.id == user_id).first()
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
-        return []
+        if not gardens:
+            # Check if user exists but has no gardens
+            user = db.query(models.User).filter(models.User.id == user_id).first()
+            if not user:
+                raise HTTPException(status_code=404, detail="User not found")
+            return []
 
-    results = []
-    for garden in gardens:
-        # Get latest recommendation
-        latest_update = db.query(models.GardenUpdate).filter(
-            models.GardenUpdate.garden_id == garden.id,
-            models.GardenUpdate.recommendation.is_not(None)
-        ).order_by(models.GardenUpdate.created_at.desc()).first()
+        results = []
+        for garden in gardens:
+            # Get latest recommendation (where recommendation is not null)
+            latest_update_with_rec = db.query(models.GardenUpdate).filter(
+                models.GardenUpdate.garden_id == garden.id,
+                models.GardenUpdate.recommendation.is_not(None)
+            ).order_by(models.GardenUpdate.created_at.desc()).first()
 
-        # Get plants with their latest updates
-        plant_responses = []
-        for plant in garden.plants:
-            latest_p_update = db.query(models.PlantUpdate).filter(
-                models.PlantUpdate.plant_id == plant.id
-            ).order_by(models.PlantUpdate.created_at.desc()).first()
+            # Get the absolute latest update for processing commentary
+            latest_overall_update = db.query(models.GardenUpdate).filter(
+                models.GardenUpdate.garden_id == garden.id
+            ).order_by(models.GardenUpdate.created_at.desc()).first()
 
-            plant_responses.append(schemas.PlantLatestUpdateResponse(
-                id=plant.id,
-                name=plant.name,
-                plant_variety=plant.plant_variety,
-                image_url=plant.image_url,
-                latest_condition=latest_p_update.condition_text if latest_p_update else None,
-                latest_recommendation=latest_p_update.recommendation if latest_p_update else None,
-                last_update_date=latest_p_update.created_at if latest_p_update else None
-            ))
+            # Get plants with their latest updates
+            plant_responses = []
+            for plant in garden.plants:
+                latest_p_update = db.query(models.PlantUpdate).filter(
+                    models.PlantUpdate.plant_id == plant.id
+                ).order_by(models.PlantUpdate.created_at.desc()).first()
 
-        # Get processing commentary from the latest update
-        current_update = db.query(models.GardenUpdate).filter(
-            models.GardenUpdate.garden_id == garden.id
-        ).order_by(models.GardenUpdate.created_at.desc()).first()
+                plant_responses.append({
+                    "id": plant.id,
+                    "name": plant.name,
+                    "plant_variety": plant.plant_variety,
+                    "image_url": plant.image_url,
+                    "latest_condition": latest_p_update.condition_text if latest_p_update else None,
+                    "latest_recommendation": latest_p_update.recommendation if latest_p_update else None,
+                    "last_update_date": latest_p_update.created_at if latest_p_update else None
+                })
 
-        results.append({
-            "id": garden.id,
-            "name": garden.name,
-            "status": garden.status,
-            "summary": garden.summary,
-            "upload_commentry": current_update.upload_commentry if current_update else None,
-            "recommendation": latest_update.recommendation if latest_update else None,
-            "created_at": garden.created_at,
-            "photos": garden.photos,
-            "plants": plant_responses
-        })
-    return results
+            # Explicitly map photos to avoid lazy-loading issues during serialization
+            photo_responses = []
+            for photo in garden.photos:
+                photo_responses.append({
+                    "id": photo.id,
+                    "photo_url": photo.photo_url,
+                    "created_at": photo.created_at
+                })
+
+            results.append({
+                "id": garden.id,
+                "name": garden.name,
+                "status": garden.status,
+                "summary": garden.summary,
+                "upload_commentry": latest_overall_update.upload_commentry if latest_overall_update else None,
+                "recommendation": latest_update_with_rec.recommendation if latest_update_with_rec else None,
+                "created_at": garden.created_at,
+                "photos": photo_responses,
+                "plants": plant_responses
+            })
+        return results
+    except Exception as e:
+        print(f"ERROR in get_user_gardens_detailed: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=f"Internal Server Error: {str(e)}")
 
 # New: Get all health updates for a specific plant
 @app.get("/plants/{plant_id}/updates", response_model=List[schemas.PlantUpdateResponse])

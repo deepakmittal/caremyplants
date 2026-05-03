@@ -6,12 +6,18 @@ import io
 from typing import List, Optional
 from dotenv import load_dotenv
 
+# Determine environment
+IS_CLOUD_RUN = os.getenv('K_SERVICE') is not None
+
 # Try loading from various possible locations for the .env file
-dotenv_locations = [
-    os.path.join('/keys', '.env'),                               # Cloud Run mount
+dotenv_locations = []
+if IS_CLOUD_RUN:
+    dotenv_locations.append(os.path.join('/keys', '.env'))
+
+dotenv_locations.extend([
     os.path.join(os.path.dirname(__file__), '..', 'keys', '.env'), # Local dev (one level up)
     os.path.join(os.getcwd(), 'keys', '.env'),                   # Docker /app/keys/
-]
+])
 
 for loc in dotenv_locations:
     if os.path.exists(loc):

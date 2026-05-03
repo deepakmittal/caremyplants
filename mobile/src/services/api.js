@@ -1,9 +1,8 @@
 import axios from 'axios';
 import { Platform } from 'react-native';
 
-// Note: When running on a real device on Wi-Fi, use your machine's local IP address (e.g., 192.168.1.x)
-// For Android Emulators, 10.0.2.2 automatically routes to the host computer's localhost
-const API_URL = 'http://192.168.1.4:8000'; // Machine local IP for emulator/device connectivity
+// Production Cloud Run URL
+const API_URL = 'https://caremyplants-1059916488233.europe-west1.run.app';
 
 
 const api = axios.create({
