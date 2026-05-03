@@ -13,7 +13,13 @@ from services import auth, gcs, gemini
 from utils import image as image_utils
 
 # Create database tables if they don't exist
-Base.metadata.create_all(bind=engine)
+try:
+    print("Connecting to database and creating tables...")
+    Base.metadata.create_all(bind=engine)
+    print("Database tables verified/created successfully.")
+except Exception as e:
+    print(f"WARNING: Could not connect to database or create tables on startup: {e}")
+    print("Continuing startup... DB connection will be retried on first request.")
 
 app = FastAPI(title="Garden Backend API")
 
