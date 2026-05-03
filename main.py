@@ -9,6 +9,10 @@ import datetime
 
 from database import engine, Base, get_db
 import models, schemas
+import queue
+import threading
+import logging
+from fastapi.responses import StreamingResponse
 from services import auth, gcs, gemini, garden_processor
 from utils import image as image_utils
 
@@ -415,20 +419,86 @@ def delete_garden(garden_id: int, db: Session = Depends(get_db)):
     db.commit()
     return {"status": "ok", "message": f"Garden {garden_id} deleted successfully"}
 
+class LogQueueHandler(logging.Handler):
+    def __init__(self, log_queue):
+        super().__init__()
+        self.log_queue = log_queue
+
+    def emit(self, record):
+        log_entry = self.format(record)
+        self.log_queue.put(log_entry)
+
 @app.post("/jobs/process")
-def trigger_garden_processing(db: Session = Depends(get_db)):
+async def trigger_garden_processing(stream: bool = True, db: Session = Depends(get_db)):
     """
-    Manually trigger the garden AI processing pipeline.
-    This replaces the background cronjob for Cloud Run compatibility.
+    Trigger the garden AI processing pipeline.
+    - stream=true (default): Streams logs via SSE. HTTP status is 200 as long as the stream starts.
+    - stream=false: Runs synchronously. Returns 200 on success, or 500 with details on failure.
     """
-    try:
-        print("Manual trigger: Starting garden processing...")
-        count = garden_processor.process_new_gardens(db)
-        print(f"Manual trigger: Processed {count} garden(s).")
-        return {"status": "success", "processed_count": count}
-    except Exception as e:
-        print(f"ERROR in manual trigger: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(e))
+    if not stream:
+        try:
+            logging.info("Sync Trigger: Starting garden processing job...")
+            count = garden_processor.process_new_gardens(db)
+            logging.info(f"Sync Trigger: Finished processing {count} garden(s).")
+            return {"status": "success", "processed_count": count}
+        except Exception as e:
+            logging.error(f"Sync Trigger ERROR: {str(e)}")
+            import traceback
+            error_details = traceback.format_exc()
+            raise HTTPException(
+                status_code=500,
+                detail={
+                    "error": str(e),
+                    "traceback": error_details
+                }
+            )
+
+    # --- SSE Streaming Mode ---
+    log_queue = queue.Queue()
+    queue_handler = LogQueueHandler(log_queue)
+    queue_handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
+    
+    # Capture logs from the entire application to provide detailed feedback
+    root_logger = logging.getLogger()
+    root_logger.addHandler(queue_handler)
+
+    def run_processing():
+        try:
+            logging.info("SSE Stream: Starting garden processing job...")
+            # Use a new session to avoid thread safety issues
+            from database import SessionLocal
+            thread_db = SessionLocal()
+            try:
+                count = garden_processor.process_new_gardens(thread_db)
+                logging.info(f"SSE Stream: Finished processing {count} garden(s).")
+            finally:
+                thread_db.close()
+        except Exception as e:
+            logging.error(f"SSE Stream ERROR: {str(e)}")
+            import traceback
+            logging.error(traceback.format_exc())
+        finally:
+            # Signal the end of the stream
+            log_queue.put(None)
+            root_logger.removeHandler(queue_handler)
+
+    # Start processing in a background thread
+    threading.Thread(target=run_processing).start()
+
+    async def log_generator():
+        try:
+            while True:
+                try:
+                    message = log_queue.get(timeout=1.0)
+                    if message is None:
+                        yield "data: [DONE]\n\n"
+                        break
+                    yield f"data: {message}\n\n"
+                except queue.Empty:
+                    # Keep-alive
+                    yield ": keep-alive\n\n"
+        except Exception as e:
+            yield f"data: Error in stream: {str(e)}\n\n"
+
+    return StreamingResponse(log_generator(), media_type="text/event-stream")
 
