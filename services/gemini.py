@@ -1,6 +1,7 @@
 import os
 import json
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from PIL import Image
 import io
 from typing import List, Optional
@@ -27,40 +28,41 @@ else:
     load_dotenv() # Fallback to default behavior
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-genai.configure(api_key=GEMINI_API_KEY)
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
+
+def _get_client():
+    """Return a configured Gemini client."""
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        print("ERROR: GEMINI_API_KEY is not set!")
+        return None
+    return genai.Client(api_key=api_key)
 
 def _call_gemini(contents: list) -> dict:
     """Helper to call Gemini and parse JSON response."""
     model_name = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
-    api_key = os.getenv("GEMINI_API_KEY")
-    
-    if not api_key:
-        print("ERROR: GEMINI_API_KEY is not set!")
+    client = _get_client()
+    if not client:
         return {}
 
     try:
-        model = genai.GenerativeModel(model_name)
-        response = model.generate_content(contents)
-        
-        if not response:
-            print("Error: Gemini returned no response.")
+        response = client.models.generate_content(
+            model=model_name,
+            contents=contents,
+        )
+
+        if not response or not response.text:
+            print(f"Error: Gemini returned an empty response.")
             return {}
 
-        # Safely handle potential empty or blocked responses
-        try:
-            text = response.text.strip()
-        except Exception as e:
-            print(f"Error: Could not retrieve text from Gemini response (possibly blocked). Error: {e}")
-            if hasattr(response, 'prompt_feedback'):
-                print(f"Prompt Feedback: {response.prompt_feedback}")
-            return {}
+        text = response.text.strip()
 
         # Clean up Markdown JSON blocks
         if text.startswith("```json"):
             text = text[7:].split("```")[0].strip()
         elif text.startswith("```"):
             text = text[3:].split("```")[0].strip()
-            
+
         try:
             return json.loads(text)
         except json.JSONDecodeError:
@@ -70,18 +72,25 @@ def _call_gemini(contents: list) -> dict:
         print(f"Exception during Gemini call: {str(e)}")
         return {}
 
+def _pil_to_part(img: Image.Image) -> types.Part:
+    """Convert a PIL image to a Gemini Part."""
+    buf = io.BytesIO()
+    img.save(buf, format="JPEG")
+    return types.Part.from_bytes(data=buf.getvalue(), mime_type="image/jpeg")
+
 def identify_plants_with_gemini(image_list: List[bytes]):
     """
     Identifies plants and suggests a garden name.
     """
-    valid_images = []
+    parts = []
     for img_bytes in image_list:
         try:
-            valid_images.append(Image.open(io.BytesIO(img_bytes)))
+            img = Image.open(io.BytesIO(img_bytes))
+            parts.append(_pil_to_part(img))
         except:
             continue
-            
-    if not valid_images:
+
+    if not parts:
         return [], ""
 
     prompt = """
@@ -110,28 +119,29 @@ def identify_plants_with_gemini(image_list: List[bytes]):
       ]
     }
     """
-    
-    result = _call_gemini([prompt] + valid_images)
+
+    result = _call_gemini([prompt] + parts)
     all_plants = result.get("plants", [])
     garden_name = result.get("suggested_garden_name", "")
-    
+
     # Filter plants based on 60% confidence threshold
     filtered_plants = [p for p in all_plants if p.get("confidence", 0) >= 0.6]
-    
+
     return filtered_plants, garden_name
 
 def analyze_garden_overview(image_list: List[bytes], last_update_recommendation: Optional[str] = None) -> dict:
     """
     Provides a high-level overview of the garden.
     """
-    valid_images = []
+    parts = []
     for img_bytes in image_list:
         try:
-            valid_images.append(Image.open(io.BytesIO(img_bytes)))
+            img = Image.open(io.BytesIO(img_bytes))
+            parts.append(_pil_to_part(img))
         except:
             continue
-            
-    if not valid_images:
+
+    if not parts:
         return {}
 
     prompt = f"""
@@ -161,7 +171,7 @@ def analyze_garden_overview(image_list: List[bytes], last_update_recommendation:
       "general_suggestions": "..."
     }}
     """
-    return _call_gemini([prompt] + valid_images)
+    return _call_gemini([prompt] + parts)
 
 def analyze_plant_detail(plant_image_bytes: bytes, plant_name: str, last_plant_recommendation: Optional[str] = None) -> dict:
     """
@@ -169,6 +179,7 @@ def analyze_plant_detail(plant_image_bytes: bytes, plant_name: str, last_plant_r
     """
     try:
         img = Image.open(io.BytesIO(plant_image_bytes))
+        part = _pil_to_part(img)
     except:
         return {}
 
@@ -196,4 +207,4 @@ def analyze_plant_detail(plant_image_bytes: bytes, plant_name: str, last_plant_r
       "recommendation": "..."
     }}
     """
-    return _call_gemini([prompt, img])
+    return _call_gemini([prompt, part])

@@ -5,7 +5,7 @@ pymysql
 pydantic[email]
 python-multipart
 google-cloud-storage
-google-generativeai
+google-genai
 pillow
 python-jose[cryptography]
 passlib[bcrypt]
