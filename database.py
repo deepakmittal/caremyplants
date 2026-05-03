@@ -4,7 +4,13 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from dotenv import load_dotenv
 
-load_dotenv()
+# Try loading from the new 'keys' directory first
+dotenv_path = os.path.join(os.path.dirname(__file__), 'keys', '.env')
+if not os.path.exists(dotenv_path):
+    # Fallback for Docker or when run from root
+    dotenv_path = os.path.join(os.getcwd(), 'keys', '.env')
+
+load_dotenv(dotenv_path)
 
 import urllib.parse
 

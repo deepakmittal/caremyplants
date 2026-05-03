@@ -6,7 +6,13 @@ import io
 from typing import List, Optional
 from dotenv import load_dotenv
 
-load_dotenv()
+# Try loading from the new 'keys' directory first (one level up)
+dotenv_path = os.path.join(os.path.dirname(__file__), '..', 'keys', '.env')
+if not os.path.exists(dotenv_path):
+    # Fallback for Docker or when run from root
+    dotenv_path = os.path.join(os.getcwd(), 'keys', '.env')
+
+load_dotenv(dotenv_path)
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 genai.configure(api_key=GEMINI_API_KEY)

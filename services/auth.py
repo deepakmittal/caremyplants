@@ -6,7 +6,13 @@ from datetime import datetime, timedelta
 from jose import jwt
 from dotenv import load_dotenv
 
-load_dotenv()
+# Try loading from the new 'keys' directory first (one level up)
+dotenv_path = os.path.join(os.path.dirname(__file__), '..', 'keys', '.env')
+if not os.path.exists(dotenv_path):
+    # Fallback for Docker or when run from root
+    dotenv_path = os.path.join(os.getcwd(), 'keys', '.env')
+
+load_dotenv(dotenv_path)
 
 SECRET_KEY = os.getenv("JWT_SECRET", "super-secret-key")
 ALGORITHM = "HS256"

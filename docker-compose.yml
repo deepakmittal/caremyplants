@@ -4,31 +4,22 @@ services:
   api:
     build: .
     restart: always
+    env_file:
+      - keys/.env
     environment:
-      - MYSQL_USER=${MYSQL_USER}
-      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
-      - MYSQL_HOST=${MYSQL_HOST}
-      - MYSQL_DB=${MYSQL_DB}
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
-      - JWT_SECRET=${JWT_SECRET}
-      - GCS_BUCKET_NAME=${GCS_BUCKET_NAME}
       - GOOGLE_APPLICATION_CREDENTIALS=/app/service_account.json
     ports:
       - "8000:8000"
     volumes:
-      - ./service_account.json:/app/service_account.json
+      - ./keys/service_account.json:/app/service_account.json
 
   worker:
     build: .
     restart: always
     command: python cron.py
+    env_file:
+      - keys/.env
     environment:
-      - MYSQL_USER=${MYSQL_USER}
-      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
-      - MYSQL_HOST=${MYSQL_HOST}
-      - MYSQL_DB=${MYSQL_DB}
-      - GEMINI_API_KEY=${GEMINI_API_KEY}
-      - GCS_BUCKET_NAME=${GCS_BUCKET_NAME}
       - GOOGLE_APPLICATION_CREDENTIALS=/app/service_account.json
     volumes:
-      - ./service_account.json:/app/service_account.json
+      - ./keys/service_account.json:/app/service_account.json
