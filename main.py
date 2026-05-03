@@ -150,7 +150,8 @@ async def upload_garden_photos(
 
 
     # Create a garden update entry for this upload session
-    db_update = models.GardenUpdate(garden_id=db_garden.id, status="New")
+    # Initial status is "Uploading" to prevent the cronjob from picking it up mid-upload
+    db_update = models.GardenUpdate(garden_id=db_garden.id, status="Uploading")
     db.add(db_update)
     db.commit()
     db.refresh(db_update)
@@ -178,6 +179,11 @@ async def upload_garden_photos(
             db_garden.users.append(db_user)
             db.commit()
             db.refresh(db_garden)
+
+    # ALL photos are now uploaded and DB records created.
+    # Set status to "Ready to Process" so the cronjob can finally pick it up safely.
+    db_update.status = "Ready to Process"
+    db.commit()
 
     response = schemas.GardenResponse.from_orm(db_garden)
     response.garden_update_id = db_update.id
@@ -208,8 +214,8 @@ async def push_photos_to_update(
         )
         db.add(db_photo)
     
-    # Set status to New so cronjob picks it up
-    db_update.status = "New"
+    # Set status to Ready to Process so cronjob picks it up
+    db_update.status = "Ready to Process"
     db.commit()
     
     return {"message": "Photos added and processed", "update_id": update_id, "count": len(photos)}
@@ -259,7 +265,11 @@ def get_garden_details(garden_id: int, db: Session = Depends(get_db)):
         "id": garden.id,
         "name": garden.name,
         "status": garden.status,
+        "summary": garden.summary,
         "recommendation": latest_update.recommendation if latest_update else None,
+        "immediate_changes": latest_update.immediate_changes if latest_update else None,
+        "disease_overview": latest_update.disease_overview if latest_update else None,
+        "growth_trend": latest_update.growth_trend if latest_update else None,
         "created_at": garden.created_at,
         "plants": plant_responses
     }
@@ -313,10 +323,17 @@ def get_user_gardens_detailed(user_id: int, db: Session = Depends(get_db)):
                 last_update_date=latest_p_update.created_at if latest_p_update else None
             ))
 
+        # Get processing commentary from the latest update
+        current_update = db.query(models.GardenUpdate).filter(
+            models.GardenUpdate.garden_id == garden.id
+        ).order_by(models.GardenUpdate.created_at.desc()).first()
+
         results.append({
             "id": garden.id,
             "name": garden.name,
             "status": garden.status,
+            "summary": garden.summary,
+            "upload_commentry": current_update.upload_commentry if current_update else None,
             "recommendation": latest_update.recommendation if latest_update else None,
             "created_at": garden.created_at,
             "photos": garden.photos,
@@ -358,9 +375,23 @@ def get_garden_environment(garden_id: int, db: Session = Depends(get_db)):
         .first()
     )
     if not latest_update:
-        return {"hydration": None, "exposure": None, "vibrancy": None}
+        return {"hydration": None, "exposure": None, "vibrancy": None, "temperature": None, "humidity": None}
     return {
         "hydration": latest_update.hydration,
         "exposure": latest_update.exposure,
         "vibrancy": latest_update.vibrancy,
+        "temperature": latest_update.temperature or "24°C",
+        "humidity": latest_update.humidity or "60%"
     }
+
+@app.delete("/gardens/{garden_id}")
+def delete_garden(garden_id: int, db: Session = Depends(get_db)):
+    """Delete a garden and all associated plants, photos, and updates."""
+    garden = db.query(models.Garden).filter(models.Garden.id == garden_id).first()
+    if not garden:
+        raise HTTPException(status_code=404, detail="Garden not found")
+    
+    db.delete(garden)
+    db.commit()
+    return {"status": "ok", "message": f"Garden {garden_id} deleted successfully"}
+

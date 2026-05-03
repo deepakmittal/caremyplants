@@ -78,6 +78,8 @@ class GardenWithPhotosResponse(BaseModel):
     id: int
     name: str
     status: Optional[str] = None
+    summary: Optional[str] = None
+    upload_commentry: Optional[str] = None
     recommendation: Optional[str] = None
     created_at: datetime
     photos: List[GardenPhotoResponse]
@@ -90,7 +92,11 @@ class GardenDetailsResponse(BaseModel):
     id: int
     name: str
     status: Optional[str] = None
+    summary: Optional[str] = None
     recommendation: Optional[str] = None
+    immediate_changes: Optional[str] = None
+    disease_overview: Optional[str] = None
+    growth_trend: Optional[str] = None
     created_at: datetime
     plants: List[PlantLatestUpdateResponse]
 
