@@ -54,7 +54,7 @@ app.mount("/static", StaticFiles(directory="static_images"), name="static")
 def read_root():
     return {"message": "Welcome to Garden API"}
 
-@app.get("/hello")
+@app.get("/hello", response_class=PlainTextResponse)
 def hello():
     return "hello"
 
