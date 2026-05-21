@@ -56,7 +56,7 @@ def read_root():
 
 @app.get("/hello")
 def read_hello():
-    return {"message": "hello"}
+    return "hello"
 
 # 1. Login Endpoint
 @app.post("/auth/login", response_model=schemas.Token)
