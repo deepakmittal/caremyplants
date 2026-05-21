@@ -56,7 +56,7 @@ def read_root():
 
 @app.get("/hello")
 def hello():
-    return {"message": "hello"}
+    return "hello"
 
 @app.get("/ping")
 def ping():
