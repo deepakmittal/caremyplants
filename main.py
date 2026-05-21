@@ -54,9 +54,9 @@ app.mount("/static", StaticFiles(directory="static_images"), name="static")
 def read_root():
     return {"message": "Welcome to Garden API"}
 
-@app.get("/hello")
+@app.get("/hello", response_class=PlainTextResponse)
 def read_hello():
-    return {"message": "Hello from the Garden API!"}
+    return "hello"
 
 @app.get("/hello/{name}")
 def read_hello_name(name: str):
@@ -506,7 +506,7 @@ async def trigger_garden_processing(stream: bool = True, db: Session = Depends(g
     queue_handler = LogQueueHandler(log_queue)
     queue_handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
     
-    # Capture logs from the entire application to provide detailed feedback
+    # Capture logs from the entire application to provide detailed.
     root_logger = logging.getLogger()
     root_logger.addHandler(queue_handler)
 
