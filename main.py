@@ -62,6 +62,10 @@ def read_hello():
 def read_hello_name(name: str):
     return {"message": f"Hello, {name}"}
 
+@app.get("/ping")
+def ping():
+    return {"message": "pong"}
+
 # 1. Login Endpoint
 @app.post("/auth/login", response_model=schemas.Token)
 def login(login_data: schemas.UserLogin, db: Session = Depends(get_db)):
