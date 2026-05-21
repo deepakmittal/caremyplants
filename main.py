@@ -70,6 +70,10 @@ def colour():
 def deepak():
     return "hi"
 
+@app.get("/vayu", response_class=PlainTextResponse)
+def vayu():
+    return "hi"
+
 @app.api_route("/echo", methods=["GET", "POST", "PUT", "DELETE"])
 async def echo(request: Request):
     """
@@ -363,8 +367,7 @@ def get_user_gardens_detailed(user_id: int, db: Session = Depends(get_db)):
 
         results = []
         for garden in gardens:
-            # Get latest recommendation (where recommendation is not null)
-            latest_update_with_rec = db.query(models.GardenUpdate).filter(
+_rec = db.query(models.GardenUpdate).filter(
                 models.GardenUpdate.garden_id == garden.id,
                 models.GardenUpdate.recommendation.is_not(None)
             ).order_by(models.GardenUpdate.created_at.desc()).first()
