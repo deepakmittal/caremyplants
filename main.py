@@ -33,6 +33,8 @@ origins = [
     "http://127.0.0.1:5173",
     "http://localhost:5174",
     "http://127.0.0.1:5174",
+    "http://localhost:8081",
+    "http://127.0.0.1:8081",
 ]
 
 app.add_middleware(
@@ -51,6 +53,10 @@ app.mount("/static", StaticFiles(directory="static_images"), name="static")
 @app.get("/")
 def read_root():
     return {"message": "Welcome to Garden API"}
+
+@app.get("/hello")
+def read_hello():
+    return {"message": "hello"}
 
 # 1. Login Endpoint
 @app.post("/auth/login", response_model=schemas.Token)
@@ -373,6 +379,32 @@ def get_plant_updates(plant_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Plant not found")
     return plant.updates
 
+# New: Upload a better photo for a specific plant
+@app.post("/plants/{plant_id}/photos")
+async def upload_plant_photo(
+    plant_id: int,
+    photo: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+    plant = db.query(models.Plant).filter(models.Plant.id == plant_id).first()
+    if not plant:
+        raise HTTPException(status_code=404, detail="Plant not found")
+
+    content = await photo.read()
+    unique_filename = f"garden_{plant.garden_id}/plant_{plant_id}_{uuid.uuid4()}_{photo.filename}"
+    url = gcs.upload_to_gcs(content, unique_filename)
+
+    # Create a new PlantUpdate with status Ready to Process so the cronjob can pick it up
+    db_update = models.PlantUpdate(
+        plant_id=plant_id,
+        image_url=url,
+        status="Ready to Process"
+    )
+    db.add(db_update)
+    db.commit()
+
+    return {"message": "Photo uploaded successfully", "update_id": db_update.id, "image_url": url}
+
 @app.put("/gardens/{garden_id}/access")
 def update_garden_access(garden_id: int, db: Session = Depends(get_db)):
     """Update the last_accessed_at timestamp for a garden."""
@@ -501,4 +533,3 @@ async def trigger_garden_processing(stream: bool = True, db: Session = Depends(g
             yield f"data: Error in stream: {str(e)}\n\n"
 
     return StreamingResponse(log_generator(), media_type="text/event-stream")
-
