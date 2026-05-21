@@ -58,9 +58,9 @@ def read_root():
 def read_hello():
     return "hello"
 
-@app.get("/hello/{name}")
-def read_hello_name(name: str):
-    return {"message": f"Hello, {name}!"}
+@app.get("/hello2", response_class=PlainTextResponse)
+def read_hello2():
+    return "hello again"
 
 @app.get("/ping")
 def ping():
@@ -441,7 +441,7 @@ def update_garden_access(garden_id: int, db: Session = Depends(get_db)):
     """Update the last_accessed_at timestamp for a garden."""
     garden = db.query(models.Garden).filter(models.Garden.id == garden_id).first()
     if not garden:
-        raise HTTPException(status_code=404, detail="Garden not. found")
+        raise HTTPException(status_code=404, detail="Garden not found")
     garden.last_accessed_at = datetime.datetime.utcnow()
     db.commit()
     return {"status": "ok"}
