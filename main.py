@@ -62,6 +62,10 @@ def read_hello():
 def read_hello_name(name: str):
     return {"message": f"Hello, {name}"}
 
+@app.get("/echo")
+def read_echo():
+    return {"message": "echo"}
+
 @app.post("/echo")
 async def echo(payload: dict):
     """Echo back the received payload."""
