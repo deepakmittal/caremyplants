@@ -66,6 +66,10 @@ def ping():
 def colour():
     return "green"
 
+@app.get("/deepak", response_class=PlainTextResponse)
+def deepak():
+    return "hi"
+
 @app.api_route("/echo", methods=["GET", "POST", "PUT", "DELETE"])
 async def echo(request: Request):
     """
