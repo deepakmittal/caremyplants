@@ -1,0 +1,269 @@
+{
+  "screenshot": {
+    "name": "projects/9952041865280547364/files/1152691663913452932",
+    "downloadUrl": "https://lh3.googleusercontent.com/aida/ADBb0ujb-LIC8yiKC9x6xtNPWdZIs1dP6GidlwjZx34KPAYLxS3CqFcyaM9khm0f_TNVCADyD920ANxVLiK7iyiGkd1_VKu0MkE4TIjtGUXQUwPV-a92Fe5VF-l2UYOR5bLEUosUKNHHgx5bZyzkVzjM0mnGuWD7XPLrrgHrCd8Wx4X_pSqu1o1t4Y4ldbnIBhfC-L9KK_QV4sRqJmWJkVtFyH9je01olVtHNT_hnE0cecIERWG0YYuJQoNI0RU"
+  },
+  "htmlCode": {
+    "name": "projects/9952041865280547364/files/10287596871237324737",
+    "downloadUrl": "https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ7Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpaCiVodG1sXzAwMDY1MWVlMjg0ZmVhMDQwN2UwMDRhZmZkMmM4Mjc0EgsSBxCuvry1uw4YAZIBIwoKcHJvamVjdF9pZBIVQhM5OTUyMDQxODY1MjgwNTQ3MzY0&filename=&opi=89354086",
+    "mimeType": "text/html"
+  },
+  "id": "d55b33da51ce47fa831a4311f3123357",
+  "generatedBy": "HatterAgent",
+  "width": "780",
+  "height": "1934",
+  "title": "My Sanctuaries - Refined Logo",
+  "prompt": "Replace the logo in the header with the new icon-only watering can logo {{DATA:IMAGE:IMAGE_33}}. Maintain the existing 'Care-My-Plants' text next to it. Ensure the layout and animations from the animated carousel view are preserved.",
+  "name": "projects/9952041865280547364/screens/d55b33da51ce47fa831a4311f3123357",
+  "theme": {
+    "colorMode": "LIGHT",
+    "font": "MANROPE",
+    "roundness": "ROUND_EIGHT",
+    "customColor": "#1a3c34",
+    "headlineFont": "MANROPE",
+    "bodyFont": "MANROPE",
+    "labelFont": "MANROPE",
+    "namedColors": {
+      "surface": "#f7faf9",
+      "surface_container_highest": "#e0e3e2",
+      "tertiary": "#361812",
+      "on_error": "#ffffff",
+      "error": "#ba1a1a",
+      "surface_bright": "#f7faf9",
+      "background": "#f7faf9",
+      "surface_container": "#ebeeed",
+      "error_container": "#ffdad6",
+      "surface_container_low": "#f1f4f3",
+      "secondary_fixed": "#ffd9de",
+      "inverse_primary": "#aacec3",
+      "on_tertiary_fixed": "#30130d",
+      "on_secondary": "#ffffff",
+      "surface_dim": "#d7dbda",
+      "surface_tint": "#43655c",
+      "on_secondary_container": "#fffbff",
+      "on_background": "#181c1c",
+      "on_surface_variant": "#414846",
+      "on_primary_container": "#83a69c",
+      "primary_fixed_dim": "#aacec3",
+      "on_tertiary": "#ffffff",
+      "on_surface": "#181c1c",
+      "inverse_surface": "#2d3131",
+      "on_primary": "#ffffff",
+      "secondary_fixed_dim": "#ffb2be",
+      "surface_container_lowest": "#ffffff",
+      "surface_container_high": "#e6e9e8",
+      "on_error_container": "#93000a",
+      "primary_fixed": "#c5eadf",
+      "tertiary_fixed": "#ffdad3",
+      "primary_container": "#1a3c34",
+      "secondary_container": "#e6005e",
+      "outline": "#717976",
+      "outline_variant": "#c1c8c4",
+      "on_secondary_fixed": "#400014",
+      "on_tertiary_fixed_variant": "#623d36",
+      "on_secondary_fixed_variant": "#900038",
+      "on_tertiary_container": "#c4948a",
+      "tertiary_fixed_dim": "#efbab0",
+      "tertiary_container": "#4f2d26",
+      "on_primary_fixed_variant": "#2b4d44",
+      "secondary": "#b8004a",
+      "surface_variant": "#e0e3e2",
+      "inverse_on_surface": "#eef1f0",
+      "on_primary_fixed": "#00201a",
+      "primary": "#01261f"
+    },
+    "designMd": "---\nname: Botanical Bold\ncolors:\n  surface: '#f7faf9'\n  surface-dim: '#d7dbda'\n  surface-bright: '#f7faf9'\n  surface-container-lowest: '#ffffff'\n  surface-container-low: '#f1f4f3'\n  surface-container: '#ebeeed'\n  surface-container-high: '#e6e9e8'\n  surface-container-highest: '#e0e3e2'\n  on-surface: '#181c1c'\n  on-surface-variant: '#414846'\n  inverse-surface: '#2d3131'\n  inverse-on-surface: '#eef1f0'\n  outline: '#717976'\n  outline-variant: '#c1c8c4'\n  surface-tint: '#43655c'\n  primary: '#01261f'\n  on-primary: '#ffffff'\n  primary-container: '#1a3c34'\n  on-primary-container: '#83a69c'\n  inverse-primary: '#aacec3'\n  secondary: '#b8004a'\n  on-secondary: '#ffffff'\n  secondary-container: '#e6005e'\n  on-secondary-container: '#fffbff'\n  tertiary: '#361812'\n  on-tertiary: '#ffffff'\n  tertiary-container: '#4f2d26'\n  on-tertiary-container: '#c4948a'\n  error: '#ba1a1a'\n  on-error: '#ffffff'\n  error-container: '#ffdad6'\n  on-error-container: '#93000a'\n  primary-fixed: '#c5eadf'\n  primary-fixed-dim: '#aacec3'\n  on-primary-fixed: '#00201a'\n  on-primary-fixed-variant: '#2b4d44'\n  secondary-fixed: '#ffd9de'\n  secondary-fixed-dim: '#ffb2be'\n  on-secondary-fixed: '#400014'\n  on-secondary-fixed-variant: '#900038'\n  tertiary-fixed: '#ffdad3'\n  tertiary-fixed-dim: '#efbab0'\n  on-tertiary-fixed: '#30130d'\n  on-tertiary-fixed-variant: '#623d36'\n  background: '#f7faf9'\n  on-background: '#181c1c'\n  surface-variant: '#e0e3e2'\ntypography:\n  display-lg:\n    fontFamily: Manrope\n    fontSize: 48px\n    fontWeight: '800'\n    lineHeight: 56px\n    letterSpacing: -0.02em\n  display-lg-mobile:\n    fontFamily: Manrope\n    fontSize: 32px\n    fontWeight: '800'\n    lineHeight: 40px\n    letterSpacing: -0.02em\n  headline-md:\n    fontFamily: Manrope\n    fontSize: 24px\n    fontWeight: '700'\n    lineHeight: 32px\n  body-lg:\n    fontFamily: Manrope\n    fontSize: 18px\n    fontWeight: '400'\n    lineHeight: 28px\n  body-md:\n    fontFamily: Manrope\n    fontSize: 16px\n    fontWeight: '400'\n    lineHeight: 24px\n  label-sm:\n    fontFamily: Manrope\n    fontSize: 12px\n    fontWeight: '600'\n    lineHeight: 16px\n    letterSpacing: 0.05em\nrounded:\n  sm: 0.25rem\n  DEFAULT: 0.5rem\n  md: 0.75rem\n  lg: 1rem\n  xl: 1.5rem\n  full: 9999px\nspacing:\n  base: 8px\n  container-max: 1280px\n  gutter: 24px\n  margin-mobile: 16px\n  margin-desktop: 48px\n  stack-sm: 8px\n  stack-md: 16px\n  stack-lg: 32px\n---\n\n## Brand & Style\n\nThis design system is built on a \"Neon Nature\" aesthetic—a fusion of organic depth and high-energy digital accents. It targets high-end lifestyle, wellness, or environmental tech brands that want to feel grounded yet provocative. \n\nThe style utilizes a **Minimalist-Corporate** foundation with **High-Contrast** accents. It relies on heavy, solid fills of deep green to establish a \"forest floor\" stability, while the vibrant pink acts as \"digital flora,\" drawing immediate attention to calls-to-action and critical data points. The interface should feel lush, expensive, and modern, avoiding traditional \"earthy\" cliches in favor of a sharp, editorial precision.\n\n## Colors\n\nThe palette is anchored by **Deep Lush Green (#1A3C34)**, used for primary backgrounds in dark mode or as the dominant structural color in light mode. The **Bold Pink (#FF1E6D)** is the exclusive color for interactive elements, notifications, and brand highlights.\n\n- **Primary:** Deep Green is used for headers, sidebars, and primary action containers.\n- **Secondary/Accent:** Bold Pink is reserved for buttons, active states, and progress indicators.\n- **Surface/Neutral:** A very light, cool-tinted grey (#F4F7F6) is used for main content areas to maintain high legibility and a clean \"gallery\" feel.\n- **Semantic:** Success states should use a brighter emerald green; errors should utilize the Bold Pink to maintain palette harmony while remaining urgent.\n\n## Typography\n\nThis design system uses **Manrope** exclusively to achieve a technical yet friendly character. The typeface's geometric qualities provide the \"precision\" required by the brief, while its wide apertures feel \"organic\" and open.\n\n- **Headings:** Use extra-bold weights with tight letter-spacing for a high-impact, editorial look.\n- **Body:** Use regular weights with generous line-height to ensure maximum readability against dark green backgrounds.\n- **Labels:** Small labels and captions should be semi-bold and slightly tracked out (all-caps) to act as clear navigational anchors.\n- **Color Application:** On Deep Green surfaces, all text must be white or the soft-mint neutral for accessibility.\n\n## Layout & Spacing\n\nThis design system employs a **12-column fluid grid** for desktop and a **4-column grid** for mobile. The spacing rhythm is strictly based on an **8px linear scale**, mirroring the 8px corner radius of UI elements to create a sense of mathematical harmony.\n\n- **Negative Space:** Use generous margins (stack-lg) between major sections to let the deep green \"breath\" and prevent the bold pink from becoming overwhelming.\n- **Alignment:** Content should be center-aligned in fixed-width containers on desktop to maintain an upscale, centered aesthetic.\n- **Padding:** Internal component padding should favor horizontal breathing room (e.g., 12px vertical / 24px horizontal for buttons).\n\n## Elevation & Depth\n\nTo maintain the \"Botanical\" theme, depth is communicated through **Tonal Layering** rather than traditional shadows. This keeps the UI feeling flat and modern.\n\n- **Surface Tiers:** In dark contexts, use a slightly lighter shade of green (#254D43) to indicate elevated surfaces like cards or menus. \n- **Borders:** Instead of shadows, use subtle 1px inner borders (strokes) in a lighter green tint to define edges.\n- **The \"Bloom\" Effect:** Reserve soft, high-diffusion pink glows (outer glows) exclusively for the most critical primary buttons or active states to simulate a bioluminescent \"bloom\" against the dark background.\n\n## Shapes\n\nThe shape language is defined by a consistent **8px (0.5rem) radius**. This \"Rounded\" setting provides a soft, approachable feel that mimics organic forms while maintaining enough structural rigidity to feel \"precise.\"\n\n- **Uniformity:** Apply the 8px radius to buttons, input fields, cards, and images.\n- **Large Containers:** For very large sections or modals, the radius may scale to 16px (rounded-lg) to maintain visual proportion.\n- **Interactive States:** On hover, shapes do not change their radius, but may receive a subtle 2px inset border in Bold Pink.\n\n## Components\n\n- **Buttons:** Primary buttons use a solid Bold Pink fill with white text. Secondary buttons use a Deep Green ghost style with a Bold Pink border.\n- **Cards:** Use the tonal layering approach. On light surfaces, cards have a 1px border of #E8F0EE. On dark surfaces, they use a #254D43 fill.\n- **Inputs:** Fields should have a 1px border. When focused, the border transitions to Bold Pink with a 2px thickness.\n- **Chips:** Small, highly rounded tags using the Soft Mint background with Deep Green text for metadata, or Bold Pink backgrounds for \"New\" or \"Live\" statuses.\n- **Lists:** Use \"Botanical\" iconography (thin-line weight) in Deep Green. Row separators should be subtle 1px lines with 10% opacity.\n- **Progress Bars:** The track should be the background color (Deep Green), and the indicator should be a vibrant, glowing Bold Pink.",
+    "colorVariant": "FIDELITY",
+    "overridePrimaryColor": "#1a3c34",
+    "overrideSecondaryColor": "#ff1e6d",
+    "overrideNeutralColor": "#f4f7f6",
+    "spacingScale": 2,
+    "typography": {
+      "label-sm": {
+        "fontFamily": "Manrope",
+        "fontSize": "12px",
+        "fontWeight": "600",
+        "lineHeight": "16px",
+        "letterSpacing": "0.05em"
+      },
+      "body-lg": {
+        "fontFamily": "Manrope",
+        "fontSize": "18px",
+        "fontWeight": "400",
+        "lineHeight": "28px"
+      },
+      "display-lg-mobile": {
+        "fontFamily": "Manrope",
+        "fontSize": "32px",
+        "fontWeight": "800",
+        "lineHeight": "40px",
+        "letterSpacing": "-0.02em"
+      },
+      "body-md": {
+        "fontFamily": "Manrope",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "24px"
+      },
+      "display-lg": {
+        "fontFamily": "Manrope",
+        "fontSize": "48px",
+        "fontWeight": "800",
+        "lineHeight": "56px",
+        "letterSpacing": "-0.02em"
+      },
+      "headline-md": {
+        "fontFamily": "Manrope",
+        "fontSize": "24px",
+        "fontWeight": "700",
+        "lineHeight": "32px"
+      }
+    },
+    "spacing": {
+      "container-max": "1280px",
+      "stack-sm": "8px",
+      "stack-lg": "32px",
+      "margin-mobile": "16px",
+      "stack-md": "16px",
+      "gutter": "24px",
+      "base": "8px",
+      "margin-desktop": "48px"
+    },
+    "headlineFontFamily": "Manrope",
+    "bodyFontFamily": "Manrope",
+    "labelFontFamily": "Manrope"
+  },
+  "deviceType": "MOBILE",
+  "screenType": "DESIGN",
+  "screenMetadata": {
+    "agentType": "PRO_AGENT",
+    "status": "COMPLETE",
+    "displayMode": "HTML"
+  },
+  "designSystem": {
+    "name": "assets/454fd12dce364f198010091085a4ba1f",
+    "designSystem": {
+      "displayName": "Botanical Bold",
+      "styleGuidelines": "## Brand & Style\n\nThis design system is built on a \"Neon Nature\" aesthetic—a fusion of organic depth and high-energy digital accents. It targets high-end lifestyle, wellness, or environmental tech brands that want to feel grounded yet provocative. \n\nThe style utilizes a **Minimalist-Corporate** foundation with **High-Contrast** accents. It relies on heavy, solid fills of deep green to establish a \"forest floor\" stability, while the vibrant pink acts as \"digital flora,\" drawing immediate attention to calls-to-action and critical data points. The interface should feel lush, expensive, and modern, avoiding traditional \"earthy\" cliches in favor of a sharp, editorial precision.\n\n## Layout & Spacing\n\nThis design system employs a **12-column fluid grid** for desktop and a **4-column grid** for mobile. The spacing rhythm is strictly based on an **8px linear scale**, mirroring the 8px corner radius of UI elements to create a sense of mathematical harmony.\n\n- **Negative Space:** Use generous margins (stack-lg) between major sections to let the deep green \"breath\" and prevent the bold pink from becoming overwhelming.\n- **Alignment:** Content should be center-aligned in fixed-width containers on desktop to maintain an upscale, centered aesthetic.\n- **Padding:** Internal component padding should favor horizontal breathing room (e.g., 12px vertical / 24px horizontal for buttons).\n\n## Elevation & Depth\n\nTo maintain the \"Botanical\" theme, depth is communicated through **Tonal Layering** rather than traditional shadows. This keeps the UI feeling flat and modern.\n\n- **Surface Tiers:** In dark contexts, use a slightly lighter shade of green (#254D43) to indicate elevated surfaces like cards or menus. \n- **Borders:** Instead of shadows, use subtle 1px inner borders (strokes) in a lighter green tint to define edges.\n- **The \"Bloom\" Effect:** Reserve soft, high-diffusion pink glows (outer glows) exclusively for the most critical primary buttons or active states to simulate a bioluminescent \"bloom\" against the dark background.\n\n## Components\n\n- **Buttons:** Primary buttons use a solid Bold Pink fill with white text. Secondary buttons use a Deep Green ghost style with a Bold Pink border.\n- **Cards:** Use the tonal layering approach. On light surfaces, cards have a 1px border of #E8F0EE. On dark surfaces, they use a #254D43 fill.\n- **Inputs:** Fields should have a 1px border. When focused, the border transitions to Bold Pink with a 2px thickness.\n- **Chips:** Small, highly rounded tags using the Soft Mint background with Deep Green text for metadata, or Bold Pink backgrounds for \"New\" or \"Live\" statuses.\n- **Lists:** Use \"Botanical\" iconography (thin-line weight) in Deep Green. Row separators should be subtle 1px lines with 10% opacity.\n- **Progress Bars:** The track should be the background color (Deep Green), and the indicator should be a vibrant, glowing Bold Pink.",
+      "theme": {
+        "colorMode": "LIGHT",
+        "font": "MANROPE",
+        "roundness": "ROUND_EIGHT",
+        "customColor": "#1a3c34",
+        "headlineFont": "MANROPE",
+        "bodyFont": "MANROPE",
+        "labelFont": "MANROPE",
+        "namedColors": {
+          "on_tertiary_fixed": "#30130d",
+          "on_secondary": "#ffffff",
+          "inverse_primary": "#aacec3",
+          "secondary_fixed": "#ffd9de",
+          "surface_container_low": "#f1f4f3",
+          "surface_dim": "#d7dbda",
+          "surface_tint": "#43655c",
+          "on_secondary_container": "#fffbff",
+          "on_background": "#181c1c",
+          "primary_fixed_dim": "#aacec3",
+          "on_primary_container": "#83a69c",
+          "on_surface_variant": "#414846",
+          "surface": "#f7faf9",
+          "tertiary": "#361812",
+          "on_error": "#ffffff",
+          "error": "#ba1a1a",
+          "surface_bright": "#f7faf9",
+          "surface_container_highest": "#e0e3e2",
+          "error_container": "#ffdad6",
+          "surface_container": "#ebeeed",
+          "background": "#f7faf9",
+          "primary_container": "#1a3c34",
+          "secondary_container": "#e6005e",
+          "outline": "#717976",
+          "outline_variant": "#c1c8c4",
+          "on_secondary_fixed_variant": "#900038",
+          "on_tertiary_container": "#c4948a",
+          "on_secondary_fixed": "#400014",
+          "on_tertiary_fixed_variant": "#623d36",
+          "surface_variant": "#e0e3e2",
+          "secondary": "#b8004a",
+          "on_primary_fixed_variant": "#2b4d44",
+          "inverse_on_surface": "#eef1f0",
+          "on_primary_fixed": "#00201a",
+          "primary": "#01261f",
+          "tertiary_fixed_dim": "#efbab0",
+          "tertiary_container": "#4f2d26",
+          "on_surface": "#181c1c",
+          "inverse_surface": "#2d3131",
+          "on_primary": "#ffffff",
+          "on_tertiary": "#ffffff",
+          "surface_container_lowest": "#ffffff",
+          "secondary_fixed_dim": "#ffb2be",
+          "on_error_container": "#93000a",
+          "surface_container_high": "#e6e9e8",
+          "primary_fixed": "#c5eadf",
+          "tertiary_fixed": "#ffdad3"
+        },
+        "designMd": "---\nname: Botanical Bold\ncolors:\n  surface: '#f7faf9'\n  surface-dim: '#d7dbda'\n  surface-bright: '#f7faf9'\n  surface-container-lowest: '#ffffff'\n  surface-container-low: '#f1f4f3'\n  surface-container: '#ebeeed'\n  surface-container-high: '#e6e9e8'\n  surface-container-highest: '#e0e3e2'\n  on-surface: '#181c1c'\n  on-surface-variant: '#414846'\n  inverse-surface: '#2d3131'\n  inverse-on-surface: '#eef1f0'\n  outline: '#717976'\n  outline-variant: '#c1c8c4'\n  surface-tint: '#43655c'\n  primary: '#01261f'\n  on-primary: '#ffffff'\n  primary-container: '#1a3c34'\n  on-primary-container: '#83a69c'\n  inverse-primary: '#aacec3'\n  secondary: '#b8004a'\n  on-secondary: '#ffffff'\n  secondary-container: '#e6005e'\n  on-secondary-container: '#fffbff'\n  tertiary: '#361812'\n  on-tertiary: '#ffffff'\n  tertiary-container: '#4f2d26'\n  on-tertiary-container: '#c4948a'\n  error: '#ba1a1a'\n  on-error: '#ffffff'\n  error-container: '#ffdad6'\n  on-error-container: '#93000a'\n  primary-fixed: '#c5eadf'\n  primary-fixed-dim: '#aacec3'\n  on-primary-fixed: '#00201a'\n  on-primary-fixed-variant: '#2b4d44'\n  secondary-fixed: '#ffd9de'\n  secondary-fixed-dim: '#ffb2be'\n  on-secondary-fixed: '#400014'\n  on-secondary-fixed-variant: '#900038'\n  tertiary-fixed: '#ffdad3'\n  tertiary-fixed-dim: '#efbab0'\n  on-tertiary-fixed: '#30130d'\n  on-tertiary-fixed-variant: '#623d36'\n  background: '#f7faf9'\n  on-background: '#181c1c'\n  surface-variant: '#e0e3e2'\ntypography:\n  display-lg:\n    fontFamily: Manrope\n    fontSize: 48px\n    fontWeight: '800'\n    lineHeight: 56px\n    letterSpacing: -0.02em\n  display-lg-mobile:\n    fontFamily: Manrope\n    fontSize: 32px\n    fontWeight: '800'\n    lineHeight: 40px\n    letterSpacing: -0.02em\n  headline-md:\n    fontFamily: Manrope\n    fontSize: 24px\n    fontWeight: '700'\n    lineHeight: 32px\n  body-lg:\n    fontFamily: Manrope\n    fontSize: 18px\n    fontWeight: '400'\n    lineHeight: 28px\n  body-md:\n    fontFamily: Manrope\n    fontSize: 16px\n    fontWeight: '400'\n    lineHeight: 24px\n  label-sm:\n    fontFamily: Manrope\n    fontSize: 12px\n    fontWeight: '600'\n    lineHeight: 16px\n    letterSpacing: 0.05em\nrounded:\n  sm: 0.25rem\n  DEFAULT: 0.5rem\n  md: 0.75rem\n  lg: 1rem\n  xl: 1.5rem\n  full: 9999px\nspacing:\n  base: 8px\n  container-max: 1280px\n  gutter: 24px\n  margin-mobile: 16px\n  margin-desktop: 48px\n  stack-sm: 8px\n  stack-md: 16px\n  stack-lg: 32px\n---\n\n## Brand & Style\n\nThis design system is built on a \"Neon Nature\" aesthetic—a fusion of organic depth and high-energy digital accents. It targets high-end lifestyle, wellness, or environmental tech brands that want to feel grounded yet provocative. \n\nThe style utilizes a **Minimalist-Corporate** foundation with **High-Contrast** accents. It relies on heavy, solid fills of deep green to establish a \"forest floor\" stability, while the vibrant pink acts as \"digital flora,\" drawing immediate attention to calls-to-action and critical data points. The interface should feel lush, expensive, and modern, avoiding traditional \"earthy\" cliches in favor of a sharp, editorial precision.\n\n## Colors\n\nThe palette is anchored by **Deep Lush Green (#1A3C34)**, used for primary backgrounds in dark mode or as the dominant structural color in light mode. The **Bold Pink (#FF1E6D)** is the exclusive color for interactive elements, notifications, and brand highlights.\n\n- **Primary:** Deep Green is used for headers, sidebars, and primary action containers.\n- **Secondary/Accent:** Bold Pink is reserved for buttons, active states, and progress indicators.\n- **Surface/Neutral:** A very light, cool-tinted grey (#F4F7F6) is used for main content areas to maintain high legibility and a clean \"gallery\" feel.\n- **Semantic:** Success states should use a brighter emerald green; errors should utilize the Bold Pink to maintain palette harmony while remaining urgent.\n\n## Typography\n\nThis design system uses **Manrope** exclusively to achieve a technical yet friendly character. The typeface's geometric qualities provide the \"precision\" required by the brief, while its wide apertures feel \"organic\" and open.\n\n- **Headings:** Use extra-bold weights with tight letter-spacing for a high-impact, editorial look.\n- **Body:** Use regular weights with generous line-height to ensure maximum readability against dark green backgrounds.\n- **Labels:** Small labels and captions should be semi-bold and slightly tracked out (all-caps) to act as clear navigational anchors.\n- **Color Application:** On Deep Green surfaces, all text must be white or the soft-mint neutral for accessibility.\n\n## Layout & Spacing\n\nThis design system employs a **12-column fluid grid** for desktop and a **4-column grid** for mobile. The spacing rhythm is strictly based on an **8px linear scale**, mirroring the 8px corner radius of UI elements to create a sense of mathematical harmony.\n\n- **Negative Space:** Use generous margins (stack-lg) between major sections to let the deep green \"breath\" and prevent the bold pink from becoming overwhelming.\n- **Alignment:** Content should be center-aligned in fixed-width containers on desktop to maintain an upscale, centered aesthetic.\n- **Padding:** Internal component padding should favor horizontal breathing room (e.g., 12px vertical / 24px horizontal for buttons).\n\n## Elevation & Depth\n\nTo maintain the \"Botanical\" theme, depth is communicated through **Tonal Layering** rather than traditional shadows. This keeps the UI feeling flat and modern.\n\n- **Surface Tiers:** In dark contexts, use a slightly lighter shade of green (#254D43) to indicate elevated surfaces like cards or menus. \n- **Borders:** Instead of shadows, use subtle 1px inner borders (strokes) in a lighter green tint to define edges.\n- **The \"Bloom\" Effect:** Reserve soft, high-diffusion pink glows (outer glows) exclusively for the most critical primary buttons or active states to simulate a bioluminescent \"bloom\" against the dark background.\n\n## Shapes\n\nThe shape language is defined by a consistent **8px (0.5rem) radius**. This \"Rounded\" setting provides a soft, approachable feel that mimics organic forms while maintaining enough structural rigidity to feel \"precise.\"\n\n- **Uniformity:** Apply the 8px radius to buttons, input fields, cards, and images.\n- **Large Containers:** For very large sections or modals, the radius may scale to 16px (rounded-lg) to maintain visual proportion.\n- **Interactive States:** On hover, shapes do not change their radius, but may receive a subtle 2px inset border in Bold Pink.\n\n## Components\n\n- **Buttons:** Primary buttons use a solid Bold Pink fill with white text. Secondary buttons use a Deep Green ghost style with a Bold Pink border.\n- **Cards:** Use the tonal layering approach. On light surfaces, cards have a 1px border of #E8F0EE. On dark surfaces, they use a #254D43 fill.\n- **Inputs:** Fields should have a 1px border. When focused, the border transitions to Bold Pink with a 2px thickness.\n- **Chips:** Small, highly rounded tags using the Soft Mint background with Deep Green text for metadata, or Bold Pink backgrounds for \"New\" or \"Live\" statuses.\n- **Lists:** Use \"Botanical\" iconography (thin-line weight) in Deep Green. Row separators should be subtle 1px lines with 10% opacity.\n- **Progress Bars:** The track should be the background color (Deep Green), and the indicator should be a vibrant, glowing Bold Pink.",
+        "colorVariant": "FIDELITY",
+        "overridePrimaryColor": "#1a3c34",
+        "overrideSecondaryColor": "#ff1e6d",
+        "overrideNeutralColor": "#f4f7f6",
+        "spacingScale": 2,
+        "typography": {
+          "body-lg": {
+            "fontFamily": "Manrope",
+            "fontSize": "18px",
+            "fontWeight": "400",
+            "lineHeight": "28px"
+          },
+          "body-md": {
+            "fontFamily": "Manrope",
+            "fontSize": "16px",
+            "fontWeight": "400",
+            "lineHeight": "24px"
+          },
+          "display-lg-mobile": {
+            "fontFamily": "Manrope",
+            "fontSize": "32px",
+            "fontWeight": "800",
+            "lineHeight": "40px",
+            "letterSpacing": "-0.02em"
+          },
+          "label-sm": {
+            "fontFamily": "Manrope",
+            "fontSize": "12px",
+            "fontWeight": "600",
+            "lineHeight": "16px",
+            "letterSpacing": "0.05em"
+          },
+          "headline-md": {
+            "fontFamily": "Manrope",
+            "fontSize": "24px",
+            "fontWeight": "700",
+            "lineHeight": "32px"
+          },
+          "display-lg": {
+            "fontFamily": "Manrope",
+            "fontSize": "48px",
+            "fontWeight": "800",
+            "lineHeight": "56px",
+            "letterSpacing": "-0.02em"
+          }
+        },
+        "spacing": {
+          "margin-mobile": "16px",
+          "stack-md": "16px",
+          "container-max": "1280px",
+          "stack-sm": "8px",
+          "stack-lg": "32px",
+          "gutter": "24px",
+          "base": "8px",
+          "margin-desktop": "48px"
+        },
+        "headlineFontFamily": "Manrope",
+        "bodyFontFamily": "Manrope",
+        "labelFontFamily": "Manrope"
+      }
+    },
+    "version": "1"
+  }
+}

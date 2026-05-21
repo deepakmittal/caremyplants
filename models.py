@@ -95,6 +95,7 @@ class PlantUpdate(Base):
     condition_text = Column(Text)
     recommendation = Column(Text)
     image_url = Column(String(512))
+    changes_from_previous = Column(Text)
     # Status lifecycle: 'New' -> 'Processing' -> 'Ready'
     status = Column(String(50), default="New", nullable=False)
     created_at = Column(TIMESTAMP, default=datetime.datetime.utcnow)
