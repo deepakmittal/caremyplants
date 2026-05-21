@@ -56,15 +56,11 @@ def read_root():
 
 @app.get("/hello")
 def read_hello():
-    return {"message": "hello"}
+    return {"message": "Hello from the Garden API!"}
 
 @app.get("/hello/{name}")
 def read_hello_name(name: str):
     return {"message": f"Hello, {name}"}
-
-@app.get("/ping")
-def ping():
-    return {"message": "pong"}
 
 # 1. Login Endpoint
 @app.post("/auth/login", response_model=schemas.Token)
