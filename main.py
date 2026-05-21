@@ -62,12 +62,28 @@ def hello():
 def ping():
     return {"message": "pong"}
 
-@app.post("/echo")
+@app.api_route("/echo", methods=["GET", "POST", "PUT", "DELETE"])
 async def echo(request: Request):
     """
-    Echo back the JSON payload of a POST request.
+    Echo back information about the request.
     """
-    return await request.json()
+    response_data = {
+        "message": "Echo response",
+        "method": request.method,
+        "path": request.url.path,
+        "headers": dict(request.headers),
+        "client": {
+            "host": request.client.host,
+            "port": request.client.port,
+        },
+    }
+    if request.method in ["POST", "PUT"]:
+        try:
+            response_data["json_payload"] = await request.json()
+        except Exception:
+            response_data["body"] = (await request.body()).decode("utf-8")
+
+    return response_data
 
 # 1. Login Endpoint
 @app.post("/auth/login", response_model=schemas.Token)
