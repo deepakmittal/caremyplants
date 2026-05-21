@@ -12,7 +12,7 @@ import models, schemas
 import queue
 import threading
 import logging
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, PlainTextResponse
 from services import auth, gcs, gemini, garden_processor
 from utils import image as image_utils
 
@@ -54,9 +54,9 @@ app.mount("/static", StaticFiles(directory="static_images"), name="static")
 def read_root():
     return {"message": "Welcome to Garden API"}
 
-@app.get("/hello")
+@app.get("/hello", response_class=PlainTextResponse)
 def read_hello():
-    return {"message": "hello"}
+    return "hello"
 
 @app.get("/hello/{name}")
 def read_hello_name(name: str):
