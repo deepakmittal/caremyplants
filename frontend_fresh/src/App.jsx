@@ -32,7 +32,7 @@ const SanctuaryCard = ({ garden, index, onClick }) => {
           {garden.recommendation || "Our AI is analyzing your botanical sanctuary..."}
         </p>
 
-        <div style={{ marginTop: '1.5rem', display: 'flex', alignItems: 'center', color: '#556158', fontSize: '0.85rem', fontWeight: '600' }}>
+        <div style={{ marginTop: '1.5rem', display: 'flex', alignItems: 'center', color: 'var(--color-primary)', fontSize: '0.85rem', fontWeight: '600' }}>
           Explore {garden.plants?.length || 0} plants <ChevronRight size={16} />
         </div>
       </div>
@@ -65,11 +65,11 @@ const PlantCard = ({ plant, index }) => {
           {plant.latest_recommendation || "Maintain consistent care to ensure your plant thrives in its current environment."}
         </p>
 
-        <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem', borderTop: '1px solid #f0eded', paddingTop: '1rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#747873', fontSize: '0.8rem' }}>
+        <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem', borderTop: '1px solid var(--color-surface-container)', paddingTop: '1rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--color-outline)', fontSize: '0.8rem' }}>
             <Droplets size={14} /> Normal
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#747873', fontSize: '0.8rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--color-outline)', fontSize: '0.8rem' }}>
             <Sun size={14} /> Bright
           </div>
         </div>
@@ -165,7 +165,7 @@ function App() {
   if (loading && !isUploading && gardens.length === 0) {
     return (
       <div className="sanctuary-container empty-state">
-        <Loader2 className="animate-spin" size={48} style={{ margin: '0 auto 1rem', color: '#556158' }} />
+        <Loader2 className="animate-spin" size={48} style={{ margin: '0 auto 1rem', color: 'var(--color-primary)' }} />
         <p>Analyzing your botanical domain...</p>
       </div>
     );
@@ -185,7 +185,7 @@ function App() {
               <ArrowLeft size={18} /> Cancel
             </button>
             <header style={{ marginBottom: '2.5rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#556158', marginBottom: '0.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-primary)', marginBottom: '0.5rem' }}>
                 <Leaf size={20} />
                 <span style={{ fontSize: '0.9rem', fontWeight: '600', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Add New Growth</span>
               </div>
@@ -246,7 +246,7 @@ function App() {
           >
             <header className="header-actions" style={{ marginBottom: '3rem' }}>
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#556158', marginBottom: '0.5rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-primary)', marginBottom: '0.5rem' }}>
                   <Leaf size={20} />
                   <span style={{ fontSize: '0.9rem', fontWeight: '600', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Botanical Manager</span>
                 </div>
@@ -282,7 +282,7 @@ function App() {
               <ArrowLeft size={18} /> Back to Sanctuaries
             </button>
             <header style={{ marginBottom: '2.5rem' }}>
-              <span style={{ fontSize: '0.9rem', fontWeight: '600', color: '#556158', opacity: 0.6 }}>{selectedGarden.name}</span>
+              <span style={{ fontSize: '0.9rem', fontWeight: '600', color: 'var(--color-primary)', opacity: 0.6 }}>{selectedGarden.name}</span>
               <h1 className="page-title" style={{ marginTop: '0.25rem' }}>Botanical Residents</h1>
             </header>
 
