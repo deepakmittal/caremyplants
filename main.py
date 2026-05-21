@@ -62,6 +62,10 @@ def hello():
 def ping():
     return {"message": "pong"}
 
+@app.get("/colour")
+def colour():
+    return "green"
+
 @app.api_route("/echo", methods=["GET", "POST", "PUT", "DELETE"])
 async def echo(request: Request):
     """
