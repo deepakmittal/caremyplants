@@ -54,22 +54,18 @@ app.mount("/static", StaticFiles(directory="static_images"), name="static")
 def read_root():
     return {"message": "Welcome to Garden API"}
 
-@app.get("/hello")
+@app.get("/hello", response_class=PlainTextResponse)
 def read_hello():
-    return {"message": "hello"}
+    return "hello"
 
 @app.get("/hello/{name}")
 def read_hello_name(name: str):
     return {"message": f"Hello, {name}"}
 
-@app.get("/ping")
-def ping():
-    return {"message": "pong"}
-
-@app.post("/echo")
-async def echo(payload: dict):
-    """Echo back the received payload."""
-    return payload
+@app.get("/echo")
+def echo(text: str):
+    """Echo back the received text."""
+    return {"echo": text}
 
 # 1. Login Endpoint
 @app.post("/auth/login", response_model=schemas.Token)
