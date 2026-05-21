@@ -1,18 +1,19 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&display=swap');
 
 :root {
-  --color-background: #fbf9f8;
-  --color-on-surface: #1b1c1c;
-  --color-primary: #556158;
-  --color-primary-container: #e8f5e9;
-  --color-secondary: #6b5a60;
-  --color-secondary-container: #f4dce4;
-  --color-tertiary: #3c6842;
-  --color-surface-container: #f0eded;
-  --color-surface-container-high: #eae8e7;
-  --color-outline: #747873;
+  --color-background: #f0fcf8;
+  --color-on-surface: #131e1b;
+  --color-primary: #1a3c34;
+  --color-primary-container: #eaf6f2;
+  --color-secondary: #c2185b;
+  --color-secondary-container: #fe4d86;
+  --color-on-secondary-container: #590025;
+  --color-tertiary: #1e2221;
+  --color-surface-container: #e5f0ec;
+  --color-surface-container-high: #dfebe6;
+  --color-outline: #717976;
 
-  --font-main: 'Plus Jakarta Sans', sans-serif;
+  --font-main: 'Manrope', sans-serif;
 
   --rounded-sm: 0.25rem;
   --rounded-md: 0.75rem;
