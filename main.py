@@ -58,6 +58,10 @@ def read_root():
 def hello():
     return "hello"
 
+@app.get("/hello_new", response_class=PlainTextResponse)
+def hello_new():
+    return "hello new"
+
 @app.get("/ping")
 def ping():
     return {"message": "pong"}
