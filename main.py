@@ -62,9 +62,9 @@ def read_hello():
 def read_hello_name(name: str):
     return {"message": f"Hello, {name}"}
 
-@app.get("/echo")
-def read_echo():
-    return {"message": "echo"}
+@app.get("/hello/world")
+def read_hello_world():
+    return {"message": "Hello, World!"}
 
 @app.post("/echo")
 async def echo(payload: dict):
