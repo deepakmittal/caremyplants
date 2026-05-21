@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Form, BackgroundTasks
+from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Form, BackgroundTasks, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
@@ -12,7 +12,7 @@ import models, schemas
 import queue
 import threading
 import logging
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, PlainTextResponse
 from services import auth, gcs, gemini, garden_processor
 from utils import image as image_utils
 
@@ -55,12 +55,39 @@ def read_root():
     return {"message": "Welcome to Garden API"}
 
 @app.get("/hello")
-def read_hello():
+def hello():
     return {"message": "hello"}
 
-@app.get("/hello/{name}")
-def read_hello_name(name: str):
-    return {"message": f"Hello, {name}"}
+@app.get("/ping")
+def ping():
+    return {"message": "pong"}
+
+@app.get("/api/ping")
+def api_ping():
+    return {"message": "pong"}
+
+@app.api_route("/echo", methods=["GET", "POST", "PUT", "DELETE"])
+async def echo(request: Request):
+    """
+    Echo back information about the request.
+    """
+    response_data = {
+        "message": "Echo response",
+        "method": request.method,
+        "path": request.url.path,
+        "headers": dict(request.headers),
+        "client": {
+            "host": request.client.host,
+            "port": request.client.port,
+        },
+    }
+    if request.method in ["POST", "PUT"]:
+        try:
+            response_data["json_payload"] = await request.json()
+        except Exception:
+            response_data["body"] = (await request.body()).decode("utf-8")
+
+    return response_data
 
 # 1. Login Endpoint
 @app.post("/auth/login", response_model=schemas.Token)
