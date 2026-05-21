@@ -66,6 +66,10 @@ def ping():
 def colour():
     return "green"
 
+@app.get("/name")
+def get_name():
+    return {"name": "Deepak"}
+
 @app.api_route("/echo", methods=["GET", "POST", "PUT", "DELETE"])
 async def echo(request: Request):
     """
