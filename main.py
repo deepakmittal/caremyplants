@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Form, BackgroundTasks
+from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Form, BackgroundTasks, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
@@ -58,22 +58,32 @@ def read_root():
 def read_hello():
     return "hello"
 
-@app.get("/hello_world")
-def read_hello_world():
-    return {"message": "hello world"}
-
 @app.get("/ping")
 def ping():
     return {"message": "pong"}
 
-@app.get("/echo")
-def read_echo():
-    return {"message": "echo"}
+@app.api_route("/echo", methods=["GET", "POST", "PUT", "DELETE"])
+async def echo(request: Request):
+    """
+    Echo back information about the request.
+    """
+    response_data = {
+        "message": "Echo response",
+        "method": request.method,
+        "path": request.url.path,
+        "headers": dict(request.headers),
+        "client": {
+            "host": request.client.host,
+            "port": request.client.port,
+        },
+    }
+    if request.method in ["POST", "PUT"]:
+        try:
+            response_data["json_payload"] = await request.json()
+        except Exception:
+            response_data["body"] = (await request.body()).decode("utf-8")
 
-@app.post("/echo")
-async def echo(payload: dict):
-    """Echo back the received payload."""
-    return payload
+    return response_data
 
 # 1. Login Endpoint
 @app.post("/auth/login", response_model=schemas.Token)
