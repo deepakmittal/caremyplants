@@ -62,6 +62,10 @@ def read_hello():
 def ping():
     return {"message": "pong"}
 
+@app.get("/echo")
+def read_echo():
+    return {"message": "echo"}
+
 @app.post("/echo")
 async def echo(payload: dict):
     """Echo back the received payload."""
