@@ -114,19 +114,20 @@ def _get_last_garden_recommendation(db: Session, garden_id: int, current_update_
     return last.recommendation if last else None
 
 
-def _get_last_plant_recommendation(db: Session, plant_id: int) -> Optional[str]:
-    """Return the recommendation from the most recent PlantUpdate for this plant."""
+def _get_last_plant_update_details(db: Session, plant_id: int) -> tuple[Optional[str], Optional[str]]:
+    """Return the (recommendation, condition) from the most recent PlantUpdate for this plant."""
     last = (
         db.query(models.PlantUpdate)
         .filter(
             models.PlantUpdate.plant_id == plant_id,
-            models.PlantUpdate.recommendation.isnot(None),
             models.PlantUpdate.status == "Ready",
         )
         .order_by(models.PlantUpdate.created_at.desc())
         .first()
     )
-    return last.recommendation if last else None
+    if last:
+        return last.recommendation, last.condition_text
+    return None, None
 
 
 # ---------------------------------------------------------------------------
@@ -200,7 +201,7 @@ def _process_single_plant(
         _set_plant_update_status(db, db_plant_update.id, "Processing")
 
         # --- Fetch previous recommendation for comparison ---
-        last_recommendation = _get_last_plant_recommendation(db, db_plant.id)
+        last_recommendation, last_condition = _get_last_plant_update_details(db, db_plant.id)
 
         # --- Call Gemini for detailed plant diagnosis ---
         analysis_bytes = cropped_bytes or (image_contents[photo_idx] if photo_idx < len(image_contents) else b"")
@@ -210,6 +211,7 @@ def _process_single_plant(
                 plant_image_bytes=analysis_bytes,
                 plant_name=plant_name,
                 last_plant_recommendation=last_recommendation,
+                last_plant_condition=last_condition,
             )
         else:
             analysis = {}
@@ -235,6 +237,8 @@ def _process_single_plant(
         # --- Update PlantUpdate with full diagnosis ---
         db_plant_update.condition_text = analysis.get("disease", condition) or condition
         db_plant_update.recommendation = recommendation
+        if "changes_from_previous" in analysis:
+            db_plant_update.changes_from_previous = analysis.get("changes_from_previous")
         db.commit()
 
         # --- Update Plant image if better one now available ---
@@ -345,7 +349,11 @@ def process_single_update(db: Session, update: models.GardenUpdate) -> None:
 
         # Identify plants from all photos
         logger.info(f"Identifying plants for garden {garden_id}...")
-        plants_list, suggested_name = gemini.identify_plants_with_gemini(image_contents)
+        
+        existing_plants_db = db.query(models.Plant).filter(models.Plant.garden_id == garden_id).all()
+        existing_plant_names = [p.name for p in existing_plants_db]
+        
+        plants_list, suggested_name = gemini.identify_plants_with_gemini(image_contents, existing_plants=existing_plant_names)
 
         if not plants_list and not suggested_name:
              # If both are empty, it might be an AI failure or just no plants found. 
@@ -407,29 +415,130 @@ def _run_update_in_thread(update_id: int) -> None:
     finally:
         db.close()
 
+def process_single_plant_update(db: Session, update_id: int) -> None:
+    logger.info(f"--- Processing single plant update {update_id} ---")
+    
+    # Transition to Processing
+    _set_plant_update_status(db, update_id, "Processing")
+
+    update = db.query(models.PlantUpdate).filter(models.PlantUpdate.id == update_id).first()
+    if not update or not update.image_url:
+        logger.warning(f"Plant update {update_id} has no image_url. Skipping.")
+        _set_plant_update_status(db, update_id, "Ready")
+        return
+
+    # Download image
+    photo_bytes = _download_photo_bytes(update.image_url)
+    if not photo_bytes:
+        logger.warning(f"Could not download photo for plant update {update_id}.")
+        _set_plant_update_status(db, update_id, "Ready")
+        return
+
+    plant = update.plant
+    if not plant:
+        logger.warning(f"Plant {update.plant_id} not found.")
+        _set_plant_update_status(db, update_id, "Ready")
+        return
+
+    # Call Gemini for detailed diagnosis
+    last_recommendation = _get_last_plant_recommendation(db, plant.id)
+    logger.info(f"Running detailed Gemini analysis for isolated plant update {update_id} ({plant.name})...")
+    
+    try:
+        analysis = gemini.analyze_plant_detail(
+            plant_image_bytes=photo_bytes,
+            plant_name=plant.name,
+            last_plant_recommendation=last_recommendation,
+        )
+
+        is_valid = analysis.get("is_valid_plant")
+        if is_valid is False or str(is_valid).lower() == "false":
+            logger.info(f"False positive image for plant '{plant.name}'.")
+            update.condition_text = "No plant detected in this photo."
+            update.recommendation = "Please upload a clearer picture of the plant."
+        else:
+            recommendation = (
+                f"Soil Quality: {analysis.get('soil_quality', 'N/A')}\n"
+                f"Disease: {analysis.get('disease', 'N/A')}\n"
+                f"Pot Assessment: {analysis.get('pot_assessment', 'N/A')}\n"
+                f"Pruning Needed: {analysis.get('pruning_needed', 'N/A')}\n"
+                f"Growth Comparison: {analysis.get('growth_comparison', 'First assessment')}\n"
+                f"Recommendation: {analysis.get('recommendation', 'N/A')}"
+            )
+            update.condition_text = analysis.get("disease", plant.condition) or plant.condition
+            update.recommendation = recommendation
+            
+            # Update the main Plant's condition and image
+            plant.condition = update.condition_text
+            plant.image_url = update.image_url
+            
+        db.commit()
+    except Exception as e:
+        logger.error(f"Error during Gemini plant analysis: {e}")
+        update.condition_text = "AI analysis failed."
+        db.commit()
+
+    _set_plant_update_status(db, update_id, "Ready")
+    logger.info(f"Plant update {update_id} complete → Ready")
+
+
+def _run_plant_update_in_thread(update_id: int) -> None:
+    """Wrapper to process a single plant update in its own DB session."""
+    db: Session = SessionLocal()
+    try:
+        update = db.query(models.PlantUpdate).filter(models.PlantUpdate.id == update_id).first()
+        if not update:
+            logger.warning(f"Thread: Plant Update {update_id} not found.")
+            return
+
+        if update.status != "Ready to Process":
+            return
+            
+        process_single_plant_update(db, update_id)
+    except Exception as e:
+        logger.error(f"Unhandled error processing plant update {update_id} in thread: {e}")
+        try:
+            _set_plant_update_status(db, update_id, "Failed")
+            db.query(models.PlantUpdate).filter(models.PlantUpdate.id == update_id).update({"status": "Ready to Process"})
+            db.commit()
+        except Exception:
+            pass
+    finally:
+        db.close()
+
 def process_new_gardens(db: Session) -> int:
     """
     Entry point for the cronjob.
-    Finds all garden updates with status='Ready to Process' and processes them.
+    Finds all garden updates and plant updates with status='Ready to Process' and processes them.
     """
+    # 1. Process Garden Updates
     new_updates = (
         db.query(models.GardenUpdate)
         .filter(models.GardenUpdate.status == "Ready to Process")
         .all()
     )
+    garden_update_ids = [update.id for update in new_updates]
+    if garden_update_ids:
+        logger.info(f"Found {len(garden_update_ids)} garden update(s) to process. Starting execution...")
+        for uid in garden_update_ids:
+            try:
+                _run_update_in_thread(uid)
+            except Exception as e:
+                logger.error(f"Execution failed for garden update {uid}: {e}")
 
-    if not new_updates:
-        logger.info("No garden updates with status='Ready to Process' found.")
-        return 0
+    # 2. Process Isolated Plant Updates
+    new_plant_updates = (
+        db.query(models.PlantUpdate)
+        .filter(models.PlantUpdate.status == "Ready to Process")
+        .all()
+    )
+    plant_update_ids = [u.id for u in new_plant_updates]
+    if plant_update_ids:
+        logger.info(f"Found {len(plant_update_ids)} isolated plant update(s) to process. Starting execution...")
+        for uid in plant_update_ids:
+            try:
+                _run_plant_update_in_thread(uid)
+            except Exception as e:
+                logger.error(f"Execution failed for plant update {uid}: {e}")
 
-    update_ids = [update.id for update in new_updates]
-    logger.info(f"Found {len(update_ids)} update(s) to process. Starting execution...")
-    
-    # Process sequentially for now as multi-threading had issues
-    for uid in update_ids:
-        try:
-            _run_update_in_thread(uid)
-        except Exception as e:
-            logger.error(f"Execution failed for update {uid}: {e}")
-
-    return len(update_ids)
+    return len(garden_update_ids) + len(plant_update_ids)

@@ -38,6 +38,7 @@ class PlantUpdateResponse(BaseModel):
     condition_text: Optional[str] = None
     recommendation: Optional[str] = None
     image_url: Optional[str] = None
+    changes_from_previous: Optional[str] = None
     created_at: datetime
 
     class Config:

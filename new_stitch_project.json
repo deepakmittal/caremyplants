@@ -1,0 +1,271 @@
+{
+  "name": "projects/6786289002650290410",
+  "title": "CareMyPlants Garden Manager",
+  "visibility": "PRIVATE",
+  "createTime": "2026-04-26T13:50:36.277129Z",
+  "updateTime": "2026-05-13T06:26:24.278641Z",
+  "projectType": "TEXT_TO_UI_PRO",
+  "thumbnailScreenshot": {
+    "name": "projects/6786289002650290410/files/4f4e23b76df2482ba62fb71a7ab3b3f8",
+    "downloadUrl": "https://lh3.googleusercontent.com/aida/ADBb0uh3UNqwftfNPcmXMARWTgj7luDOBd4LzPTx2Sf2cOe5SVKbtwbDIUUlKtJOgWAQ1lb6ky-B5Bh3uIbE2AR0JyoKmGdqDf4AwlWInYKRtBiSH7RGceAVENcXYltNiC5Ku1II-ec0CUGNP5Ua0VLCkEZ_GQ4hMVbgYQ30WOywnS4lVPwJgkyyXEqii0hwalnfiqciNJpA6yXld2hec-lCMArEDB5r9M4E495PB25Y1qmdjBw14llD_UqH7Sg"
+  },
+  "origin": "STITCH",
+  "deviceType": "MOBILE",
+  "designTheme": {
+    "colorMode": "LIGHT",
+    "font": "PLUS_JAKARTA_SANS",
+    "roundness": "ROUND_EIGHT",
+    "customColor": "#E8F5E9",
+    "headlineFont": "PLUS_JAKARTA_SANS",
+    "bodyFont": "PLUS_JAKARTA_SANS",
+    "labelFont": "PLUS_JAKARTA_SANS",
+    "namedColors": {
+      "on_error": "#ffffff",
+      "secondary_container": "#f4dce4",
+      "tertiary_container": "#ccfecd",
+      "surface_container": "#f0eded",
+      "on_primary_fixed_variant": "#3e4a41",
+      "inverse_primary": "#bdcabe",
+      "on_secondary_fixed_variant": "#524249",
+      "inverse_surface": "#303030",
+      "background": "#fbf9f8",
+      "on_tertiary_fixed": "#002109",
+      "surface_container_highest": "#e4e2e1",
+      "on_tertiary_fixed_variant": "#24502c",
+      "surface_variant": "#e4e2e1",
+      "on_tertiary": "#ffffff",
+      "error_container": "#ffdad6",
+      "on_tertiary_container": "#4b7850",
+      "on_surface": "#1b1c1c",
+      "on_secondary_container": "#716066",
+      "surface_container_lowest": "#ffffff",
+      "surface_tint": "#556158",
+      "surface_dim": "#dcd9d9",
+      "primary_fixed_dim": "#bdcabe",
+      "on_primary_fixed": "#131e17",
+      "on_primary": "#ffffff",
+      "secondary_fixed": "#f4dce4",
+      "surface_bright": "#fbf9f8",
+      "on_background": "#1b1c1c",
+      "surface_container_low": "#f5f3f3",
+      "on_secondary_fixed": "#25181e",
+      "secondary": "#6b5a60",
+      "tertiary_fixed": "#bdefbe",
+      "tertiary_fixed_dim": "#a2d3a4",
+      "primary": "#556158",
+      "primary_fixed": "#d9e6da",
+      "on_secondary": "#ffffff",
+      "on_primary_container": "#647167",
+      "secondary_fixed_dim": "#d7c1c8",
+      "inverse_on_surface": "#f2f0f0",
+      "on_surface_variant": "#434844",
+      "surface": "#fbf9f8",
+      "surface_container_high": "#eae8e7",
+      "primary_container": "#e8f5e9",
+      "outline_variant": "#c3c8c2",
+      "error": "#ba1a1a",
+      "on_error_container": "#93000a",
+      "outline": "#747873",
+      "tertiary": "#3c6842"
+    },
+    "designMd": "---\nname: Botanical Serenity\ncolors:\n  surface: '#fbf9f8'\n  surface-dim: '#dcd9d9'\n  surface-bright: '#fbf9f8'\n  surface-container-lowest: '#ffffff'\n  surface-container-low: '#f5f3f3'\n  surface-container: '#f0eded'\n  surface-container-high: '#eae8e7'\n  surface-container-highest: '#e4e2e1'\n  on-surface: '#1b1c1c'\n  on-surface-variant: '#434844'\n  inverse-surface: '#303030'\n  inverse-on-surface: '#f2f0f0'\n  outline: '#747873'\n  outline-variant: '#c3c8c2'\n  surface-tint: '#556158'\n  primary: '#556158'\n  on-primary: '#ffffff'\n  primary-container: '#e8f5e9'\n  on-primary-container: '#647167'\n  inverse-primary: '#bdcabe'\n  secondary: '#6b5a60'\n  on-secondary: '#ffffff'\n  secondary-container: '#f4dce4'\n  on-secondary-container: '#716066'\n  tertiary: '#3c6842'\n  on-tertiary: '#ffffff'\n  tertiary-container: '#ccfecd'\n  on-tertiary-container: '#4b7850'\n  error: '#ba1a1a'\n  on-error: '#ffffff'\n  error-container: '#ffdad6'\n  on-error-container: '#93000a'\n  primary-fixed: '#d9e6da'\n  primary-fixed-dim: '#bdcabe'\n  on-primary-fixed: '#131e17'\n  on-primary-fixed-variant: '#3e4a41'\n  secondary-fixed: '#f4dce4'\n  secondary-fixed-dim: '#d7c1c8'\n  on-secondary-fixed: '#25181e'\n  on-secondary-fixed-variant: '#524249'\n  tertiary-fixed: '#bdefbe'\n  tertiary-fixed-dim: '#a2d3a4'\n  on-tertiary-fixed: '#002109'\n  on-tertiary-fixed-variant: '#24502c'\n  background: '#fbf9f8'\n  on-background: '#1b1c1c'\n  surface-variant: '#e4e2e1'\ntypography:\n  display-lg:\n    fontFamily: Plus Jakarta Sans\n    fontSize: 40px\n    fontWeight: '700'\n    lineHeight: 48px\n    letterSpacing: -0.02em\n  headline-md:\n    fontFamily: Plus Jakarta Sans\n    fontSize: 24px\n    fontWeight: '600'\n    lineHeight: 32px\n    letterSpacing: -0.01em\n  body-lg:\n    fontFamily: Plus Jakarta Sans\n    fontSize: 18px\n    fontWeight: '400'\n    lineHeight: 28px\n  body-md:\n    fontFamily: Plus Jakarta Sans\n    fontSize: 16px\n    fontWeight: '400'\n    lineHeight: 24px\n  label-sm:\n    fontFamily: Plus Jakarta Sans\n    fontSize: 13px\n    fontWeight: '600'\n    lineHeight: 18px\n    letterSpacing: 0.05em\nrounded:\n  sm: 0.25rem\n  DEFAULT: 0.5rem\n  md: 0.75rem\n  lg: 1rem\n  xl: 1.5rem\n  full: 9999px\nspacing:\n  base: 8px\n  xs: 4px\n  sm: 12px\n  md: 24px\n  lg: 40px\n  xl: 64px\n  gutter: 16px\n  margin: 24px\n---\n\n## Brand & Style\n\nThis design system is built upon a philosophy of **Organic Minimalism**. It aims to evoke a sense of tranquility, growth, and nurturing, reflecting the emotional state of a gardener tending to their sanctuary. The brand personality is approachable, expert yet gentle, and deeply breathable.\n\nThe visual style utilizes heavy whitespace to reduce cognitive load, allowing the vibrant photography of plants to be the focal point. By mixing a clean, modern aesthetic with soft, rounded geometry, the UI feels systematic yet natural—never clinical. It prioritizes clarity and ease of use for a target audience that ranges from hobbyist urban gardeners to dedicated horticulturalists.\n\n## Colors\n\nThe palette is derived from nature’s softest hues. The **Primary Green (#E8F5E9)** acts as a soothing wash for large surfaces and backgrounds, while the **Secondary Pink (#FCE4EC)** is used sparingly for highlights, floral-related categories, and soft call-to-actions. \n\nTo ensure accessibility, a darker **Tertiary Green (#A5D6A7)** is used for interactive icons and strokes, and a deep **Neutral Grey (#424242)** provides high-contrast legibility for typography. The background remains primarily white to maintain the \"airy\" feel requested, with extremely subtle off-white surfaces to distinguish card layers.\n\n## Typography\n\nThe design system utilizes **Plus Jakarta Sans** across all levels. Its modern, geometric construction is softened by slightly rounded terminals, perfectly mirroring the organic brand personality. \n\nHeadlines use a tighter letter-spacing and heavier weights to feel grounded and confident. Body text is set with generous line-height to ensure readability and maintain the \"airy\" aesthetic. Labels and captions use increased tracking (letter-spacing) and semi-bold weights to remain legible at smaller sizes against soft-colored backgrounds.\n\n## Layout & Spacing\n\nThis design system employs a **Fluid Grid** with a 4px baseline rhythm. The layout philosophy prioritizes \"Safe Zones\"—generous outer margins of 24px on mobile and up to 64px on tablet/desktop to frame the content. \n\nContainers and cards should utilize dynamic padding, typically `md` (24px) to ensure content does not feel cramped. Vertical rhythm is driven by large gaps (`lg` or `xl`) between major sections to emphasize the minimalistic, \"plenty of white space\" requirement.\n\n## Elevation & Depth\n\nTo maintain a clean and airy look, depth is conveyed through **Tonal Layers** and **Ambient Shadows** rather than harsh borders. \n\nMost surfaces sit on the background with a 1px stroke in a slightly darker version of the surface color (e.g., a 10% opacity green stroke). When elevation is required for interactivity, such as a hovering card, use an \"Extra-diffused\" shadow: a very large blur radius (30px+) with low opacity (5-8%) tinted with the primary green hue. This creates a soft glow effect that feels like natural sunlight rather than a digital shadow.\n\n## Shapes\n\nThe shape language is defined by high-radius **Rounded Corners**. The base `roundedness: 2` (0.5rem) is used for small elements like input fields and chips. For the primary \"Garden\" and \"Plant\" cards, `rounded-xl` (1.5rem) is the standard to evoke an organic, pebble-like feel. \n\nInteractive elements like buttons should utilize a full \"Pill\" shape (3rem) to provide a soft, friendly touchpoint that contrasts with the more structured rectangular layout of the app's grid.\n\n## Components\n\n**Cards (Gardens & Plants):** \nFeatured cards use `rounded-xl` corners and a vertical stack: a high-quality image at the top with a 3:4 aspect ratio, followed by title and status chips. The background should be a subtle tint of Primary Green or pure White.\n\n**Elegant Carousels:** \nCarousels must feature \"partial-peek\" functionality, where the edge of the next card is visible to suggest horizontal movement. Use a soft progress bar at the bottom rather than traditional dots to maintain a modern, minimal look.\n\n**Simple Upload Buttons:** \nThe upload action is represented by a large, circular pill-shaped button. Use a dashed `2px` stroke in Primary Green with a centered \"plus\" icon. Avoid heavy text; a simple \"Add Plant\" label below the icon is sufficient.\n\n**Buttons & Chips:** \nButtons use the Secondary Pink for primary actions to provide a warm, distinct contrast against green plant imagery. Chips use low-saturation versions of the primary colors for categorization (e.g., \"Indoor,\" \"Succulent,\" \"Needs Water\").\n\n**Input Fields:** \nClean, borderless-style inputs with a soft-grey bottom stroke that turns into a Primary Green stroke on focus. Placeholders should be light and airy.",
+    "colorVariant": "FIDELITY",
+    "overridePrimaryColor": "#E8F5E9",
+    "overrideSecondaryColor": "#FCE4EC",
+    "overrideTertiaryColor": "#A5D6A7",
+    "overrideNeutralColor": "#424242",
+    "spacingScale": 2,
+    "typography": {
+      "label-sm": {
+        "fontFamily": "Plus Jakarta Sans",
+        "fontSize": "13px",
+        "fontWeight": "600",
+        "lineHeight": "18px",
+        "letterSpacing": "0.05em"
+      },
+      "headline-md": {
+        "fontFamily": "Plus Jakarta Sans",
+        "fontSize": "24px",
+        "fontWeight": "600",
+        "lineHeight": "32px",
+        "letterSpacing": "-0.01em"
+      },
+      "display-lg": {
+        "fontFamily": "Plus Jakarta Sans",
+        "fontSize": "40px",
+        "fontWeight": "700",
+        "lineHeight": "48px",
+        "letterSpacing": "-0.02em"
+      },
+      "body-lg": {
+        "fontFamily": "Plus Jakarta Sans",
+        "fontSize": "18px",
+        "fontWeight": "400",
+        "lineHeight": "28px"
+      },
+      "body-md": {
+        "fontFamily": "Plus Jakarta Sans",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "24px"
+      }
+    },
+    "spacing": {
+      "lg": "40px",
+      "gutter": "16px",
+      "sm": "12px",
+      "xl": "64px",
+      "margin": "24px",
+      "base": "8px",
+      "md": "24px",
+      "xs": "4px"
+    }
+  },
+  "screenInstances": [
+    {
+      "id": "01e59fc1819c47bbaaba2df7a81576b9",
+      "sourceScreen": "projects/6786289002650290410/screens/01e59fc1819c47bbaaba2df7a81576b9",
+      "y": 3765,
+      "width": 390,
+      "height": 1542
+    },
+    {
+      "id": "230592d8a82e445292f1d8a7dacafcce",
+      "sourceScreen": "projects/6786289002650290410/screens/230592d8a82e445292f1d8a7dacafcce",
+      "y": 2045,
+      "width": 390,
+      "height": 1464
+    },
+    {
+      "id": "2358a117bd0c4fd2bad467a26d700b62",
+      "sourceScreen": "projects/6786289002650290410/screens/2358a117bd0c4fd2bad467a26d700b62",
+      "x": 1478,
+      "y": 12355,
+      "width": 390,
+      "height": 1782,
+      "label": "Plant Details (Vibrant)"
+    },
+    {
+      "id": "28f23ccb594e4836a45da988ccca1757",
+      "sourceScreen": "projects/6786289002650290410/screens/28f23ccb594e4836a45da988ccca1757",
+      "x": 1024,
+      "y": 10085,
+      "width": 390,
+      "height": 2014
+    },
+    {
+      "id": "2ecd42b0da1147878907b6a8ef01913f",
+      "sourceScreen": "projects/6786289002650290410/screens/2ecd42b0da1147878907b6a8ef01913f",
+      "x": 1024,
+      "y": 7819,
+      "width": 390,
+      "height": 2010,
+      "label": "Garden Details (Vibrant)"
+    },
+    {
+      "id": "5648d0d1a70d41eb9fdc9af5ce32a53d",
+      "sourceScreen": "projects/6786289002650290410/screens/5648d0d1a70d41eb9fdc9af5ce32a53d",
+      "x": 1478,
+      "y": 7819,
+      "width": 512,
+      "height": 512,
+      "label": "icon"
+    },
+    {
+      "id": "5d3ec461bb604d029d8fbde89d0c3e42",
+      "sourceScreen": "projects/6786289002650290410/screens/5d3ec461bb604d029d8fbde89d0c3e42",
+      "x": 1932,
+      "width": 390,
+      "height": 1440,
+      "label": "My Gardens (Vibrant)"
+    },
+    {
+      "id": "6906c4761721431f9512190a9ae00cdd",
+      "sourceScreen": "projects/6786289002650290410/screens/6906c4761721431f9512190a9ae00cdd",
+      "x": 1509,
+      "width": 390,
+      "height": 1789
+    },
+    {
+      "id": "737ae4a5d21c450391af6dff90e3dcb4",
+      "sourceScreen": "projects/6786289002650290410/screens/737ae4a5d21c450391af6dff90e3dcb4",
+      "x": 454,
+      "y": 3765,
+      "width": 390,
+      "height": 1546
+    },
+    {
+      "id": "assets-2dbe5c8b4d0244d1838040696bb05bac-1777211628519",
+      "x": 1039,
+      "y": 2070,
+      "width": 960,
+      "height": 540,
+      "sourceAsset": "assets/2dbe5c8b4d0244d1838040696bb05bac",
+      "type": "DESIGN_SYSTEM_INSTANCE"
+    },
+    {
+      "id": "assets-c0f07ba208a04f69bfafb76c6c4402fb-1777211454373",
+      "width": 960,
+      "height": 540,
+      "sourceAsset": "assets/c0f07ba208a04f69bfafb76c6c4402fb",
+      "type": "DESIGN_SYSTEM_INSTANCE"
+    },
+    {
+      "id": "bb27894e29f54c439bfd9d4ce012c729",
+      "sourceScreen": "projects/6786289002650290410/screens/bb27894e29f54c439bfd9d4ce012c729",
+      "x": 1024,
+      "width": 390,
+      "height": 1597
+    },
+    {
+      "id": "c343236d921e482d97d452479341ad88",
+      "sourceScreen": "projects/6786289002650290410/screens/c343236d921e482d97d452479341ad88",
+      "x": 2386,
+      "width": 390,
+      "height": 1788,
+      "label": "Garden Details (Vibrant)"
+    },
+    {
+      "id": "c85f9431b6a24143b71f9cdd4e145fd9",
+      "sourceScreen": "projects/6786289002650290410/screens/c85f9431b6a24143b71f9cdd4e145fd9",
+      "x": 2840,
+      "width": 390,
+      "height": 1597,
+      "label": "Upload Plants (Vibrant)"
+    },
+    {
+      "id": "d58ca73a57e64f1cbe69312339cd3213",
+      "sourceScreen": "projects/6786289002650290410/screens/d58ca73a57e64f1cbe69312339cd3213",
+      "x": 454,
+      "y": 2045,
+      "width": 390,
+      "height": 1455
+    },
+    {
+      "id": "d6b4c7244a334322b67829cd50db257b",
+      "sourceScreen": "projects/6786289002650290410/screens/d6b4c7244a334322b67829cd50db257b",
+      "x": 3294,
+      "width": 390,
+      "height": 1433
+    },
+    {
+      "id": "e224f1ee3d7c411ca4cf821022c12e97",
+      "sourceScreen": "projects/6786289002650290410/screens/e224f1ee3d7c411ca4cf821022c12e97",
+      "x": 1024,
+      "y": 12355,
+      "width": 390,
+      "height": 1934
+    },
+    {
+      "id": "f0e2c4f88b084052a5561ce9f07762dd",
+      "sourceScreen": "projects/6786289002650290410/screens/f0e2c4f88b084052a5561ce9f07762dd",
+      "x": 1024,
+      "y": 5567,
+      "width": 390,
+      "height": 1996
+    }
+  ],
+  "metadata": {
+    "userRole": "OWNER"
+  }
+}

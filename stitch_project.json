@@ -1,0 +1,430 @@
+{
+  "name": "projects/9952041865280547364",
+  "title": "Lush Garden Manager",
+  "visibility": "PRIVATE",
+  "createTime": "2026-05-13T06:33:48.734052Z",
+  "updateTime": "2026-05-16T12:06:21.701812Z",
+  "projectType": "TEXT_TO_UI_PRO",
+  "thumbnailScreenshot": {
+    "name": "projects/9952041865280547364/files/26823c4269f049889b2c9dcc294e0823",
+    "downloadUrl": "https://lh3.googleusercontent.com/aida/ADBb0ugalLd9GpEzikronPRWSQe7ipX7eVUg6FeG1OGYSKf9FVhOoWBuq_4lKNar8u8_UTkYVzr3ifM861u2fN_RviGEk6pp4DpzZT1jDzXLfUFanLrxqAmLLrIgr3O27HZum_8ubbXbIDWEGvouG8A9dHvpxl-d1Ba563kNwBmXpLnLeBFUz2tHMuTDz5iKvDUBdIdOsVIxLycxo9vviVH9A8uYroUudVqEVRiWYR4H__JEwXwDn4RIhtC1Kw"
+  },
+  "origin": "STITCH",
+  "deviceType": "MOBILE",
+  "designTheme": {
+    "colorMode": "LIGHT",
+    "font": "MANROPE",
+    "roundness": "ROUND_EIGHT",
+    "customColor": "#1a3c34",
+    "headlineFont": "MANROPE",
+    "bodyFont": "MANROPE",
+    "labelFont": "MANROPE",
+    "namedColors": {
+      "secondary_container": "#fe4d86",
+      "surface_bright": "#f0fcf8",
+      "on_tertiary_fixed_variant": "#434847",
+      "on_error": "#ffffff",
+      "on_secondary_fixed_variant": "#8f003f",
+      "tertiary": "#1e2221",
+      "on_primary_container": "#83a69c",
+      "inverse_on_surface": "#e8f3ef",
+      "on_primary_fixed_variant": "#2b4d44",
+      "on_surface": "#131e1b",
+      "secondary_fixed_dim": "#ffb1c2",
+      "on_tertiary_fixed": "#181c1c",
+      "primary_container": "#1a3c34",
+      "secondary": "#b90c55",
+      "secondary_fixed": "#ffd9df",
+      "on_error_container": "#93000a",
+      "tertiary_container": "#333737",
+      "surface_container_low": "#eaf6f2",
+      "primary_fixed_dim": "#aacec3",
+      "background": "#f0fcf8",
+      "surface_container_highest": "#d9e5e1",
+      "surface_container_lowest": "#ffffff",
+      "on_secondary_fixed": "#3f0018",
+      "surface_tint": "#43655c",
+      "error": "#ba1a1a",
+      "surface_container": "#e5f0ec",
+      "surface_variant": "#d9e5e1",
+      "tertiary_fixed": "#e0e3e2",
+      "surface_dim": "#d1ddd8",
+      "on_tertiary": "#ffffff",
+      "on_surface_variant": "#414846",
+      "surface": "#f0fcf8",
+      "error_container": "#ffdad6",
+      "outline_variant": "#c1c8c4",
+      "inverse_surface": "#283330",
+      "surface_container_high": "#dfebe6",
+      "on_background": "#131e1b",
+      "on_secondary_container": "#590025",
+      "on_primary_fixed": "#00201a",
+      "on_tertiary_container": "#9ca09f",
+      "inverse_primary": "#aacec3",
+      "tertiary_fixed_dim": "#c4c7c6",
+      "on_primary": "#ffffff",
+      "primary_fixed": "#c5eadf",
+      "primary": "#01261f",
+      "on_secondary": "#ffffff",
+      "outline": "#717976"
+    },
+    "designMd": "---\nname: Botanical Tech-Forward\ncolors:\n  surface: '#f0fcf8'\n  surface-dim: '#d1ddd8'\n  surface-bright: '#f0fcf8'\n  surface-container-lowest: '#ffffff'\n  surface-container-low: '#eaf6f2'\n  surface-container: '#e5f0ec'\n  surface-container-high: '#dfebe6'\n  surface-container-highest: '#d9e5e1'\n  on-surface: '#131e1b'\n  on-surface-variant: '#414846'\n  inverse-surface: '#283330'\n  inverse-on-surface: '#e8f3ef'\n  outline: '#717976'\n  outline-variant: '#c1c8c4'\n  surface-tint: '#43655c'\n  primary: '#01261f'\n  on-primary: '#ffffff'\n  primary-container: '#1a3c34'\n  on-primary-container: '#83a69c'\n  inverse-primary: '#aacec3'\n  secondary: '#b90c55'\n  on-secondary: '#ffffff'\n  secondary-container: '#fe4d86'\n  on-secondary-container: '#590025'\n  tertiary: '#1e2221'\n  on-tertiary: '#ffffff'\n  tertiary-container: '#333737'\n  on-tertiary-container: '#9ca09f'\n  error: '#ba1a1a'\n  on-error: '#ffffff'\n  error-container: '#ffdad6'\n  on-error-container: '#93000a'\n  primary-fixed: '#c5eadf'\n  primary-fixed-dim: '#aacec3'\n  on-primary-fixed: '#00201a'\n  on-primary-fixed-variant: '#2b4d44'\n  secondary-fixed: '#ffd9df'\n  secondary-fixed-dim: '#ffb1c2'\n  on-secondary-fixed: '#3f0018'\n  on-secondary-fixed-variant: '#8f003f'\n  tertiary-fixed: '#e0e3e2'\n  tertiary-fixed-dim: '#c4c7c6'\n  on-tertiary-fixed: '#181c1c'\n  on-tertiary-fixed-variant: '#434847'\n  background: '#f0fcf8'\n  on-background: '#131e1b'\n  surface-variant: '#d9e5e1'\ntypography:\n  headline-lg:\n    fontFamily: Manrope\n    fontSize: 32px\n    fontWeight: '700'\n    lineHeight: 40px\n    letterSpacing: -0.02em\n  headline-lg-mobile:\n    fontFamily: Manrope\n    fontSize: 26px\n    fontWeight: '700'\n    lineHeight: 32px\n  headline-md:\n    fontFamily: Manrope\n    fontSize: 24px\n    fontWeight: '600'\n    lineHeight: 32px\n  body-lg:\n    fontFamily: Manrope\n    fontSize: 18px\n    fontWeight: '400'\n    lineHeight: 28px\n  body-md:\n    fontFamily: Manrope\n    fontSize: 16px\n    fontWeight: '400'\n    lineHeight: 24px\n  label-md:\n    fontFamily: Manrope\n    fontSize: 14px\n    fontWeight: '600'\n    lineHeight: 20px\n    letterSpacing: 0.01em\n  label-sm:\n    fontFamily: Manrope\n    fontSize: 12px\n    fontWeight: '500'\n    lineHeight: 16px\n    letterSpacing: 0.04em\nrounded:\n  sm: 0.25rem\n  DEFAULT: 0.5rem\n  md: 0.75rem\n  lg: 1rem\n  xl: 1.5rem\n  full: 9999px\nspacing:\n  base: 8px\n  xs: 4px\n  sm: 12px\n  md: 24px\n  lg: 48px\n  xl: 64px\n  gutter: 20px\n  margin-mobile: 16px\n  margin-desktop: 40px\n---\n\n## Brand & Style\n\nThe brand personality is a sophisticated fusion of organic nurturing and high-precision technology. This design system bridges the gap between the tactile world of soil and the digital world of data-driven care. The goal is to evoke a sense of calm reliability—like a modern greenhouse—where the user feels both empowered by information and connected to nature.\n\nThe visual style is **Modern Corporate** with **Glassmorphic** accents. It utilizes deep, saturated forest tones to ground the experience, while vibrant pink accents provide a \"blooming\" energy that guides the user toward essential actions. The interface should feel \"lush\" through the use of high-quality botanical imagery and subtle depth, while remaining strictly professional through clean typography and a disciplined layout grid.\n\n## Colors\n\nThe palette is anchored by **Deep Forest Green (#1A3C34)**, representing growth, stability, and professional expertise. This color is used for primary navigation, headers, and major action buttons. **Vibrant Dark Pink (#C2185B)** serves as the high-contrast accent, used sparingly for \"vital\" moments: health alerts, watering reminders, and primary calls-to-action that require immediate attention.\n\nTo ensure the interface feels \"modern\" and \"airy\" despite the deep primary colors, we utilize a **Soft Neutral (#F4F7F6)** for large background surfaces. This provides a crisp, clinical backdrop that allows the green and pink to pop. Semantic colors for success (sage green) and warning (terracotta) should be muted to maintain the professional tone.\n\n## Typography\n\nThe choice of **Manrope** provides a balanced, modern, and highly legible sans-serif experience. Its geometric yet slightly softened terminals reflect the intersection of technology and organic growth. \n\nHeadlines use a tighter letter-spacing and heavier weights to command authority. Body text is optimized for readability with generous line heights, essential for long-form care guides and technical plant descriptions. Label styles utilize a slightly increased letter-spacing and medium weights to ensure clarity in data-heavy views like schedule lists and sensor readouts.\n\n## Layout & Spacing\n\nThis design system employs a **12-column fluid grid** for desktop and a **4-column grid** for mobile. The layout philosophy is \"containerized,\" where information is grouped into logical, distinct modules to reduce cognitive load.\n\nSpacing follows an 8px rhythmic scale. We favor generous margins (40px+) on desktop to create a premium, editorial feel. On mobile, we prioritize \"thumb-friendly\" targets, ensuring interactive elements have at least 12px of internal padding. Elements should reflow vertically on mobile, transforming multi-column plant grids into single-column list views or stacked cards.\n\n## Elevation & Depth\n\nHierarchy is established through **Tonal Layers** and **Ambient Shadows**. Instead of harsh black shadows, this design system uses soft, diffused shadows with a slight tint of the primary green (`#1A3C34` at 8-12% opacity). This creates a \"botanical depth,\" making cards appear like leaves floating slightly above a surface.\n\nTo lean into the \"tech-forward\" vibe, we use **Glassmorphism** for floating elements such as navigation bars and hover states. These elements should feature a backdrop blur of 10px-16px and a very thin (1px) semi-transparent border to define their edges without adding visual weight.\n\n## Shapes\n\nThe shape language is consistently **Rounded**, using a 0.5rem (8px) base radius. This level of roundedness avoids the playfulness of pill shapes while moving away from the clinical coldness of sharp corners.\n\nLarger containers like plant profile cards or dashboard modules should use `rounded-xl` (24px) to emphasize the \"nurturing\" aspect of the brand. Icons should feature rounded caps and corners to match the UI components, ensuring a cohesive visual thread throughout the app.\n\n## Components\n\n### Buttons\nPrimary buttons are solid Forest Green with white text, using `rounded-lg` corners. Secondary buttons (for non-essential tasks) utilize the Vibrant Pink as a text color with a thin pink border. Floating action buttons (FABs) for adding new plants should always be the Vibrant Pink to remain highly discoverable.\n\n### Input Fields\nFields use a \"soft-inset\" style—a light neutral background with a subtle inner shadow. On focus, the border transitions to Forest Green. Error states must use a high-visibility version of the theme's pink to ensure accessibility.\n\n### Cards\nCards are the primary vehicle for plant profiles. They should feature a top-aligned image area with a 2:1 aspect ratio. The content area below should use structured typography labels to display \"Health Status,\" \"Last Watered,\" and \"Sunlight Needs\" with clear, identifiable icons.\n\n### Status Chips\nUse chips to categorize plants (e.g., \"Succulent,\" \"Fern,\" \"Indoor\"). These should have a low-opacity Forest Green background with dark green text. If a plant needs urgent care, the chip should transition to a solid Pink background to signal high priority.\n\n### Progress Bars\nUsed for soil moisture and growth cycles. These should feature a dual-tone green gradient (from forest green to a lighter sage) to symbolize vitality and life.",
+    "colorVariant": "FIDELITY",
+    "overridePrimaryColor": "#1a3c34",
+    "overrideSecondaryColor": "#c2185b",
+    "overrideTertiaryColor": "#f4f7f6",
+    "overrideNeutralColor": "#4a5552",
+    "spacingScale": 2,
+    "typography": {
+      "body-lg": {
+        "fontFamily": "Manrope",
+        "fontSize": "18px",
+        "fontWeight": "400",
+        "lineHeight": "28px"
+      },
+      "label-sm": {
+        "fontFamily": "Manrope",
+        "fontSize": "12px",
+        "fontWeight": "500",
+        "lineHeight": "16px",
+        "letterSpacing": "0.04em"
+      },
+      "headline-lg-mobile": {
+        "fontFamily": "Manrope",
+        "fontSize": "26px",
+        "fontWeight": "700",
+        "lineHeight": "32px"
+      },
+      "label-md": {
+        "fontFamily": "Manrope",
+        "fontSize": "14px",
+        "fontWeight": "600",
+        "lineHeight": "20px",
+        "letterSpacing": "0.01em"
+      },
+      "headline-md": {
+        "fontFamily": "Manrope",
+        "fontSize": "24px",
+        "fontWeight": "600",
+        "lineHeight": "32px"
+      },
+      "headline-lg": {
+        "fontFamily": "Manrope",
+        "fontSize": "32px",
+        "fontWeight": "700",
+        "lineHeight": "40px",
+        "letterSpacing": "-0.02em"
+      },
+      "body-md": {
+        "fontFamily": "Manrope",
+        "fontSize": "16px",
+        "fontWeight": "400",
+        "lineHeight": "24px"
+      }
+    },
+    "spacing": {
+      "margin-desktop": "40px",
+      "md": "24px",
+      "xl": "64px",
+      "gutter": "20px",
+      "margin-mobile": "16px",
+      "base": "8px",
+      "sm": "12px",
+      "lg": "48px",
+      "xs": "4px"
+    },
+    "headlineFontFamily": "Manrope",
+    "bodyFontFamily": "Manrope",
+    "labelFontFamily": "Manrope"
+  },
+  "screenInstances": [
+    {
+      "id": "000eb24e36a54c9c88c3890ceeb2dc3c",
+      "sourceScreen": "projects/9952041865280547364/screens/000eb24e36a54c9c88c3890ceeb2dc3c",
+      "x": 1024,
+      "width": 390,
+      "height": 1619,
+      "hidden": true
+    },
+    {
+      "id": "012f015d5c8c4ceab69f21a992b97741",
+      "sourceScreen": "projects/9952041865280547364/screens/012f015d5c8c4ceab69f21a992b97741",
+      "x": 1600,
+      "y": 10652,
+      "width": 512,
+      "height": 512
+    },
+    {
+      "id": "146f33253f17453bb9233a462f5fef64",
+      "sourceScreen": "projects/9952041865280547364/screens/146f33253f17453bb9233a462f5fef64",
+      "x": 1501,
+      "y": -1007,
+      "width": 390,
+      "height": 966
+    },
+    {
+      "id": "1b284d1b60b344efbda788617368f9c3",
+      "sourceScreen": "projects/9952041865280547364/screens/1b284d1b60b344efbda788617368f9c3",
+      "x": 1501,
+      "y": -1007,
+      "width": 390,
+      "height": 884,
+      "label": "My Gardens - Bold Pink",
+      "hidden": true
+    },
+    {
+      "id": "36bc8121355e48d29f0785d1a69fce03",
+      "sourceScreen": "projects/9952041865280547364/screens/36bc8121355e48d29f0785d1a69fce03",
+      "x": 2752,
+      "y": 8025,
+      "width": 512,
+      "height": 512
+    },
+    {
+      "id": "37f781c6df0a47acba68ca78a7ab8b8f",
+      "sourceScreen": "projects/9952041865280547364/screens/37f781c6df0a47acba68ca78a7ab8b8f",
+      "x": 3294,
+      "width": 390,
+      "height": 884,
+      "hidden": true
+    },
+    {
+      "id": "38927a7c8ad04f449ba2e638e767d3ab",
+      "sourceScreen": "projects/9952041865280547364/screens/38927a7c8ad04f449ba2e638e767d3ab",
+      "x": 1188,
+      "y": 6166,
+      "width": 390,
+      "height": 975
+    },
+    {
+      "id": "3c40aaa388bd489293e4ad0d0112f9eb",
+      "sourceScreen": "projects/9952041865280547364/screens/3c40aaa388bd489293e4ad0d0112f9eb",
+      "x": 1478,
+      "y": 2448,
+      "width": 390,
+      "height": 1603
+    },
+    {
+      "id": "3c7695e255a040328b5eb1730b2aa902",
+      "sourceScreen": "projects/9952041865280547364/screens/3c7695e255a040328b5eb1730b2aa902",
+      "x": 1024,
+      "y": 4307,
+      "width": 100,
+      "height": 100
+    },
+    {
+      "id": "49413e06faad4f15b6c175b3c09bce17",
+      "sourceScreen": "projects/9952041865280547364/screens/49413e06faad4f15b6c175b3c09bce17",
+      "x": 1932,
+      "width": 390,
+      "height": 1800,
+      "hidden": true
+    },
+    {
+      "id": "588ce9d1f5854cb3baef659d60fccca2",
+      "sourceScreen": "projects/9952041865280547364/screens/588ce9d1f5854cb3baef659d60fccca2",
+      "x": 1024,
+      "y": 2448,
+      "width": 390,
+      "height": 966
+    },
+    {
+      "id": "594a1166621640fd868528059351a4b8",
+      "sourceScreen": "projects/9952041865280547364/screens/594a1166621640fd868528059351a4b8",
+      "x": 1188,
+      "y": 4307,
+      "width": 390,
+      "height": 975
+    },
+    {
+      "id": "6381d8c81f204ed5a111e0e9d92c2de7",
+      "sourceScreen": "projects/9952041865280547364/screens/6381d8c81f204ed5a111e0e9d92c2de7",
+      "x": 2054,
+      "y": 8793,
+      "width": 390,
+      "height": 1603
+    },
+    {
+      "id": "66cfbc711b1942bdb7c71371661cd548",
+      "sourceScreen": "projects/9952041865280547364/screens/66cfbc711b1942bdb7c71371661cd548",
+      "x": 1932,
+      "width": 390,
+      "height": 1544,
+      "hidden": true
+    },
+    {
+      "id": "6df848f2738a4cd4a6d675d0b456a3f5",
+      "sourceScreen": "projects/9952041865280547364/screens/6df848f2738a4cd4a6d675d0b456a3f5",
+      "x": 1955,
+      "y": -1007,
+      "width": 390,
+      "height": 884
+    },
+    {
+      "id": "739c14ad976d49eb8e405d6d5732447e",
+      "sourceScreen": "projects/9952041865280547364/screens/739c14ad976d49eb8e405d6d5732447e",
+      "x": 1024,
+      "width": 390,
+      "height": 884,
+      "hidden": true
+    },
+    {
+      "id": "76fbb42de3b7452fba0558d764e78cb7",
+      "sourceScreen": "projects/9952041865280547364/screens/76fbb42de3b7452fba0558d764e78cb7",
+      "x": 2386,
+      "width": 390,
+      "height": 1103,
+      "hidden": true
+    },
+    {
+      "id": "8e7b2dde1aef4a21b24225d7c0111742",
+      "sourceScreen": "projects/9952041865280547364/screens/8e7b2dde1aef4a21b24225d7c0111742",
+      "x": 1024,
+      "y": 8025,
+      "width": 100,
+      "height": 100
+    },
+    {
+      "id": "8eeb3ebcdff24e63968882e0806ee40d",
+      "sourceScreen": "projects/9952041865280547364/screens/8eeb3ebcdff24e63968882e0806ee40d",
+      "x": 1600,
+      "y": 8025,
+      "width": 100,
+      "height": 100
+    },
+    {
+      "id": "a7cce4061dad4de5938cbaca7142daee",
+      "sourceScreen": "projects/9952041865280547364/screens/a7cce4061dad4de5938cbaca7142daee",
+      "x": 1642,
+      "y": 6166,
+      "width": 390,
+      "height": 1603
+    },
+    {
+      "id": "af75a1dfd0d140e0ac704a04f0cac124",
+      "sourceScreen": "projects/9952041865280547364/screens/af75a1dfd0d140e0ac704a04f0cac124",
+      "x": 1024,
+      "y": 8793,
+      "width": 512,
+      "height": 512
+    },
+    {
+      "id": "assets-0d22d0d42fe84893bc91c87913182696-1778655603365",
+      "y": 1822,
+      "width": 960,
+      "height": 540,
+      "hidden": true,
+      "sourceAsset": "assets/0d22d0d42fe84893bc91c87913182696",
+      "type": "DESIGN_SYSTEM_INSTANCE"
+    },
+    {
+      "id": "assets-454fd12dce364f198010091085a4ba1f-1778667121869",
+      "x": 23,
+      "y": -1007,
+      "width": 960,
+      "height": 540,
+      "sourceAsset": "assets/454fd12dce364f198010091085a4ba1f",
+      "type": "DESIGN_SYSTEM_INSTANCE"
+    },
+    {
+      "id": "assets-e72500d5b7af487db6a9a07018e031a2-1778654050365",
+      "width": 960,
+      "height": 540,
+      "hidden": true,
+      "sourceAsset": "assets/e72500d5b7af487db6a9a07018e031a2",
+      "type": "DESIGN_SYSTEM_INSTANCE"
+    },
+    {
+      "id": "b555da14478a4787b16e1374db678c12",
+      "sourceScreen": "projects/9952041865280547364/screens/b555da14478a4787b16e1374db678c12",
+      "x": 1642,
+      "y": 4307,
+      "width": 390,
+      "height": 1603
+    },
+    {
+      "id": "b5bf2eccbef8449ca515560b5d24c045",
+      "sourceScreen": "projects/9952041865280547364/screens/b5bf2eccbef8449ca515560b5d24c045",
+      "x": 2840,
+      "width": 390,
+      "height": 884,
+      "hidden": true
+    },
+    {
+      "id": "b983f154465548efa982f196d9ec04de",
+      "sourceScreen": "projects/9952041865280547364/screens/b983f154465548efa982f196d9ec04de",
+      "x": 1024,
+      "y": 11420,
+      "width": 512,
+      "height": 512
+    },
+    {
+      "id": "c8ba33b43089415ab5aa32be8b993cfa",
+      "sourceScreen": "projects/9952041865280547364/screens/c8ba33b43089415ab5aa32be8b993cfa",
+      "x": 1024,
+      "y": 6166,
+      "width": 100,
+      "height": 100
+    },
+    {
+      "id": "cc724c2ad2784536a3d1486e6e4ad755",
+      "sourceScreen": "projects/9952041865280547364/screens/cc724c2ad2784536a3d1486e6e4ad755",
+      "x": 1478,
+      "width": 390,
+      "height": 2192,
+      "hidden": true
+    },
+    {
+      "id": "d08f0554628e4d37a2379444ec92d273",
+      "sourceScreen": "projects/9952041865280547364/screens/d08f0554628e4d37a2379444ec92d273",
+      "x": 2176,
+      "y": 10652,
+      "width": 512,
+      "height": 512
+    },
+    {
+      "id": "d55b33da51ce47fa831a4311f3123357",
+      "sourceScreen": "projects/9952041865280547364/screens/d55b33da51ce47fa831a4311f3123357",
+      "x": 1600,
+      "y": 8793,
+      "width": 390,
+      "height": 967
+    },
+    {
+      "id": "dd5ed9229b594deeaab9f782c7f066a0",
+      "sourceScreen": "projects/9952041865280547364/screens/dd5ed9229b594deeaab9f782c7f066a0",
+      "x": 1024,
+      "y": 10652,
+      "width": 512,
+      "height": 512
+    },
+    {
+      "id": "dfa9349d6bdf473ea9cedcd9456edb56",
+      "sourceScreen": "projects/9952041865280547364/screens/dfa9349d6bdf473ea9cedcd9456edb56",
+      "x": 1047,
+      "y": -1007,
+      "width": 390,
+      "height": 884,
+      "label": "Garden Details - Bold Pink"
+    },
+    {
+      "id": "f8bb6f33ecc8430a867933c0bcb6acae",
+      "sourceScreen": "projects/9952041865280547364/screens/f8bb6f33ecc8430a867933c0bcb6acae",
+      "x": 2176,
+      "y": 8025,
+      "width": 100,
+      "height": 100
+    },
+    {
+      "id": "fcc582e7bf4a4c90aee6e0a23f5087c6",
+      "sourceScreen": "projects/9952041865280547364/screens/fcc582e7bf4a4c90aee6e0a23f5087c6",
+      "x": 1478,
+      "width": 390,
+      "height": 1566,
+      "hidden": true
+    }
+  ],
+  "metadata": {
+    "userRole": "OWNER"
+  }
+}

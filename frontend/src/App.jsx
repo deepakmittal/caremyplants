@@ -106,7 +106,7 @@ const App = () => {
   // --- Sub-Components (Pages) ---
 
   const LoginPage = () => (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-slate-900 to-slate-800">
+    <div className="min-h-screen flex items-center justify-center p-6">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -204,7 +204,7 @@ const App = () => {
               </h3>
               <button onClick={() => setShowLogs(false)} className="text-xs text-text-muted hover:text-white">Close</button>
             </div>
-            <div className="bg-black/40 rounded-xl p-4 font-mono text-xs space-y-1 max-h-40 overflow-y-auto">
+            <div className="bg-white/80 rounded-xl p-4 font-mono text-xs space-y-1 max-h-40 overflow-y-auto border border-glass-border">
               {logs.length === 0 && <p className="text-text-muted">Connecting to AI core...</p>}
               {logs.map((log, i) => (
                 <div key={i} className="text-emerald-400/80 border-l-2 border-emerald-500/30 pl-3 py-1">
@@ -234,7 +234,7 @@ const App = () => {
             <button
               onClick={() => handleOpenGarden(garden)}
               disabled={garden.status !== 'Ready'}
-              className="w-full py-4 rounded-2xl bg-white/10 hover:bg-white/20 text-white font-bold flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full py-4 rounded-2xl bg-primary/10 hover:bg-primary/20 text-primary font-bold flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               View Plants
               <ChevronRight size={20} />
@@ -287,18 +287,18 @@ const App = () => {
                   className="w-full h-full object-cover transition-transform duration-700 hover:scale-110"
                   alt={plant.name}
                 />
-                <div className="absolute top-4 right-4 capitalize bg-slate-900/80 backdrop-blur-md px-3 py-1 rounded-lg text-xs font-bold">
+                <div className="absolute top-4 right-4 capitalize bg-white/80 backdrop-blur-md px-3 py-1 rounded-lg text-xs font-bold text-primary">
                   {plant.plant_variety || 'Unknown Species'}
                 </div>
               </div>
               <div className="p-8 flex-grow">
                 <h3 className="text-2xl font-bold mb-4">{plant.name}</h3>
                 <div className="space-y-4">
-                  <div className="bg-white/5 p-4 rounded-xl">
+                  <div className="bg-primary/5 p-4 rounded-xl">
                     <p className="text-sm font-bold text-primary uppercase mb-1">Recommendation</p>
                     <p className="text-sm leading-relaxed">{plant.latest_recommendation || "Maintain current watering schedule."}</p>
                   </div>
-                  <div className="bg-white/5 p-4 rounded-xl">
+                  <div className="bg-primary/5 p-4 rounded-xl">
                     <p className="text-sm font-bold text-secondary uppercase mb-1">Current Condition</p>
                     <p className="text-sm italic text-text-muted">{plant.latest_condition || "Analyzing..."}</p>
                   </div>
@@ -348,7 +348,7 @@ const App = () => {
                 placeholder="Give your garden a name (e.g. Sunny Balcony)"
                 required
               />
-              <label className="border-2 border-dashed border-glass-border rounded-3xl p-12 flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-all hover:bg-white/5">
+              <label className="border-2 border-dashed border-glass-border rounded-3xl p-12 flex flex-col items-center justify-center cursor-pointer hover:border-primary transition-all hover:bg-primary/5">
                 <ImageIcon size={48} className="text-text-muted mb-4" />
                 <div className="text-center">
                   <p className="text-lg font-bold mb-1">
