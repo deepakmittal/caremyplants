@@ -54,17 +54,13 @@ app.mount("/static", StaticFiles(directory="static_images"), name="static")
 def read_root():
     return {"message": "Welcome to Garden API"}
 
-@app.get("/hello", response_class=PlainTextResponse)
+@app.get("/hello")
 def read_hello():
-    return "hello"
+    return {"message": "hello"}
 
 @app.get("/ping")
 def ping():
     return {"message": "pong"}
-
-@app.get("/echo")
-def read_echo():
-    return {"message": "echo"}
 
 @app.post("/echo")
 async def echo(payload: dict):
