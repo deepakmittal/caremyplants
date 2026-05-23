@@ -48,6 +48,11 @@ if not os.path.exists("static_images"):
     os.makedirs("static_images")
 app.mount("/static", StaticFiles(directory="static_images"), name="static")
 
+@app.get("/time")
+def get_current_time():
+    """Returns the current server time."""
+    return {"currentTime": datetime.datetime.now().isoformat()}
+
 @app.get("/")
 def read_root():
     return {"message": "Welcome to Garden API"}
@@ -501,4 +506,3 @@ async def trigger_garden_processing(stream: bool = True, db: Session = Depends(g
             yield f"data: Error in stream: {str(e)}\n\n"
 
     return StreamingResponse(log_generator(), media_type="text/event-stream")
-
