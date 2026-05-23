@@ -6,6 +6,7 @@ from typing import List, Optional
 import os
 import uuid
 import datetime
+from zoneinfo import ZoneInfo
 
 from database import engine, Base, get_db
 import models, schemas
@@ -51,6 +52,15 @@ app.mount("/static", StaticFiles(directory="static_images"), name="static")
 @app.get("/")
 def read_root():
     return {"message": "Welcome to Garden API"}
+
+@app.get("/api/v1/time")
+def get_time():
+    """
+    Returns the current time in Delhi, India and San Francisco, USA.
+    """
+    delhi_time = datetime.datetime.now(ZoneInfo("Asia/Kolkata")).isoformat()
+    sf_time = datetime.datetime.now(ZoneInfo("America/Los_Angeles")).isoformat()
+    return {"delhi_time": delhi_time, "san_francisco_time": sf_time}
 
 # 1. Login Endpoint
 @app.post("/auth/login", response_model=schemas.Token)
@@ -501,4 +511,3 @@ async def trigger_garden_processing(stream: bool = True, db: Session = Depends(g
             yield f"data: Error in stream: {str(e)}\n\n"
 
     return StreamingResponse(log_generator(), media_type="text/event-stream")
-
