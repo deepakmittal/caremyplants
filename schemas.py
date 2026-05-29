@@ -88,6 +88,11 @@ class GardenWithPhotosResponse(BaseModel):
     class Config:
         from_attributes = True
 
+class Tile(BaseModel):
+    title: str
+    value: str
+    icon: Optional[str] = None
+
 class GardenDetailsResponse(BaseModel):
     id: int
     name: str
@@ -99,6 +104,7 @@ class GardenDetailsResponse(BaseModel):
     growth_trend: Optional[str] = None
     created_at: datetime
     plants: List[PlantLatestUpdateResponse]
+    tiles: List[Tile] = []
 
     class Config:
         from_attributes = True
