@@ -72,6 +72,8 @@ class GardenUpdate(Base):
     vibrancy = Column(String(255))
     temperature = Column(String(255))
     humidity = Column(String(255))
+    beauty_score = Column(Integer)
+    color_score = Column(Integer)
     created_at = Column(TIMESTAMP, default=datetime.datetime.utcnow)
 
     garden = relationship("Garden", back_populates="updates")

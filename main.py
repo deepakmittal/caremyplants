@@ -271,6 +271,13 @@ def get_garden_details(garden_id: int, db: Session = Depends(get_db)):
         models.GardenUpdate.recommendation.is_not(None)
     ).order_by(models.GardenUpdate.created_at.desc()).first()
 
+    tiles = []
+    if latest_update:
+        if latest_update.beauty_score and latest_update.beauty_score > 7:
+            tiles.append(schemas.Tile(title="Beauty", value="Beautiful", icon="sparkles"))
+        if latest_update.color_score and latest_update.color_score > 7:
+            tiles.append(schemas.Tile(title="Color", value="Colorful", icon="palette"))
+
     return {
         "id": garden.id,
         "name": garden.name,
@@ -281,7 +288,8 @@ def get_garden_details(garden_id: int, db: Session = Depends(get_db)):
         "disease_overview": latest_update.disease_overview if latest_update else None,
         "growth_trend": latest_update.growth_trend if latest_update else None,
         "created_at": garden.created_at,
-        "plants": plant_responses
+        "plants": plant_responses,
+        "tiles": tiles,
     }
 
 # New: Get all gardens for a specific user
@@ -501,4 +509,3 @@ async def trigger_garden_processing(stream: bool = True, db: Session = Depends(g
             yield f"data: Error in stream: {str(e)}\n\n"
 
     return StreamingResponse(log_generator(), media_type="text/event-stream")
-
