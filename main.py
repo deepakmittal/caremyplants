@@ -408,6 +408,22 @@ def get_garden_environment(garden_id: int, db: Session = Depends(get_db)):
         "humidity": latest_update.humidity or "60%"
     }
 
+@app.get("/gardens/{garden_id}/plant_status_tickers")
+def get_plant_status_tickers(garden_id: int, db: Session = Depends(get_db)):
+    """Return a list of plant status tickers for a garden."""
+    garden = db.query(models.Garden).filter(models.Garden.id == garden_id).first()
+    if not garden:
+        raise HTTPException(status_code=404, detail="Garden not found")
+    
+    # In a real implementation, this data would be generated based on the garden's plants
+    # and their conditions. For now, we'll return a hardcoded list.
+    tickers = [
+        {"status": "warning", "message": "Tomato plant showing signs of blight."},
+        {"status": "success", "message": "Cucumbers are thriving."},
+        {"status": "info", "message": "Basil is ready for harvest."},
+    ]
+    return tickers
+
 @app.delete("/gardens/{garden_id}")
 def delete_garden(garden_id: int, db: Session = Depends(get_db)):
     """Delete a garden and all associated plants, photos, and updates."""
@@ -501,4 +517,3 @@ async def trigger_garden_processing(stream: bool = True, db: Session = Depends(g
             yield f"data: Error in stream: {str(e)}\n\n"
 
     return StreamingResponse(log_generator(), media_type="text/event-stream")
-

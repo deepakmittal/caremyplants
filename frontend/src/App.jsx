@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Camera, Plus, Leaf, LogOut, ChevronRight, Loader2, Image as ImageIcon, ChevronLeft, Sparkles, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { loginWithGoogle, uploadGardenPhotos, getUserGardens, getGardenDetails } from './services/api';
+import { loginWithGoogle, uploadGardenPhotos, getUserGardens, getGardenDetails, getPlantStatusTickers } from './services/api';
 import Carousel from './components/Carousel';
 import GoogleLoginButton from './components/GoogleLoginButton';
 
@@ -15,6 +15,7 @@ const App = () => {
   const [gardens, setGardens] = useState([]);
   const [selectedGarden, setSelectedGarden] = useState(null);
   const [gardenDetails, setGardenDetails] = useState(null);
+  const [plantStatusTickers, setPlantStatusTickers] = useState([]);
 
   // Form and Upload State
   const [newGardenName, setNewGardenName] = useState('');
@@ -78,6 +79,8 @@ const App = () => {
     try {
       const details = await getGardenDetails(garden.id);
       setGardenDetails(details);
+      const tickers = await getPlantStatusTickers(garden.id);
+      setPlantStatusTickers(tickers);
       setCurrentPage('plants');
     } catch (err) {
       alert("Failed to load garden details.");
@@ -245,6 +248,42 @@ const App = () => {
     </div>
   );
 
+  const PlantStatusTickers = ({ tickers }) => {
+    if (!tickers || tickers.length === 0) {
+      return null;
+    }
+
+    const getStatusColor = (status) => {
+      switch (status) {
+        case 'warning':
+          return 'bg-yellow-500';
+        case 'success':
+          return 'bg-green-500';
+        case 'info':
+          return 'bg-blue-500';
+        default:
+          return 'bg-gray-500';
+      }
+    };
+
+    return (
+      <div className="my-8">
+        <h2 className="text-2xl font-bold mb-4">Plant Status Tickers</h2>
+        <div className="flex overflow-x-auto space-x-4">
+          {tickers.map((ticker, index) => (
+            <div key={index} className="flex-shrink-0 w-80 bg-white/5 p-4 rounded-xl">
+              <div className="flex items-center mb-2">
+                <div className={`w-3 h-3 rounded-full ${getStatusColor(ticker.status)} mr-2`}></div>
+                <span className="text-sm font-bold uppercase">{ticker.status}</span>
+              </div>
+              <p className="text-sm">{ticker.message}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
   const PlantsPage = () => (
     <div className="min-h-screen p-6 md:p-12 max-w-7xl mx-auto">
       <header className="mb-12">
@@ -278,35 +317,38 @@ const App = () => {
           <p className="text-text-muted animate-pulse">Fetching plant intelligence...</p>
         </div>
       ) : (
-        <Carousel>
-          {gardenDetails?.plants.map((plant) => (
-            <div key={plant.id} className="glass-card overflow-hidden h-full flex flex-col">
-              <div className="relative h-64 overflow-hidden">
-                <img
-                  src={plant.image_url.startsWith('http') ? plant.image_url : `/static/${plant.image_url.split('/').pop()}`}
-                  className="w-full h-full object-cover transition-transform duration-700 hover:scale-110"
-                  alt={plant.name}
-                />
-                <div className="absolute top-4 right-4 capitalize bg-slate-900/80 backdrop-blur-md px-3 py-1 rounded-lg text-xs font-bold">
-                  {plant.plant_variety || 'Unknown Species'}
-                </div>
-              </div>
-              <div className="p-8 flex-grow">
-                <h3 className="text-2xl font-bold mb-4">{plant.name}</h3>
-                <div className="space-y-4">
-                  <div className="bg-white/5 p-4 rounded-xl">
-                    <p className="text-sm font-bold text-primary uppercase mb-1">Recommendation</p>
-                    <p className="text-sm leading-relaxed">{plant.latest_recommendation || "Maintain current watering schedule."}</p>
-                  </div>
-                  <div className="bg-white/5 p-4 rounded-xl">
-                    <p className="text-sm font-bold text-secondary uppercase mb-1">Current Condition</p>
-                    <p className="text-sm italic text-text-muted">{plant.latest_condition || "Analyzing..."}</p>
+        <>
+          <PlantStatusTickers tickers={plantStatusTickers} />
+          <Carousel>
+            {gardenDetails?.plants.map((plant) => (
+              <div key={plant.id} className="glass-card overflow-hidden h-full flex flex-col">
+                <div className="relative h-64 overflow-hidden">
+                  <img
+                    src={plant.image_url.startsWith('http') ? plant.image_url : `/static/${plant.image_url.split('/').pop()}`}
+                    className="w-full h-full object-cover transition-transform duration-700 hover:scale-110"
+                    alt={plant.name}
+                  />
+                  <div className="absolute top-4 right-4 capitalize bg-slate-900/80 backdrop-blur-md px-3 py-1 rounded-lg text-xs font-bold">
+                    {plant.plant_variety || 'Unknown Species'}
                   </div>
                 </div>
+                <div className="p-8 flex-grow">
+                  <h3 className="text-2xl font-bold mb-4">{plant.name}</h3>
+                  <div className="space-y-4">
+                    <div className="bg-white/5 p-4 rounded-xl">
+                      <p className="text-sm font-bold text-primary uppercase mb-1">Recommendation</p>
+                      <p className="text-sm leading-relaxed">{plant.latest_recommendation || "Maintain current watering schedule."}</p>
+                    </div>
+                    <div className="bg-white/5 p-4 rounded-xl">
+                      <p className="text-sm font-bold text-secondary uppercase mb-1">Current Condition</p>
+                      <p className="text-sm italic text-text-muted">{plant.latest_condition || "Analyzing..."}</p>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
-          ))}
-        </Carousel>
+            ))}
+          </Carousel>
+        </>
       )}
     </div>
   );

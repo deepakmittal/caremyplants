@@ -47,4 +47,9 @@ export const getUserGardens = async (userId) => {
     return response.data;
 };
 
+export const getPlantStatusTickers = async (gardenId) => {
+    const response = await api.get(`/gardens/${gardenId}/plant_status_tickers`);
+    return response.data;
+};
+
 export default api;
