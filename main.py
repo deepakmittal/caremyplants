@@ -248,40 +248,50 @@ def get_garden_details(garden_id: int, db: Session = Depends(get_db)):
     plant_responses = []
     for plant in garden.plants:
         # Get latest update for this specific plant
-        latest_update = db.query(models.PlantUpdate).filter(
+        latest_plant_update = db.query(models.PlantUpdate).filter(
             models.PlantUpdate.plant_id == plant.id
         ).order_by(models.PlantUpdate.created_at.desc()).first()
         
         # Use image_url from update if available, otherwise from plant
-        image_url = latest_update.image_url if (latest_update and latest_update.image_url) else plant.image_url
+        image_url = latest_plant_update.image_url if (latest_plant_update and latest_plant_update.image_url) else plant.image_url
         
         plant_responses.append(schemas.PlantLatestUpdateResponse(
             id=plant.id,
             name=plant.name,
             plant_variety=plant.plant_variety,
             image_url=image_url,
-            latest_condition=latest_update.condition_text if latest_update else None,
-            latest_recommendation=latest_update.recommendation if latest_update else None,
-            last_update_date=latest_update.created_at if latest_update else None
+            latest_condition=latest_plant_update.condition_text if latest_plant_update else None,
+            latest_recommendation=latest_plant_update.recommendation if latest_plant_update else None,
+            last_update_date=latest_plant_update.created_at if latest_plant_update else None
         ))
     
     # Get latest garden-level recommendation from updates
-    latest_update = db.query(models.GardenUpdate).filter(
+    latest_garden_update = db.query(models.GardenUpdate).filter(
         models.GardenUpdate.garden_id == garden_id,
         models.GardenUpdate.recommendation.is_not(None)
     ).order_by(models.GardenUpdate.created_at.desc()).first()
+
+    tiles = []
+    if latest_garden_update:
+        if latest_garden_update.vibrancy in ("High", "Very High"):
+            tiles.append(schemas.Tile(name="Vibrancy", value=latest_garden_update.vibrancy, metric=""))
+        if latest_garden_update.hydration:
+            tiles.append(schemas.Tile(name="Hydration", value=latest_garden_update.hydration, metric=""))
+        if latest_garden_update.exposure:
+            tiles.append(schemas.Tile(name="Exposure", value=latest_garden_update.exposure, metric=""))
 
     return {
         "id": garden.id,
         "name": garden.name,
         "status": garden.status,
         "summary": garden.summary,
-        "recommendation": latest_update.recommendation if latest_update else None,
-        "immediate_changes": latest_update.immediate_changes if latest_update else None,
-        "disease_overview": latest_update.disease_overview if latest_update else None,
-        "growth_trend": latest_update.growth_trend if latest_update else None,
+        "recommendation": latest_garden_update.recommendation if latest_garden_update else None,
+        "immediate_changes": latest_garden_update.immediate_changes if latest_garden_update else None,
+        "disease_overview": latest_garden_update.disease_overview if latest_garden_update else None,
+        "growth_trend": latest_garden_update.growth_trend if latest_garden_update else None,
         "created_at": garden.created_at,
-        "plants": plant_responses
+        "plants": plant_responses,
+        "tiles": tiles
     }
 
 # New: Get all gardens for a specific user
@@ -501,4 +511,3 @@ async def trigger_garden_processing(stream: bool = True, db: Session = Depends(g
             yield f"data: Error in stream: {str(e)}\n\n"
 
     return StreamingResponse(log_generator(), media_type="text/event-stream")
-
