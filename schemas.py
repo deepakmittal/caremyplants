@@ -2,6 +2,13 @@ from pydantic import BaseModel, EmailStr
 from typing import List, Optional
 from datetime import datetime
 
+class Tile(BaseModel):
+    id: str
+    title: str
+    value: str
+    description: Optional[str] = None
+    icon: Optional[str] = None
+
 class UserBase(BaseModel):
     user_email: EmailStr
     user_phone: Optional[str] = None
@@ -99,6 +106,7 @@ class GardenDetailsResponse(BaseModel):
     growth_trend: Optional[str] = None
     created_at: datetime
     plants: List[PlantLatestUpdateResponse]
+    tiles: List[Tile] = []
 
     class Config:
         from_attributes = True
