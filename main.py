@@ -30,7 +30,7 @@ app = FastAPI(title="Garden Backend API")
 # Configure CORS
 origins = [
     "http://localhost:5173",
-    "http://127.0.0.1:5173",
+    "http://12.0.0.1:5173",
     "http://localhost:5174",
     "http://127.0.0.1:5174",
 ]
@@ -239,7 +239,7 @@ def get_garden_plants(garden_id: int, db: Session = Depends(get_db)):
     return plants
 
 # New: Get garden details including its plants
-@app.get("/gardens/{garden_id}/details", response_model=schemas.GardenDetailsResponse)
+@app.get("/gardens/{garden_id}/details", response_model=schemas.GardenDetailsEnhancedResponse)
 def get_garden_details(garden_id: int, db: Session = Depends(get_db)):
     garden = db.query(models.Garden).filter(models.Garden.id == garden_id).first()
     if not garden:
@@ -255,31 +255,24 @@ def get_garden_details(garden_id: int, db: Session = Depends(get_db)):
         # Use image_url from update if available, otherwise from plant
         image_url = latest_update.image_url if (latest_update and latest_update.image_url) else plant.image_url
         
-        plant_responses.append(schemas.PlantLatestUpdateResponse(
+        plant_responses.append(schemas.PlantUpdateEnhancedMetricsResponse(
             id=plant.id,
             name=plant.name,
             plant_variety=plant.plant_variety,
             image_url=image_url,
-            latest_condition=latest_update.condition_text if latest_update else None,
-            latest_recommendation=latest_update.recommendation if latest_update else None,
+            recommendation=latest_update.recommendation if latest_update else None,
+            recommendation_details=latest_update.recommendation_details if latest_update else None,
+            health_score=latest_update.health_score if latest_update else None,
+            growth_stage=latest_update.growth_stage if latest_update else None,
+            pest_issue=latest_update.pest_issue if latest_update else None,
+            disease_issue=latest_update.disease_issue if latest_update else None,
             last_update_date=latest_update.created_at if latest_update else None
         ))
-    
-    # Get latest garden-level recommendation from updates
-    latest_update = db.query(models.GardenUpdate).filter(
-        models.GardenUpdate.garden_id == garden_id,
-        models.GardenUpdate.recommendation.is_not(None)
-    ).order_by(models.GardenUpdate.created_at.desc()).first()
 
     return {
         "id": garden.id,
         "name": garden.name,
         "status": garden.status,
-        "summary": garden.summary,
-        "recommendation": latest_update.recommendation if latest_update else None,
-        "immediate_changes": latest_update.immediate_changes if latest_update else None,
-        "disease_overview": latest_update.disease_overview if latest_update else None,
-        "growth_trend": latest_update.growth_trend if latest_update else None,
         "created_at": garden.created_at,
         "plants": plant_responses
     }
@@ -501,4 +494,3 @@ async def trigger_garden_processing(stream: bool = True, db: Session = Depends(g
             yield f"data: Error in stream: {str(e)}\n\n"
 
     return StreamingResponse(log_generator(), media_type="text/event-stream")
-

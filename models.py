@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, TIMESTAMP, ForeignKey, Table, Text, LargeBinary
+from sqlalchemy import Column, Integer, String, TIMESTAMP, ForeignKey, Table, Text, LargeBinary, Boolean, Float
 from sqlalchemy.orm import relationship
 from database import Base
 import datetime
@@ -93,7 +93,12 @@ class PlantUpdate(Base):
     id = Column(Integer, primary_key=True, index=True)
     plant_id = Column(Integer, ForeignKey("plants.id", ondelete="CASCADE"), nullable=False)
     condition_text = Column(Text)
-    recommendation = Column(Text)
+    recommendation = Column(String(255))
+    recommendation_details = Column(Text)
+    health_score = Column(Float)
+    growth_stage = Column(String(255))
+    pest_issue = Column(Boolean, default=False)
+    disease_issue = Column(Boolean, default=False)
     image_url = Column(String(512))
     # Status lifecycle: 'New' -> 'Processing' -> 'Ready'
     status = Column(String(50), default="New", nullable=False)

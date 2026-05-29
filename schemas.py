@@ -74,6 +74,32 @@ class PlantLatestUpdateResponse(BaseModel):
     class Config:
         from_attributes = True
 
+class PlantUpdateEnhancedMetricsResponse(BaseModel):
+    id: int
+    name: str
+    plant_variety: Optional[str] = None
+    image_url: Optional[str] = None
+    recommendation: Optional[str] = None
+    recommendation_details: Optional[str] = None
+    health_score: Optional[float] = None
+    growth_stage: Optional[str] = None
+    pest_issue: Optional[bool] = None
+    disease_issue: Optional[bool] = None
+    last_update_date: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+class GardenDetailsEnhancedResponse(BaseModel):
+    id: int
+    name: str
+    status: Optional[str] = None
+    created_at: datetime
+    plants: List[PlantUpdateEnhancedMetricsResponse]
+
+    class Config:
+        from_attributes = True
+
 class GardenWithPhotosResponse(BaseModel):
     id: int
     name: str
