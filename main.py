@@ -262,25 +262,38 @@ def get_garden_details(garden_id: int, db: Session = Depends(get_db)):
             image_url=image_url,
             latest_condition=latest_update.condition_text if latest_update else None,
             latest_recommendation=latest_update.recommendation if latest_update else None,
-            last_update_date=latest_update.created_at if latest_update else None
+            detailed_recommendation=latest_update.detailed_recommendation if latest_update else None,
+            last_update_date=latest_update.created_at if latest_update else None,
+            health_score=latest_update.health_score if latest_update else None,
+            growth_stage=latest_update.growth_stage if latest_update else None,
+            pest_issue=latest_update.pest_issue if latest_update else None,
+            water_stress=latest_update.water_stress if latest_update else None,
         ))
     
-    # Get latest garden-level recommendation from updates
-    latest_update = db.query(models.GardenUpdate).filter(
+    # Get latest garden-level metrics from updates
+    latest_garden_update = db.query(models.GardenUpdate).filter(
         models.GardenUpdate.garden_id == garden_id,
-        models.GardenUpdate.recommendation.is_not(None)
     ).order_by(models.GardenUpdate.created_at.desc()).first()
+
+    metrics = []
+    if latest_garden_update:
+        if latest_garden_update.hydration:
+            metrics.append({"name": "Hydration", "value": latest_garden_update.hydration})
+        if latest_garden_update.exposure:
+            metrics.append({"name": "Exposure", "value": latest_garden_update.exposure})
+        if latest_garden_update.vibrancy:
+            metrics.append({"name": "Vibrancy", "value": latest_garden_update.vibrancy})
+        if latest_garden_update.temperature:
+            metrics.append({"name": "Temperature", "value": latest_garden_update.temperature})
+        if latest_garden_update.humidity:
+            metrics.append({"name": "Humidity", "value": latest_garden_update.humidity})
 
     return {
         "id": garden.id,
         "name": garden.name,
         "status": garden.status,
-        "summary": garden.summary,
-        "recommendation": latest_update.recommendation if latest_update else None,
-        "immediate_changes": latest_update.immediate_changes if latest_update else None,
-        "disease_overview": latest_update.disease_overview if latest_update else None,
-        "growth_trend": latest_update.growth_trend if latest_update else None,
         "created_at": garden.created_at,
+        "metrics": metrics,
         "plants": plant_responses
     }
 
@@ -501,4 +514,3 @@ async def trigger_garden_processing(stream: bool = True, db: Session = Depends(g
             yield f"data: Error in stream: {str(e)}\n\n"
 
     return StreamingResponse(log_generator(), media_type="text/event-stream")
-

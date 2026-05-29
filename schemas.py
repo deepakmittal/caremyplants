@@ -37,7 +37,12 @@ class PlantUpdateResponse(BaseModel):
     id: int
     condition_text: Optional[str] = None
     recommendation: Optional[str] = None
+    detailed_recommendation: Optional[str] = None
     image_url: Optional[str] = None
+    health_score: Optional[int] = None
+    growth_stage: Optional[str] = None
+    pest_issue: Optional[str] = None
+    water_stress: Optional[str] = None
     created_at: datetime
 
     class Config:
@@ -69,7 +74,13 @@ class PlantLatestUpdateResponse(BaseModel):
     image_url: Optional[str] = None
     latest_condition: Optional[str] = None
     latest_recommendation: Optional[str] = None
+    detailed_recommendation: Optional[str] = None
     last_update_date: Optional[datetime] = None
+    health_score: Optional[int] = None
+    growth_stage: Optional[str] = None
+    pest_issue: Optional[str] = None
+    water_stress: Optional[str] = None
+
 
     class Config:
         from_attributes = True
@@ -88,16 +99,17 @@ class GardenWithPhotosResponse(BaseModel):
     class Config:
         from_attributes = True
 
+class GardenMetric(BaseModel):
+    name: str
+    value: str
+    description: Optional[str] = None
+
 class GardenDetailsResponse(BaseModel):
     id: int
     name: str
     status: Optional[str] = None
-    summary: Optional[str] = None
-    recommendation: Optional[str] = None
-    immediate_changes: Optional[str] = None
-    disease_overview: Optional[str] = None
-    growth_trend: Optional[str] = None
     created_at: datetime
+    metrics: List[GardenMetric]
     plants: List[PlantLatestUpdateResponse]
 
     class Config:

@@ -93,10 +93,15 @@ class PlantUpdate(Base):
     id = Column(Integer, primary_key=True, index=True)
     plant_id = Column(Integer, ForeignKey("plants.id", ondelete="CASCADE"), nullable=False)
     condition_text = Column(Text)
-    recommendation = Column(Text)
+    recommendation = Column(String(255)) # Short recommendation for ticker
+    detailed_recommendation = Column(Text) # Detailed recommendation for lightbox
     image_url = Column(String(512))
     # Status lifecycle: 'New' -> 'Processing' -> 'Ready'
     status = Column(String(50), default="New", nullable=False)
+    health_score = Column(Integer)
+    growth_stage = Column(String(255))
+    pest_issue = Column(String(255))
+    water_stress = Column(String(255))
     created_at = Column(TIMESTAMP, default=datetime.datetime.utcnow)
     updated_at = Column(TIMESTAMP, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
 
