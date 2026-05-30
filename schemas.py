@@ -93,12 +93,14 @@ class GardenDetailsResponse(BaseModel):
     name: str
     status: Optional[str] = None
     summary: Optional[str] = None
-    recommendation: Optional[str] = None
-    immediate_changes: Optional[str] = None
-    disease_overview: Optional[str] = None
-    growth_trend: Optional[str] = None
+    short_recommendation: Optional[str] = None
+    full_recommendation: Optional[str] = None
     created_at: datetime
     plants: List[PlantLatestUpdateResponse]
+    needs_water: Optional[bool] = None
+    pest_detected: Optional[bool] = None
+    low_sunlight: Optional[bool] = None
+
 
     class Config:
         from_attributes = True
