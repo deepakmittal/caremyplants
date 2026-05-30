@@ -152,9 +152,9 @@ def analyze_garden_overview(image_list: List[bytes], last_update_recommendation:
     1. hydration (Low/Medium/High)
     2. exposure (Low/Medium/High)
     3. vibrancy (Low/Medium/High)
-    4. immediate_changes
-    5. growth_trend
-    6. disease_overview
+    4. pest_presence (boolean)
+    5. weed_presence (boolean)
+    6. flowering_status (Not Flowering/Flowering/Fruiting)
     7. general_suggestions
 
     Return ONLY JSON:
@@ -163,11 +163,11 @@ def analyze_garden_overview(image_list: List[bytes], last_update_recommendation:
       "hydration": "Low/Medium/High",
       "exposure": "Low/Medium/High",
       "vibrancy": "Low/Medium/High",
+      "pest_presence": false,
+      "weed_presence": true,
+      "flowering_status": "Flowering",
       "temperature": "e.g. 24°C",
       "humidity": "e.g. 60%",
-      "immediate_changes": "...",
-      "growth_trend": "...",
-      "disease_overview": "...",
       "general_suggestions": "..."
     }}
     """
