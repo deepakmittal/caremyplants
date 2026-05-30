@@ -88,16 +88,20 @@ class GardenWithPhotosResponse(BaseModel):
     class Config:
         from_attributes = True
 
-class GardenDetailsResponse(BaseModel):
+class GardenMetrics(BaseModel):
+    hydration: Optional[float] = None
+    exposure: Optional[float] = None
+    vibrancy: Optional[float] = None
+    plant_count: Optional[int] = None
+    species_count: Optional[int] = None
+    average_plant_health: Optional[float] = None
+
+class GardenDetailsHighDensityResponse(BaseModel):
     id: int
     name: str
     status: Optional[str] = None
-    summary: Optional[str] = None
-    recommendation: Optional[str] = None
-    immediate_changes: Optional[str] = None
-    disease_overview: Optional[str] = None
-    growth_trend: Optional[str] = None
     created_at: datetime
+    metrics: GardenMetrics
     plants: List[PlantLatestUpdateResponse]
 
     class Config:
