@@ -239,7 +239,7 @@ def get_garden_plants(garden_id: int, db: Session = Depends(get_db)):
     return plants
 
 # New: Get garden details including its plants
-@app.get("/gardens/{garden_id}/details", response_model=schemas.GardenDetailsResponse)
+@app.get("/gardens/{garden_id}/details", response_model=schemas.GardenDetailsHighDensityResponse)
 def get_garden_details(garden_id: int, db: Session = Depends(get_db)):
     garden = db.query(models.Garden).filter(models.Garden.id == garden_id).first()
     if not garden:
@@ -271,16 +271,28 @@ def get_garden_details(garden_id: int, db: Session = Depends(get_db)):
         models.GardenUpdate.recommendation.is_not(None)
     ).order_by(models.GardenUpdate.created_at.desc()).first()
 
+    plant_count = len(garden.plants)
+    species_count = len(set(p.plant_variety for p in garden.plants))
+    
+    # Dummy average_plant_health
+    average_plant_health = 0.8 
+
+
+    metrics = schemas.GardenMetrics(
+        hydration=latest_update.hydration if latest_update else None,
+        exposure=latest_update.exposure if latest_update else None,
+        vibrancy=latest_update.vibrancy if latest_update else None,
+        plant_count=plant_count,
+        species_count=species_count,
+        average_plant_health=average_plant_health,
+    )
+
     return {
         "id": garden.id,
         "name": garden.name,
         "status": garden.status,
-        "summary": garden.summary,
-        "recommendation": latest_update.recommendation if latest_update else None,
-        "immediate_changes": latest_update.immediate_changes if latest_update else None,
-        "disease_overview": latest_update.disease_overview if latest_update else None,
-        "growth_trend": latest_update.growth_trend if latest_update else None,
         "created_at": garden.created_at,
+        "metrics": metrics,
         "plants": plant_responses
     }
 
@@ -501,4 +513,3 @@ async def trigger_garden_processing(stream: bool = True, db: Session = Depends(g
             yield f"data: Error in stream: {str(e)}\n\n"
 
     return StreamingResponse(log_generator(), media_type="text/event-stream")
-
