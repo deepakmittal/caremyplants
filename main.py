@@ -30,7 +30,7 @@ app = FastAPI(title="Garden Backend API")
 # Configure CORS
 origins = [
     "http://localhost:5173",
-    "http://127.0.0.1:5173",
+    "http://1227.0.0.1:5173",
     "http://localhost:5174",
     "http://127.0.0.1:5174",
 ]
@@ -267,19 +267,28 @@ def get_garden_details(garden_id: int, db: Session = Depends(get_db)):
     
     # Get latest garden-level recommendation from updates
     latest_update = db.query(models.GardenUpdate).filter(
-        models.GardenUpdate.garden_id == garden_id,
-        models.GardenUpdate.recommendation.is_not(None)
+        models.GardenUpdate.garden_id == garden_id
     ).order_by(models.GardenUpdate.created_at.desc()).first()
+
+    recommendation_full = latest_update.recommendation if latest_update else None
+    recommendation_words = recommendation_full.split() if recommendation_full else []
+    show_more = len(recommendation_words) > 10
+    recommendation_truncated = " ".join(recommendation_words[:10]) if show_more else recommendation_full
+
 
     return {
         "id": garden.id,
         "name": garden.name,
         "status": garden.status,
         "summary": garden.summary,
-        "recommendation": latest_update.recommendation if latest_update else None,
-        "immediate_changes": latest_update.immediate_changes if latest_update else None,
-        "disease_overview": latest_update.disease_overview if latest_update else None,
-        "growth_trend": latest_update.growth_trend if latest_update else None,
+        "recommendation": recommendation_truncated,
+        "recommendation_full": recommendation_full,
+        "show_more": show_more,
+        "has_pests": latest_update.has_pests if latest_update else None,
+        "has_disease": latest_update.has_disease if latest_update else None,
+        "is_healthy": latest_update.is_healthy if latest_update else None,
+        "needs_water": latest_update.needs_water if latest_update else None,
+        "needs_sunlight": latest_update.needs_sunlight if latest_update else None,
         "created_at": garden.created_at,
         "plants": plant_responses
     }
@@ -501,4 +510,3 @@ async def trigger_garden_processing(stream: bool = True, db: Session = Depends(g
             yield f"data: Error in stream: {str(e)}\n\n"
 
     return StreamingResponse(log_generator(), media_type="text/event-stream")
-
