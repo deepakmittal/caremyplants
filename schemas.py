@@ -94,9 +94,11 @@ class GardenDetailsResponse(BaseModel):
     status: Optional[str] = None
     summary: Optional[str] = None
     recommendation: Optional[str] = None
-    immediate_changes: Optional[str] = None
-    disease_overview: Optional[str] = None
-    growth_trend: Optional[str] = None
+    recommendation_show_more: bool = False
+    has_pests: bool = False
+    has_weeds: bool = False
+    is_overwatered: bool = False
+    is_underwatered: bool = False
     created_at: datetime
     plants: List[PlantLatestUpdateResponse]
 
