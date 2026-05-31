@@ -271,15 +271,21 @@ def get_garden_details(garden_id: int, db: Session = Depends(get_db)):
         models.GardenUpdate.recommendation.is_not(None)
     ).order_by(models.GardenUpdate.created_at.desc()).first()
 
+    recommendation = latest_update.recommendation if latest_update else None
+    if recommendation:
+        words = recommendation.split()
+        if len(words) > 10:
+            recommendation = " ".join(words[:10]) + "..."
+
     return {
         "id": garden.id,
         "name": garden.name,
         "status": garden.status,
         "summary": garden.summary,
-        "recommendation": latest_update.recommendation if latest_update else None,
-        "immediate_changes": latest_update.immediate_changes if latest_update else None,
-        "disease_overview": latest_update.disease_overview if latest_update else None,
-        "growth_trend": latest_update.growth_trend if latest_update else None,
+        "recommendation": recommendation,
+        "pest_presence": latest_update.pest_presence if latest_update else None,
+        "water_stress": latest_update.water_stress if latest_update else None,
+        "nutrient_deficiency": latest_update.nutrient_deficiency if latest_update else None,
         "created_at": garden.created_at,
         "plants": plant_responses
     }
@@ -501,4 +507,3 @@ async def trigger_garden_processing(stream: bool = True, db: Session = Depends(g
             yield f"data: Error in stream: {str(e)}\n\n"
 
     return StreamingResponse(log_generator(), media_type="text/event-stream")
-

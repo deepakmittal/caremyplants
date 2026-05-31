@@ -317,15 +317,15 @@ def process_single_update(db: Session, update: models.GardenUpdate) -> None:
              raise Exception("AI Overview failed (likely API error)")
 
         latest_update.summary = overview.get('summary', 'No summary available')
-        latest_update.immediate_changes = overview.get('immediate_changes')
-        latest_update.disease_overview = overview.get('disease_overview')
-        latest_update.growth_trend = overview.get('growth_trend')
-        latest_update.recommendation = overview.get('general_suggestions')
+        latest_update.recommendation = overview.get('recommendation')
         latest_update.hydration = overview.get('hydration')
         latest_update.exposure = overview.get('exposure')
         latest_update.vibrancy = overview.get('vibrancy')
         latest_update.temperature = overview.get('temperature')
         latest_update.humidity = overview.get('humidity')
+        latest_update.pest_presence = overview.get('pest_presence', False)
+        latest_update.water_stress = overview.get('water_stress', False)
+        latest_update.nutrient_deficiency = overview.get('nutrient_deficiency', False)
         
         # Also update the main garden summary for the list view
         db_garden = db.query(models.Garden).filter(models.Garden.id == garden_id).first()
