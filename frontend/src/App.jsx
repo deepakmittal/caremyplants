@@ -106,7 +106,7 @@ const App = () => {
   // --- Sub-Components (Pages) ---
 
   const LoginPage = () => (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-slate-900 to-slate-800">
+    <div className="min-h-screen flex items-center justify-center p-6">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
