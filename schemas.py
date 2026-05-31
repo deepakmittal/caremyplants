@@ -92,11 +92,12 @@ class GardenDetailsResponse(BaseModel):
     id: int
     name: str
     status: Optional[str] = None
-    summary: Optional[str] = None
     recommendation: Optional[str] = None
-    immediate_changes: Optional[str] = None
-    disease_overview: Optional[str] = None
-    growth_trend: Optional[str] = None
+    recommendation_full: Optional[str] = None
+    needs_watering: bool = False
+    needs_sunlight: bool = False
+    has_pests: bool = False
+    has_disease: bool = False
     created_at: datetime
     plants: List[PlantLatestUpdateResponse]
 
