@@ -100,7 +100,6 @@ class GardenDetailsResponse(BaseModel):
     has_pests: Optional[bool] = None
     has_weeds: Optional[bool] = None
     created_at: datetime
-    plants: List[PlantLatestUpdateResponse]
 
     class Config:
         from_attributes = True

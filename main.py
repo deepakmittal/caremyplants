@@ -245,26 +245,6 @@ def get_garden_details(garden_id: int, db: Session = Depends(get_db)):
     if not garden:
         raise HTTPException(status_code=404, detail="Garden not found")
     
-    plant_responses = []
-    for plant in garden.plants:
-        # Get latest update for this specific plant
-        latest_update = db.query(models.PlantUpdate).filter(
-            models.PlantUpdate.plant_id == plant.id
-        ).order_by(models.PlantUpdate.created_at.desc()).first()
-        
-        # Use image_url from update if available, otherwise from plant
-        image_url = latest_update.image_url if (latest_update and latest_update.image_url) else plant.image_url
-        
-        plant_responses.append(schemas.PlantLatestUpdateResponse(
-            id=plant.id,
-            name=plant.name,
-            plant_variety=plant.plant_variety,
-            image_url=image_url,
-            latest_condition=latest_update.condition_text if latest_update else None,
-            latest_recommendation=latest_update.recommendation if latest_update else None,
-            last_update_date=latest_update.created_at if latest_update else None
-        ))
-    
     # Get latest garden-level recommendation from updates
     latest_update = db.query(models.GardenUpdate).filter(
         models.GardenUpdate.garden_id == garden_id,
@@ -276,7 +256,7 @@ def get_garden_details(garden_id: int, db: Session = Depends(get_db)):
     if recommendation_full:
         words = recommendation_full.split()
         if len(words) > 10:
-            recommendation_truncated = " ".join(words[:10]) + "..."
+            recommendation_truncated = " ".join(words[:10])
         else:
             recommendation_truncated = recommendation_full
 
@@ -291,8 +271,7 @@ def get_garden_details(garden_id: int, db: Session = Depends(get_db)):
         "needs_fertilizer": latest_update.needs_fertilizer if latest_update else None,
         "has_pests": latest_update.has_pests if latest_update else None,
         "has_weeds": latest_update.has_weeds if latest_update else None,
-        "created_at": garden.created_at,
-        "plants": plant_responses
+        "created_at": garden.created_at
     }
 
 # New: Get all gardens for a specific user
