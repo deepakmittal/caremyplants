@@ -156,6 +156,10 @@ def analyze_garden_overview(image_list: List[bytes], last_update_recommendation:
     5. growth_trend
     6. disease_overview
     7. general_suggestions
+    8. needs_watering (boolean)
+    9. needs_fertilizer (boolean)
+    10. has_pests (boolean)
+    11. has_weeds (boolean)
 
     Return ONLY JSON:
     {{
@@ -168,7 +172,11 @@ def analyze_garden_overview(image_list: List[bytes], last_update_recommendation:
       "immediate_changes": "...",
       "growth_trend": "...",
       "disease_overview": "...",
-      "general_suggestions": "..."
+      "general_suggestions": "...",
+      "needs_watering": true,
+      "needs_fertilizer": false,
+      "has_pests": false,
+      "has_weeds": true
     }}
     """
     return _call_gemini([prompt] + parts)
