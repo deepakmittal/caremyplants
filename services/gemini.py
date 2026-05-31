@@ -152,10 +152,8 @@ def analyze_garden_overview(image_list: List[bytes], last_update_recommendation:
     1. hydration (Low/Medium/High)
     2. exposure (Low/Medium/High)
     3. vibrancy (Low/Medium/High)
-    4. immediate_changes
-    5. growth_trend
-    6. disease_overview
-    7. general_suggestions
+    4. general_suggestions
+    5. tickers: A list of tickers with a name and a boolean value. The possible ticker names are "Pests", "Weeds", "Needs Watering". Only include the tickers that are relevant.
 
     Return ONLY JSON:
     {{
@@ -165,10 +163,12 @@ def analyze_garden_overview(image_list: List[bytes], last_update_recommendation:
       "vibrancy": "Low/Medium/High",
       "temperature": "e.g. 24°C",
       "humidity": "e.g. 60%",
-      "immediate_changes": "...",
-      "growth_trend": "...",
-      "disease_overview": "...",
-      "general_suggestions": "..."
+      "general_suggestions": "...",
+      "tickers": [
+        {{"name": "Pests", "value": true}},
+        {{"name": "Weeds", "value": false}},
+        {{"name": "Needs Watering", "value": true}}
+      ]
     }}
     """
     return _call_gemini([prompt] + parts)

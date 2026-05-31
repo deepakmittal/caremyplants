@@ -88,17 +88,20 @@ class GardenWithPhotosResponse(BaseModel):
     class Config:
         from_attributes = True
 
+class Ticker(BaseModel):
+    name: str
+    value: bool
+
 class GardenDetailsResponse(BaseModel):
     id: int
     name: str
     status: Optional[str] = None
-    summary: Optional[str] = None
     recommendation: Optional[str] = None
-    immediate_changes: Optional[str] = None
-    disease_overview: Optional[str] = None
-    growth_trend: Optional[str] = None
+    recommendation_short: Optional[str] = None
+    show_more: bool = False
     created_at: datetime
     plants: List[PlantLatestUpdateResponse]
+    tickers: List[Ticker] = []
 
     class Config:
         from_attributes = True

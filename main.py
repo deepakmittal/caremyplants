@@ -271,17 +271,28 @@ def get_garden_details(garden_id: int, db: Session = Depends(get_db)):
         models.GardenUpdate.recommendation.is_not(None)
     ).order_by(models.GardenUpdate.created_at.desc()).first()
 
+    recommendation_full = latest_update.recommendation if latest_update else None
+    recommendation_short = None
+    show_more = False
+
+    if recommendation_full:
+        words = recommendation_full.split()
+        if len(words) > 10:
+            recommendation_short = " ".join(words[:10]) + "..."
+            show_more = True
+        else:
+            recommendation_short = recommendation_full
+
     return {
         "id": garden.id,
         "name": garden.name,
         "status": garden.status,
-        "summary": garden.summary,
-        "recommendation": latest_update.recommendation if latest_update else None,
-        "immediate_changes": latest_update.immediate_changes if latest_update else None,
-        "disease_overview": latest_update.disease_overview if latest_update else None,
-        "growth_trend": latest_update.growth_trend if latest_update else None,
+        "recommendation": recommendation_full,
+        "recommendation_short": recommendation_short,
+        "show_more": show_more,
         "created_at": garden.created_at,
-        "plants": plant_responses
+        "plants": plant_responses,
+        "tickers": latest_update.tickers if latest_update and latest_update.tickers else []
     }
 
 # New: Get all gardens for a specific user
@@ -501,4 +512,3 @@ async def trigger_garden_processing(stream: bool = True, db: Session = Depends(g
             yield f"data: Error in stream: {str(e)}\n\n"
 
     return StreamingResponse(log_generator(), media_type="text/event-stream")
-
