@@ -1,5 +1,6 @@
 from sqlalchemy import Column, Integer, String, TIMESTAMP, ForeignKey, Table, Text, LargeBinary
 from sqlalchemy.orm import relationship
+from sqlalchemy.types import JSON
 from database import Base
 import datetime
 
@@ -72,6 +73,7 @@ class GardenUpdate(Base):
     vibrancy = Column(String(255))
     temperature = Column(String(255))
     humidity = Column(String(255))
+    tickers = Column(JSON)
     created_at = Column(TIMESTAMP, default=datetime.datetime.utcnow)
 
     garden = relationship("Garden", back_populates="updates")
