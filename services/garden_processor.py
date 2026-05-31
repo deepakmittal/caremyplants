@@ -334,6 +334,18 @@ def process_single_update(db: Session, update: models.GardenUpdate) -> None:
             
         db.commit()
 
+        # New: Get binary details for tickers
+        logger.info(f"Getting binary details for garden {garden_id}...")
+        ticker_details = gemini.analyze_garden_tickers(image_list=image_contents)
+        
+        if ticker_details:
+            latest_update.has_pests = ticker_details.get('has_pests', False)
+            latest_update.has_disease = ticker_details.get('has_disease', False)
+            latest_update.needs_watering = ticker_details.get('needs_watering', False)
+            latest_update.needs_fertilizing = ticker_details.get('needs_fertilizing', False)
+
+        db.commit()
+
         # ── Step 2: Processing Plants ─────────────────────────────────────────
         _set_update_status(db, update_id, "Processing Plants", commentary="identifying plants")
 

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, TIMESTAMP, ForeignKey, Table, Text, LargeBinary
+from sqlalchemy import Column, Integer, String, TIMESTAMP, ForeignKey, Table, Text, LargeBinary, Boolean
 from sqlalchemy.orm import relationship
 from database import Base
 import datetime
@@ -72,6 +72,10 @@ class GardenUpdate(Base):
     vibrancy = Column(String(255))
     temperature = Column(String(255))
     humidity = Column(String(255))
+    has_pests = Column(Boolean, default=False)
+    has_disease = Column(Boolean, default=False)
+    needs_watering = Column(Boolean, default=False)
+    needs_fertilizing = Column(Boolean, default=False)
     created_at = Column(TIMESTAMP, default=datetime.datetime.utcnow)
 
     garden = relationship("Garden", back_populates="updates")

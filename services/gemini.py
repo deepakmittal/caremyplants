@@ -208,3 +208,37 @@ def analyze_plant_detail(plant_image_bytes: bytes, plant_name: str, last_plant_r
     }}
     """
     return _call_gemini([prompt, part])
+
+def analyze_garden_tickers(image_list: List[bytes]) -> dict:
+    """
+    Analyzes garden photos to determine the status of various tickers.
+    """
+    parts = []
+    for img_bytes in image_list:
+        try:
+            img = Image.open(io.BytesIO(img_bytes))
+            parts.append(_pil_to_part(img))
+        except:
+            continue
+
+    if not parts:
+        return {}
+
+    prompt = """
+    Analyze these garden photos and determine the status of the following tickers.
+    For each ticker, provide a boolean value (true or false).
+
+    1. has_pests: Are there any visible pests on the plants?
+    2. has_disease: Are there any visible signs of disease on the plants?
+    3. needs_watering: Do the plants appear to need watering?
+    4. needs_fertilizing: Do the plants appear to need fertilizing?
+
+    Return ONLY a JSON object:
+    {
+      "has_pests": true/false,
+      "has_disease": true/false,
+      "needs_watering": true/false,
+      "needs_fertilizing": true/false
+    }
+    """
+    return _call_gemini([prompt] + parts)
