@@ -4,7 +4,7 @@
   --primary: #10b981;
   --primary-dark: #059669;
   --secondary: #6366f1;
-  --bg-dark: #0f172a;
+  --bg-dark: #1a202c;
   --card-bg: rgba(255, 255, 255, 0.05);
   --glass-border: rgba(255, 255, 255, 0.1);
   --text-main: #f8fafc;
@@ -153,8 +153,6 @@ body {
 .status-new {
   background: rgba(59, 130, 246, 0.2);
   color: #60a5fa;
-}
-
 .status-processing {
   background: rgba(245, 158, 11, 0.2);
   color: #fbbf24;
