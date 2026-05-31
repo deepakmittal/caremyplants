@@ -321,11 +321,15 @@ def process_single_update(db: Session, update: models.GardenUpdate) -> None:
         latest_update.disease_overview = overview.get('disease_overview')
         latest_update.growth_trend = overview.get('growth_trend')
         latest_update.recommendation = overview.get('general_suggestions')
+        latest_update.recommendation_full = overview.get('general_suggestions')
         latest_update.hydration = overview.get('hydration')
         latest_update.exposure = overview.get('exposure')
         latest_update.vibrancy = overview.get('vibrancy')
         latest_update.temperature = overview.get('temperature')
         latest_update.humidity = overview.get('humidity')
+        latest_update.pest_presence = overview.get('pest_presence')
+        latest_update.weed_presence = overview.get('weed_presence')
+        latest_update.flowering_status = overview.get('flowering_status')
         
         # Also update the main garden summary for the list view
         db_garden = db.query(models.Garden).filter(models.Garden.id == garden_id).first()
