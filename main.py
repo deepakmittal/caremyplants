@@ -284,13 +284,14 @@ def get_garden_details(garden_id: int, db: Session = Depends(get_db)):
         "id": garden.id,
         "name": garden.name,
         "status": garden.status,
-        "summary": garden.summary,
         "recommendation": recommendation_truncated,
         "recommendation_full": recommendation_full,
         "needs_watering": latest_update.needs_watering if latest_update else None,
         "needs_fertilizer": latest_update.needs_fertilizer if latest_update else None,
         "has_pests": latest_update.has_pests if latest_update else None,
         "has_weeds": latest_update.has_weeds if latest_update else None,
+        "has_disease": latest_update.has_disease if latest_update else None,
+        "needs_sunlight": latest_update.needs_sunlight if latest_update else None,
         "created_at": garden.created_at,
         "plants": plant_responses
     }

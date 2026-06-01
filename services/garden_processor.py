@@ -330,6 +330,8 @@ def process_single_update(db: Session, update: models.GardenUpdate) -> None:
         latest_update.needs_fertilizer = overview.get('needs_fertilizer', False)
         latest_update.has_pests = overview.get('has_pests', False)
         latest_update.has_weeds = overview.get('has_weeds', False)
+        latest_update.has_disease = overview.get('has_disease', False)
+        latest_update.needs_sunlight = overview.get('needs_sunlight', False)
         
         # Also update the main garden summary for the list view
         db_garden = db.query(models.Garden).filter(models.Garden.id == garden_id).first()
