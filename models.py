@@ -76,6 +76,8 @@ class GardenUpdate(Base):
     needs_fertilizer = Column(Boolean, default=False)
     has_pests = Column(Boolean, default=False)
     has_weeds = Column(Boolean, default=False)
+    has_disease = Column(Boolean, default=False)
+    needs_sunlight = Column(Boolean, default=False)
     created_at = Column(TIMESTAMP, default=datetime.datetime.utcnow)
 
     garden = relationship("Garden", back_populates="updates")
