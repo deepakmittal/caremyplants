@@ -78,9 +78,10 @@ def _pil_to_part(img: Image.Image) -> types.Part:
     img.save(buf, format="JPEG")
     return types.Part.from_bytes(data=buf.getvalue(), mime_type="image/jpeg")
 
-def identify_plants_with_gemini(image_list: List[bytes]):
+def identify_plants_with_gemini(image_list: List[bytes], existing_plants: Optional[List[str]] = None):
     """
     Identifies plants and suggests a garden name.
+    If existing_plants is provided, it tries to match identified plants to existing names.
     """
     parts = []
     for img_bytes in image_list:
@@ -92,10 +93,15 @@ def identify_plants_with_gemini(image_list: List[bytes]):
 
     if not parts:
         return [], ""
+        
+    existing_plants_text = ""
+    if existing_plants:
+        existing_plants_text = f"\nHere is a list of existing plants in this garden: {', '.join(existing_plants)}.\nIf you identify a plant that matches one of these existing plants, you MUST use the exact existing name. If it is a new plant, give it a new name."
 
-    prompt = """
+    prompt = f"""
     Exhaustively identify EVERY individual plant visible in these garden photos. 
     Include plants in the foreground, background, and those partially obscured. 
+    {existing_plants_text}
 
     For each plant provide:
     1. Common Name and Variety.
@@ -105,19 +111,19 @@ def identify_plants_with_gemini(image_list: List[bytes]):
     5. confidence: a float between 0 and 1 representing your confidence in this identification.
 
     Return ONLY a JSON object:
-    {
+    {{
       "suggested_garden_name": "...",
       "plants": [
-        {
+        {{
           "name": "...",
           "variety": "...",
           "condition": "...",
           "photo_index": 0,
           "box_2d": [ymin, xmin, ymax, xmax],
           "confidence": 0.95
-        }
+        }}
       ]
-    }
+    }}
     """
 
     result = _call_gemini([prompt] + parts)
@@ -185,7 +191,7 @@ def analyze_garden_overview(image_list: List[bytes], last_update_recommendation:
     """
     return _call_gemini([prompt] + parts)
 
-def analyze_plant_detail(plant_image_bytes: bytes, plant_name: str, last_plant_recommendation: Optional[str] = None) -> dict:
+def analyze_plant_detail(plant_image_bytes: bytes, plant_name: str, last_plant_recommendation: Optional[str] = None, last_plant_condition: Optional[str] = None) -> dict:
     """
     Detailed diagnosis for a specific plant.
     """
@@ -197,7 +203,10 @@ def analyze_plant_detail(plant_image_bytes: bytes, plant_name: str, last_plant_r
 
     prompt = f"""
     Detailed analysis for {plant_name}.
+    Previous Condition: {last_plant_condition or 'None'}
     Previous Recommendation: {last_plant_recommendation or 'None'}
+
+    Compare the plant's current state with the 'Previous Condition'. Specifically identify any improvements or degradations.
 
     Provide:
     1. is_valid_plant (boolean)
@@ -206,7 +215,8 @@ def analyze_plant_detail(plant_image_bytes: bytes, plant_name: str, last_plant_r
     4. pot_assessment
     5. pruning_needed
     6. growth_comparison
-    7. recommendation
+    7. changes_from_previous (Document explicitly what improvements or regressions happened since the previous update based on the image and previous condition)
+    8. recommendation
 
     Return ONLY JSON:
     {{
@@ -216,6 +226,7 @@ def analyze_plant_detail(plant_image_bytes: bytes, plant_name: str, last_plant_r
       "pot_assessment": "...",
       "pruning_needed": "...",
       "growth_comparison": "...",
+      "changes_from_previous": "...",
       "recommendation": "..."
     }}
     """
