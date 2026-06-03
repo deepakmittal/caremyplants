@@ -1,8 +1,8 @@
 import axios from 'axios';
 import { Platform } from 'react-native';
 
-// Production Cloud Run URL
-const API_URL = 'https://caremyplants-1059916488233.europe-west1.run.app';
+// Local Development backend URL
+const API_URL = 'http://localhost:8002';
 
 
 const api = axios.create({
@@ -21,24 +21,40 @@ export const getDetailedGardens = async (userId) => {
 
 export const uploadGardenPhotos = async (photos, gardenName, userId, location) => {
     const formData = new FormData();
-    photos.forEach((photo) => {
-        const fileData = {
-            uri: Platform.OS === 'ios' ? photo.uri.replace('file://', '') : photo.uri,
-            type: 'image/jpeg',
-            name: photo.fileName || `photo_${Date.now()}.jpg`,
-        };
-        formData.append('photos', fileData);
-    });
+    const isWeb = Platform.OS === 'web';
+
+    if (isWeb) {
+        for (const photo of photos) {
+            if (photo.file) {
+                formData.append('photos', photo.file);
+            } else {
+                const response = await fetch(photo.uri);
+                const blob = await response.blob();
+                formData.append('photos', blob, photo.fileName || `photo_${Date.now()}.jpg`);
+            }
+        }
+    } else {
+        photos.forEach((photo) => {
+            const fileData = {
+                uri: Platform.OS === 'ios' ? photo.uri.replace('file://', '') : photo.uri,
+                type: 'image/jpeg',
+                name: photo.fileName || `photo_${Date.now()}.jpg`,
+            };
+            formData.append('photos', fileData);
+        });
+    }
     if (gardenName) formData.append('garden_name', gardenName);
     if (userId) formData.append('user_id', userId);
     if (location) formData.append('location', location);
 
     try {
-        const response = await api.post('/gardens/upload', formData, {
-            headers: {
+        const config = {};
+        if (!isWeb) {
+            config.headers = {
                 'Content-Type': 'multipart/form-data',
-            },
-        });
+            };
+        }
+        const response = await api.post('/gardens/upload', formData, config);
         return response.data;
     } catch (error) {
         console.error('Error uploading garden photos:', error);
@@ -48,19 +64,33 @@ export const uploadGardenPhotos = async (photos, gardenName, userId, location) =
 
 export const uploadPlantPhoto = async (plantId, photo) => {
     const formData = new FormData();
-    const fileData = {
-        uri: Platform.OS === 'ios' ? photo.uri.replace('file://', '') : photo.uri,
-        type: 'image/jpeg',
-        name: photo.fileName || `photo_${Date.now()}.jpg`,
-    };
-    formData.append('photo', fileData);
+    const isWeb = Platform.OS === 'web';
+
+    if (isWeb) {
+        if (photo.file) {
+            formData.append('photo', photo.file);
+        } else {
+            const response = await fetch(photo.uri);
+            const blob = await response.blob();
+            formData.append('photo', blob, photo.fileName || `photo_${Date.now()}.jpg`);
+        }
+    } else {
+        const fileData = {
+            uri: Platform.OS === 'ios' ? photo.uri.replace('file://', '') : photo.uri,
+            type: 'image/jpeg',
+            name: photo.fileName || `photo_${Date.now()}.jpg`,
+        };
+        formData.append('photo', fileData);
+    }
 
     try {
-        const response = await api.post(`/plants/${plantId}/photos`, formData, {
-            headers: {
+        const config = {};
+        if (!isWeb) {
+            config.headers = {
                 'Content-Type': 'multipart/form-data',
-            },
-        });
+            };
+        }
+        const response = await api.post(`/plants/${plantId}/photos`, formData, config);
         return response.data;
     } catch (error) {
         console.error('Error uploading plant photo:', error);
