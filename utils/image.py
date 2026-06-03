@@ -1,6 +1,16 @@
 from PIL import Image, ImageFilter
 import io
 
+def is_valid_image(content: bytes) -> bool:
+    """
+    Check if the content is a valid image.
+    """
+    try:
+        Image.open(io.BytesIO(content))
+        return True
+    except Exception:
+        return False
+
 def crop_plant_image(original_image_bytes: bytes, box_2d: list):
     """
     Creates a portrait-style effect:
