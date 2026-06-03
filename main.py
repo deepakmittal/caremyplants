@@ -144,60 +144,71 @@ async def upload_garden_photos(
     Garden status transitions during processing:
       New → Processing Garden → Processing Plants → Ready
     """
-    if garden_id is not None:
-        # Use existing garden
-        db_garden = db.query(models.Garden).filter(models.Garden.id == garden_id).first()
-        if not db_garden:
-            raise HTTPException(status_code=404, detail=f"Garden with id {garden_id} not found")
-    else:
-        # Auto-create a new garden
-        name = garden_name or "My Garden"
-        db_garden = models.Garden(name=name, status="New")
-        db.add(db_garden)
-        db.commit()
-        db.refresh(db_garden)
-
-
-
-    # Create a garden update entry for this upload session
-    # Initial status is "Uploading" to prevent the cronjob from picking it up mid-upload
-    db_update = models.GardenUpdate(garden_id=db_garden.id, status="Uploading")
-    db.add(db_update)
-    db.commit()
-    db.refresh(db_update)
-
-    # Standardize on asynchronous processing: upload photos to GCS 
-    # and let the cronjob handle AI analysis.
-    for photo in photos:
-        content = await photo.read()
-        unique_filename = f"garden_{db_garden.id}/{uuid.uuid4()}_{photo.filename}"
-        url = gcs.upload_to_gcs(content, unique_filename)
-        
-        db_photo = models.GardenPhoto(
-            garden_id=db_garden.id,
-            update_id=db_update.id,
-            photo_url=url
-        )
-        db.add(db_photo)
-    db.commit()
-    db.refresh(db_garden)
-
-    # Ensure user-garden association if user_id provided
-    if user_id is not None:
-        db_user = db.query(models.User).get(user_id)
-        if db_user and db_user not in db_garden.users:
-            db_garden.users.append(db_user)
+    try:
+        if garden_id is not None:
+            # Use existing garden
+            db_garden = db.query(models.Garden).filter(models.Garden.id == garden_id).first()
+            if not db_garden:
+                raise HTTPException(status_code=404, detail=f"Garden with id {garden_id} not found")
+        else:
+            # Auto-create a new garden
+            name = garden_name or "My Garden"
+            db_garden = models.Garden(name=name, status="New")
+            db.add(db_garden)
             db.commit()
             db.refresh(db_garden)
 
-    # ALL photos are now uploaded and DB records created.
-    # Set status to "Ready to Process" so the cronjob can finally pick it up safely.
-    db_update.status = "Ready to Process"
-    db.commit()
+        # Create a garden update entry for this upload session
+        # Initial status is "Uploading" to prevent the cronjob from picking it up mid-upload
+        db_update = models.GardenUpdate(garden_id=db_garden.id, status="Uploading")
+        db.add(db_update)
+        db.commit()
+        db.refresh(db_update)
 
-    response = schemas.GardenResponse.from_orm(db_garden)
-    response.garden_update_id = db_update.id
-    return response
+        # Standardize on asynchronous processing: upload photos to GCS
+        # and let the cronjob handle AI analysis.
+        for photo in photos:
+            # Sanitize filename
+            original_filename = photo.filename
+            safe_filename = "".join(c for c in original_filename if c.isalnum() or c in ('.', '_')).rstrip()
+            unique_filename = f"garden_{db_garden.id}/{uuid.uuid4()}_{safe_filename}"
+
+            content = await photo.read()
+            
+            # Image validation
+            if not image_utils.is_valid_image(content):
+                raise HTTPException(status_code=400, detail=f"Invalid image file: {original_filename}")
+
+            url = gcs.upload_to_gcs(content, unique_filename)
+
+            db_photo = models.GardenPhoto(
+                garden_id=db_garden.id,
+                update_id=db_update.id,
+                photo_url=url
+            )
+            db.add(db_photo)
+        db.commit()
+        db.refresh(db_garden)
+
+        # Ensure user-garden association if user_id provided
+        if user_id is not None:
+            db_user = db.query(models.User).get(user_id)
+            if db_user and db_user not in db_garden.users:
+                db_garden.users.append(db_user)
+                db.commit()
+                db.refresh(db_garden)
+
+        # ALL photos are now uploaded and DB records created.
+        # Set status to "Ready to Process" so the cronjob can finally pick it up safely.
+        db_update.status = "Ready to Process"
+        db.commit()
+
+        response = schemas.GardenResponse.from_orm(db_garden)
+        response.garden_update_id = db_update.id
+        return response
+    except Exception as e:
+        logging.error(f"Failed to upload garden: {e}")
+        raise HTTPException(status_code=500, detail="Failed to upload garden. Please try again")
 
 # New: Push photos to an existing update
 @app.post("/updates/{update_id}/photos")
