@@ -367,7 +367,7 @@ def get_user_gardens_detailed(user_id: int, db: Session = Depends(get_db)):
 
         results = []
         for garden in gardens:
-_rec = db.query(models.GardenUpdate).filter(
+            latest_update_with_rec = db.query(models.GardenUpdate).filter(
                 models.GardenUpdate.garden_id == garden.id,
                 models.GardenUpdate.recommendation.is_not(None)
             ).order_by(models.GardenUpdate.created_at.desc()).first()
