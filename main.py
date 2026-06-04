@@ -13,8 +13,7 @@ import queue
 import threading
 import logging
 from fastapi.responses import StreamingResponse, PlainTextResponse
-from services import auth, gcs, gemini, garden_processor
-from utils import image as image_utils
+# Services are imported lazily inside endpoint functions to minimize container startup memory footprint
 
 # Create database tables if they don't exist
 try:
@@ -98,6 +97,7 @@ async def echo(request: Request):
 # 1. Login Endpoint
 @app.post("/auth/login", response_model=schemas.Token)
 def login(login_data: schemas.UserLogin, db: Session = Depends(get_db)):
+    from services import auth
     user, token = auth.authenticate_external_user(db, login_data)
     return {"access_token": token, "token_type": "bearer"}
 
@@ -121,6 +121,7 @@ async def create_garden(
     user_id: Optional[int] = Form(None),
     db: Session = Depends(get_db)
 ):
+    from services import gcs
     # Create new entry in garden table
     db_garden = models.Garden(name=name, status="New")
     db.add(db_garden)
@@ -187,6 +188,7 @@ async def upload_garden_photos(
     Garden status transitions during processing:
       New → Processing Garden → Processing Plants → Ready
     """
+    from services import gcs
     if garden_id is not None:
         # Use existing garden
         db_garden = db.query(models.Garden).filter(models.Garden.id == garden_id).first()
@@ -249,6 +251,7 @@ async def push_photos_to_update(
     photos: List[UploadFile] = File(...),
     db: Session = Depends(get_db)
 ):
+    from services import gcs
     db_update = db.query(models.GardenUpdate).filter(models.GardenUpdate.id == update_id).first()
     if not db_update:
         raise HTTPException(status_code=404, detail="Garden update not found")
@@ -434,6 +437,7 @@ async def upload_plant_photo(
     photo: UploadFile = File(...),
     db: Session = Depends(get_db)
 ):
+    from services import gcs
     plant = db.query(models.Plant).filter(models.Plant.id == plant_id).first()
     if not plant:
         raise HTTPException(status_code=404, detail="Plant not found")
@@ -515,6 +519,7 @@ async def trigger_garden_processing(stream: bool = True, db: Session = Depends(g
     - stream=true (default): Streams logs via SSE. HTTP status is 200 as long as the stream starts.
     - stream=false: Runs synchronously. Returns 200 on success, or 500 with details on failure.
     """
+    from services import garden_processor
     if not stream:
         try:
             logging.info("Sync Trigger: Starting garden processing job...")
