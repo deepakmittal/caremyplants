@@ -50,9 +50,7 @@ if not os.path.exists("static_images"):
     os.makedirs("static_images")
 app.mount("/static", StaticFiles(directory="static_images"), name="static")
 
-@app.get("/")
-def read_root():
-    return {"message": "Welcome to Garden API"}
+# The root "/" route is served by the static files mount at the end of the file.
 
 @app.get("/hello", response_class=PlainTextResponse)
 def hello():
@@ -583,3 +581,21 @@ async def trigger_garden_processing(stream: bool = True, db: Session = Depends(g
             yield f"data: Error in stream: {str(e)}\n\n"
 
     return StreamingResponse(log_generator(), media_type="text/event-stream")
+
+# Mount Web UI static assets at / for Cloud Run serving
+frontend_dir = "/var/www/html"
+if os.path.exists(frontend_dir):
+    class SPAStaticFiles(StaticFiles):
+        async def get_response(self, path: str, scope):
+            try:
+                response = await super().get_response(path, scope)
+                if response.status_code == 404:
+                    return await super().get_response("index.html", scope)
+                return response
+            except HTTPException as ex:
+                if ex.status_code == 404:
+                    return await super().get_response("index.html", scope)
+                raise ex
+
+    app.mount("/", SPAStaticFiles(directory=frontend_dir, html=True), name="frontend")
+

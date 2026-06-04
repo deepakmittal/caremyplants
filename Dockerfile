@@ -6,7 +6,7 @@ RUN npm install --legacy-peer-deps
 COPY mobile/ .
 RUN npx expo export -p web
 
-# Stage 2: Final image combining Python, Nginx, and Supervisor
+# Stage 2: Final image running Python/Uvicorn directly
 FROM python:3.11-slim
 
 # Set environment variables
@@ -15,17 +15,11 @@ ENV PYTHONUNBUFFERED 1
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    nginx \
-    supervisor \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
 # Set the working directory in the container
 WORKDIR /app
-
-# Copy Nginx and Supervisor configs
-COPY nginx.conf /etc/nginx/nginx.conf
-COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Copy compiled Web UI static assets
 COPY --from=ui-builder /app/dist /var/www/html
@@ -42,8 +36,8 @@ COPY . .
 # Make the entrypoint script executable (if needed for migration or scripts)
 RUN chmod +x entrypoint.sh
 
-# Expose the port the Nginx server runs on (Cloud Run default)
+# Expose the port the application runs on (Cloud Run default)
 EXPOSE 8080
 
-# Run supervisor to manage nginx and uvicorn backend
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+# Run the entrypoint script directly
+CMD ["/app/entrypoint.sh"]
