@@ -37,7 +37,7 @@ MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD", "")
 MYSQL_HOST = os.getenv("MYSQL_HOST", "localhost")
 MYSQL_DB = os.getenv("MYSQL_DB", "garden_db")
 # The Cloud SQL instance connection name (e.g., project:region:instance)
-INSTANCE_CONNECTION_NAME = os.getenv("INSTANCE_CONNECTION_NAME", "crawler-488903:us-central1:care-my-plants")
+INSTANCE_CONNECTION_NAME = os.getenv("INSTANCE_CONNECTION_NAME", "crawler-488903:us-central1:care-my-plants-v2")
 
 encoded_password = urllib.parse.quote_plus(MYSQL_PASSWORD)
 
