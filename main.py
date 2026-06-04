@@ -597,8 +597,8 @@ if os.path.exists(frontend_dir):
                 if response.status_code == 404:
                     return await super().get_response("index.html", scope)
                 return response
-            except HTTPException as ex:
-                if ex.status_code == 404:
+            except Exception as ex:
+                if getattr(ex, "status_code", None) == 404:
                     return await super().get_response("index.html", scope)
                 raise ex
 
