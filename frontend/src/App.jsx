@@ -141,7 +141,7 @@ const App = () => {
     setIsProcessing(true);
     
     // In a real app, API_BASE_URL would be used
-    const eventSource = new EventSource('https://caremyplants-1059916488233.europe-west1.run.app/jobs/process?stream=true');
+    const eventSource = new EventSource('https://caremyplants-1059916488233.us-central1.run.app/jobs/process?stream=true');
     
     eventSource.onmessage = (event) => {
       if (event.data === '[DONE]') {

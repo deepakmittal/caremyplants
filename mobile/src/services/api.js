@@ -4,7 +4,7 @@ import { Platform } from 'react-native';
 // Local Development vs Production backend URL selection
 const API_URL = Platform.OS === 'web'
     ? (typeof window !== 'undefined' && window.location.hostname !== 'localhost' ? '' : 'http://localhost:8002')
-    : 'https://caremyplants-1059916488233.europe-west1.run.app';
+    : 'https://caremyplants-1059916488233.us-central1.run.app';
 
 
 const api = axios.create({
