@@ -60,7 +60,7 @@ engine = create_engine(
     max_overflow=10,
     pool_timeout=30,
     pool_recycle=1800,
-    connect_args={"connect_timeout": 5}
+    connect_args={"connect_timeout": 5, "read_timeout": 5, "write_timeout": 5}
 )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
