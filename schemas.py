@@ -89,6 +89,11 @@ class GardenWithPhotosResponse(BaseModel):
     class Config:
         from_attributes = True
 
+class PlantStatusTicker(BaseModel):
+    plant_count: int
+    healthy_plant_count: int
+    unhealthy_plant_count: int
+
 class GardenDetailsResponse(BaseModel):
     id: int
     name: str
@@ -101,6 +106,7 @@ class GardenDetailsResponse(BaseModel):
     has_weeds: Optional[bool] = None
     has_disease: Optional[bool] = None
     needs_sunlight: Optional[bool] = None
+    plant_status_tickers: PlantStatusTicker
     created_at: datetime
     plants: List[PlantLatestUpdateResponse]
 

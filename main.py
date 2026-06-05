@@ -292,11 +292,15 @@ def get_garden_details(garden_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Garden not found")
     
     plant_responses = []
+    healthy_plant_count = 0
     for plant in garden.plants:
         # Get latest update for this specific plant
         latest_update = db.query(models.PlantUpdate).filter(
             models.PlantUpdate.plant_id == plant.id
         ).order_by(models.PlantUpdate.created_at.desc()).first()
+        
+        if latest_update and latest_update.condition_text == "Healthy":
+            healthy_plant_count += 1
         
         # Use image_url from update if available, otherwise from plant
         image_url = latest_update.image_url if (latest_update and latest_update.image_url) else plant.image_url
@@ -310,6 +314,15 @@ def get_garden_details(garden_id: int, db: Session = Depends(get_db)):
             latest_recommendation=latest_update.recommendation if latest_update else None,
             last_update_date=latest_update.created_at if latest_update else None
         ))
+    
+    plant_count = len(garden.plants)
+    unhealthy_plant_count = plant_count - healthy_plant_count
+    
+    plant_status_tickers = schemas.PlantStatusTicker(
+        plant_count=plant_count,
+        healthy_plant_count=healthy_plant_count,
+        unhealthy_plant_count=unhealthy_plant_count
+    )
     
     # Get latest garden-level recommendation from updates
     latest_update = db.query(models.GardenUpdate).filter(
@@ -338,6 +351,7 @@ def get_garden_details(garden_id: int, db: Session = Depends(get_db)):
         "has_weeds": latest_update.has_weeds if latest_update else None,
         "has_disease": latest_update.has_disease if latest_update else None,
         "needs_sunlight": latest_update.needs_sunlight if latest_update else None,
+        "plant_status_tickers": plant_status_tickers,
         "created_at": garden.created_at,
         "plants": plant_responses
     }
@@ -603,4 +617,3 @@ if os.path.exists(frontend_dir):
                 raise ex
 
     app.mount("/", SPAStaticFiles(directory=frontend_dir, html=True), name="frontend")
-
