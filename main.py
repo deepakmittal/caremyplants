@@ -326,6 +326,21 @@ def get_garden_details(garden_id: int, db: Session = Depends(get_db)):
         else:
             recommendation_truncated = recommendation_full
 
+    plant_status_tickers = []
+    if latest_update:
+        if latest_update.needs_watering:
+            plant_status_tickers.append("Needs Watering")
+        if latest_update.needs_fertilizer:
+            plant_status_tickers.append("Needs Fertilizer")
+        if latest_update.has_pests:
+            plant_status_tickers.append("Pest Alert")
+        if latest_update.has_weeds:
+            plant_status_tickers.append("Weed Alert")
+        if latest_update.has_disease:
+            plant_status_tickers.append("Disease Alert")
+        if latest_update.needs_sunlight:
+            plant_status_tickers.append("Needs Sunlight")
+
     return {
         "id": garden.id,
         "name": garden.name,
@@ -338,6 +353,7 @@ def get_garden_details(garden_id: int, db: Session = Depends(get_db)):
         "has_weeds": latest_update.has_weeds if latest_update else None,
         "has_disease": latest_update.has_disease if latest_update else None,
         "needs_sunlight": latest_update.needs_sunlight if latest_update else None,
+        "plant_status_tickers": plant_status_tickers,
         "created_at": garden.created_at,
         "plants": plant_responses
     }
@@ -603,4 +619,3 @@ if os.path.exists(frontend_dir):
                 raise ex
 
     app.mount("/", SPAStaticFiles(directory=frontend_dir, html=True), name="frontend")
-
