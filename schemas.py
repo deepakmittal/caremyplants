@@ -101,6 +101,7 @@ class GardenDetailsResponse(BaseModel):
     has_weeds: Optional[bool] = None
     has_disease: Optional[bool] = None
     needs_sunlight: Optional[bool] = None
+    plant_status_tickers: Optional[List[str]] = None
     created_at: datetime
     plants: List[PlantLatestUpdateResponse]
 
