@@ -326,6 +326,33 @@ def get_garden_details(garden_id: int, db: Session = Depends(get_db)):
         else:
             recommendation_truncated = recommendation_full
 
+    tickers = []
+    if latest_update:
+        if latest_update.needs_watering:
+            tickers.append({"name": "Water", "status": "Needs Attention", "icon": "water-drop-icon"})
+        else:
+            tickers.append({"name": "Water", "status": "OK", "icon": "water-drop-icon"})
+        if latest_update.needs_fertilizer:
+            tickers.append({"name": "Fertilizer", "status": "Needs Attention", "icon": "fertilizer-icon"})
+        else:
+            tickers.append({"name": "Fertilizer", "status": "OK", "icon": "fertilizer-icon"})
+        if latest_update.has_pests:
+            tickers.append({"name": "Pests", "status": "Needs Attention", "icon": "pest-icon"})
+        else:
+            tickers.append({"name": "Pests", "status": "OK", "icon": "pest-icon"})
+        if latest_update.has_weeds:
+            tickers.append({"name": "Weeds", "status": "Needs Attention", "icon": "weed-icon"})
+        else:
+            tickers.append({"name": "Weeds", "status": "OK", "icon": "weed-icon"})
+        if latest_update.has_disease:
+            tickers.append({"name": "Disease", "status": "Needs Attention", "icon": "disease-icon"})
+        else:
+            tickers.append({"name": "Disease", "status": "OK", "icon": "disease-icon"})
+        if latest_update.needs_sunlight:
+            tickers.append({"name": "Sunlight", "status": "Needs Attention", "icon": "sun-icon"})
+        else:
+            tickers.append({"name": "Sunlight", "status": "OK", "icon": "sun-icon"})
+
     return {
         "id": garden.id,
         "name": garden.name,
@@ -339,7 +366,8 @@ def get_garden_details(garden_id: int, db: Session = Depends(get_db)):
         "has_disease": latest_update.has_disease if latest_update else None,
         "needs_sunlight": latest_update.needs_sunlight if latest_update else None,
         "created_at": garden.created_at,
-        "plants": plant_responses
+        "plants": plant_responses,
+        "tickers": tickers
     }
 
 # New: Get all gardens for a specific user
@@ -603,4 +631,3 @@ if os.path.exists(frontend_dir):
                 raise ex
 
     app.mount("/", SPAStaticFiles(directory=frontend_dir, html=True), name="frontend")
-
