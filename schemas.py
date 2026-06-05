@@ -89,6 +89,11 @@ class GardenWithPhotosResponse(BaseModel):
     class Config:
         from_attributes = True
 
+class Ticker(BaseModel):
+    name: str
+    status: str
+    icon: str
+
 class GardenDetailsResponse(BaseModel):
     id: int
     name: str
@@ -103,6 +108,7 @@ class GardenDetailsResponse(BaseModel):
     needs_sunlight: Optional[bool] = None
     created_at: datetime
     plants: List[PlantLatestUpdateResponse]
+    tickers: List[Ticker] = []
 
     class Config:
         from_attributes = True
