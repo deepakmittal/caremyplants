@@ -2,6 +2,7 @@ from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Form, Bac
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from typing import List, Optional
 import os
 import uuid
@@ -285,60 +286,76 @@ def get_garden_plants(garden_id: int, db: Session = Depends(get_db)):
     return plants
 
 # New: Get garden details including its plants
-@app.get("/gardens/{garden_id}/details", response_model=schemas.GardenDetailsResponse)
+@app.get("/gardens/{garden_id}/details", response_model=schemas.GardenDetailsResponseV2)
 def get_garden_details(garden_id: int, db: Session = Depends(get_db)):
     garden = db.query(models.Garden).filter(models.Garden.id == garden_id).first()
     if not garden:
         raise HTTPException(status_code=404, detail="Garden not found")
     
+    # 1. Fetch latest garden photo
+    latest_photo = db.query(models.GardenPhoto).filter(
+        models.GardenPhoto.garden_id == garden_id
+    ).order_by(models.GardenPhoto.created_at.desc()).first()
+    photo_url = latest_photo.photo_url if latest_photo else None
+
+    # 2. Generate tickers from the latest garden-level update
+    latest_garden_update = db.query(models.GardenUpdate).filter(
+        models.GardenUpdate.garden_id == garden_id
+    ).order_by(models.GardenUpdate.created_at.desc()).first()
+
+    tickers = []
+    if latest_garden_update:
+        if latest_garden_update.needs_watering:
+            tickers.append({"label": "Watering", "value": "Needed"})
+        if latest_garden_update.needs_fertilizer:
+            tickers.append({"label": "Fertilizer", "value": "Needed"})
+        if latest_garden_update.has_pests:
+            tickers.append({"label": "Pests", "value": "Detected"})
+        if latest_garden_update.has_weeds:
+            tickers.append({"label": "Weeds", "value": "Detected"})
+        if latest_garden_update.has_disease:
+            tickers.append({"label": "Disease", "value": "Detected"})
+    
+    # Add a ticker for total plants
+    plant_count = db.query(func.count(models.Plant.id)).filter(models.Plant.garden_id == garden_id).scalar()
+    tickers.append({"label": "Plants", "value": str(plant_count)})
+
+    # 3. Generate a short summary (max 10 words)
+    summary = None
+    if latest_garden_update and latest_garden_update.recommendation:
+        words = latest_garden_update.recommendation.split()
+        if len(words) > 10:
+            summary = " ".join(words[:10]) + "..."
+        else:
+            summary = latest_garden_update.recommendation
+
+    # 4. Get all plants with their latest updates
     plant_responses = []
     for plant in garden.plants:
-        # Get latest update for this specific plant
-        latest_update = db.query(models.PlantUpdate).filter(
+        latest_plant_update = db.query(models.PlantUpdate).filter(
             models.PlantUpdate.plant_id == plant.id
         ).order_by(models.PlantUpdate.created_at.desc()).first()
         
-        # Use image_url from update if available, otherwise from plant
-        image_url = latest_update.image_url if (latest_update and latest_update.image_url) else plant.image_url
+        image_url = latest_plant_update.image_url if (latest_plant_update and latest_plant_update.image_url) else plant.image_url
         
         plant_responses.append(schemas.PlantLatestUpdateResponse(
             id=plant.id,
             name=plant.name,
             plant_variety=plant.plant_variety,
             image_url=image_url,
-            latest_condition=latest_update.condition_text if latest_update else None,
-            latest_recommendation=latest_update.recommendation if latest_update else None,
-            last_update_date=latest_update.created_at if latest_update else None
+            latest_condition=latest_plant_update.condition_text if latest_plant_update else None,
+            latest_recommendation=latest_plant_update.recommendation if latest_plant_update else None,
+            last_update_date=latest_plant_update.created_at if latest_plant_update else None
         ))
-    
-    # Get latest garden-level recommendation from updates
-    latest_update = db.query(models.GardenUpdate).filter(
-        models.GardenUpdate.garden_id == garden_id,
-        models.GardenUpdate.recommendation.is_not(None)
-    ).order_by(models.GardenUpdate.created_at.desc()).first()
-
-    recommendation_full = latest_update.recommendation if latest_update else None
-    recommendation_truncated = None
-    if recommendation_full:
-        words = recommendation_full.split()
-        if len(words) > 10:
-            recommendation_truncated = " ".join(words[:10]) + "..."
-        else:
-            recommendation_truncated = recommendation_full
 
     return {
         "id": garden.id,
         "name": garden.name,
         "status": garden.status,
-        "recommendation": recommendation_truncated,
-        "recommendation_full": recommendation_full,
-        "needs_watering": latest_update.needs_watering if latest_update else None,
-        "needs_fertilizer": latest_update.needs_fertilizer if latest_update else None,
-        "has_pests": latest_update.has_pests if latest_update else None,
-        "has_weeds": latest_update.has_weeds if latest_update else None,
-        "has_disease": latest_update.has_disease if latest_update else None,
-        "needs_sunlight": latest_update.needs_sunlight if latest_update else None,
+        "summary": summary,
+        "photo_url": photo_url,
         "created_at": garden.created_at,
+        "tickers": tickers,
         "plants": plant_responses
     }
 
@@ -603,4 +620,3 @@ if os.path.exists(frontend_dir):
                 raise ex
 
     app.mount("/", SPAStaticFiles(directory=frontend_dir, html=True), name="frontend")
-

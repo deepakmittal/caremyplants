@@ -44,17 +44,6 @@ class PlantUpdateResponse(BaseModel):
     class Config:
         from_attributes = True
 
-class PlantResponse(BaseModel):
-    id: int
-    name: str
-    plant_variety: Optional[str] = None
-    condition: Optional[str] = None
-    image_url: Optional[str] = None
-    updates: List[PlantUpdateResponse] = []
-
-    class Config:
-        from_attributes = True
-
 class GardenPhotoResponse(BaseModel):
     id: int
     photo_url: str
@@ -75,33 +64,18 @@ class PlantLatestUpdateResponse(BaseModel):
     class Config:
         from_attributes = True
 
-class GardenWithPhotosResponse(BaseModel):
-    id: int
-    name: str
-    status: Optional[str] = None
-    summary: Optional[str] = None
-    upload_commentry: Optional[str] = None
-    recommendation: Optional[str] = None
-    created_at: datetime
-    photos: List[GardenPhotoResponse]
-    plants: List[PlantLatestUpdateResponse] = []
-
-    class Config:
-        from_attributes = True
+class Ticker(BaseModel):
+    label: str
+    value: str
 
 class GardenDetailsResponse(BaseModel):
     id: int
     name: str
     status: Optional[str] = None
-    recommendation: Optional[str] = None
-    recommendation_full: Optional[str] = None
-    needs_watering: Optional[bool] = None
-    needs_fertilizer: Optional[bool] = None
-    has_pests: Optional[bool] = None
-    has_weeds: Optional[bool] = None
-    has_disease: Optional[bool] = None
-    needs_sunlight: Optional[bool] = None
+    summary: Optional[str] = None
+    photo_url: Optional[str] = None
     created_at: datetime
+    tickers: List[Ticker]
     plants: List[PlantLatestUpdateResponse]
 
     class Config:
