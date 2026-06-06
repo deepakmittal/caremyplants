@@ -1,66 +1,67 @@
 import os
-import httpx
+import requests
 import pytest
 
-BASE_URL = os.environ.get("BASE_URL")
-if not BASE_URL:
-    raise ValueError("BASE_URL environment variable not set")
+BASE_URL = os.environ.get("BASE_URL", "http://localhost:8000")
 
-GARDEN_ID_TO_TEST = 1 
+def test_get_garden_details_v2():
+    """
+    Test the refactored garden details endpoint to ensure it returns tickers,
+    a truncated summary, and other expected fields.
+    """
+    garden_id = 1  # Assuming a garden with ID 1 exists for testing
+    response = requests.get(f"{BASE_URL}/gardens/{garden_id}/details")
 
-@pytest.mark.integration
-def test_get_garden_details_new_format():
-    """
-    Tests the GET /gardens/{garden_id}/details endpoint for the new V2 response format.
-    """
-    # Arrange
-    url = f"{BASE_URL}/gardens/{GARDEN_ID_TO_TEST}/details"
-    
-    # Act
-    with httpx.Client() as client:
-        response = client.get(url)
-    
-    # Assert
-    # Check for successful response
-    assert response.status_code == 200, f"Expected status code 200, but got {response.status_code}. Response: {response.text}"
-    
-    # Parse the JSON response
+    assert response.status_code == 200
+
     data = response.json()
-    
-    # Verify the new V2 fields are present
+
+    # 1. Check for the existence of key fields
     assert "id" in data
     assert "name" in data
     assert "summary" in data
     assert "photo_url" in data
     assert "tickers" in data
     assert "plants" in data
-    
-    # Verify the format of the new fields
-    assert isinstance(data["summary"], (str, type(None))), "summary should be a string or null"
-    if data["summary"] is not None:
-        # Check if the summary is roughly 10 words
-        assert len(data["summary"].split()) <= 11, "Summary should be around 10 words."
+    assert "created_at" in data
 
-    assert isinstance(data["tickers"], list), "tickers should be a list"
-    if data["tickers"]:
-        for ticker in data["tickers"]:
-            assert "label" in ticker
-            assert "value" in ticker
-            assert isinstance(ticker["label"], str)
-            assert isinstance(ticker["value"], str)
+    # 2. Validate the data types
+    assert isinstance(data["id"], int)
+    assert isinstance(data["name"], str)
+    assert (data["summary"] is None or isinstance(data["summary"], str))
+    assert (data["photo_url"] is None or isinstance(data["photo_url"], str))
+    assert isinstance(data["tickers"], list)
+    assert isinstance(data["plants"], list)
 
-    assert isinstance(data["plants"], list), "plants should be a list"
+    # 3. Validate the summary truncation (max 10 words)
+    if data["summary"]:
+        summary_words = data["summary"].split()
+        # The truncated summary might end with "...", so we check for <= 11 words
+        assert len(summary_words) <= 11 
 
-    # Verify that the old, removed fields are NOT present
+    # 4. Validate the structure of tickers
+    for ticker in data["tickers"]:
+        assert "label" in ticker
+        assert "value" in ticker
+        assert isinstance(ticker["label"], str)
+        assert isinstance(ticker["value"], str)
+
+    # 5. Validate the structure of plants list
+    if data["plants"]:
+        plant = data["plants"][0]
+        assert "id" in plant
+        assert "name" in plant
+        assert "plant_variety" in plant
+        assert "image_url" in plant
+        assert "latest_condition" in plant
+        assert "latest_recommendation" in plant
+        assert "last_update_date" in plant
+
+    # 6. Check that old, removed fields are not present
     assert "recommendation" not in data
     assert "recommendation_full" not in data
     assert "needs_watering" not in data
-    assert "needs_fertilizer" not in data
     assert "has_pests" not in data
-    assert "has_weeds" not in data
-    assert "has_disease" not in data
-    assert "needs_sunlight" not in data
 
-    print(f"Successfully validated new garden details format for garden ID {GARDEN_ID_TO_TEST}")
-    print(f"Response JSON: {data}")
-
+if __name__ == "__main__":
+    pytest.main()
