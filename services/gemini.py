@@ -171,7 +171,7 @@ def analyze_garden_overview(image_list: List[bytes], last_update_recommendation:
 
     Return ONLY JSON:
     {{
-      "summary": "comma separated summary (e.g. vibrant, healthy, full of colors)",
+      "summary": "A very short summary of the garden's health in 10 words or less.",
       "hydration": "Low/Medium/High",
       "exposure": "Low/Medium/High",
       "vibrancy": "Low/Medium/High",
