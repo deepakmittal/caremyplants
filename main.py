@@ -1,7 +1,7 @@
 from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Form, BackgroundTasks, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from typing import List, Optional
 import os
 import uuid
@@ -287,7 +287,7 @@ def get_garden_plants(garden_id: int, db: Session = Depends(get_db)):
 # New: Get garden details including its plants
 @app.get("/gardens/{garden_id}/details", response_model=schemas.GardenDetailsResponse)
 def get_garden_details(garden_id: int, db: Session = Depends(get_db)):
-    garden = db.query(models.Garden).filter(models.Garden.id == garden_id).first()
+    garden = db.query(models.Garden).options(joinedload(models.Garden.photos)).filter(models.Garden.id == garden_id).first()
     if not garden:
         raise HTTPException(status_code=404, detail="Garden not found")
     
@@ -311,36 +311,15 @@ def get_garden_details(garden_id: int, db: Session = Depends(get_db)):
             last_update_date=latest_update.created_at if latest_update else None
         ))
     
-    # Get latest garden-level recommendation from updates
-    latest_update = db.query(models.GardenUpdate).filter(
-        models.GardenUpdate.garden_id == garden_id,
-        models.GardenUpdate.recommendation.is_not(None)
-    ).order_by(models.GardenUpdate.created_at.desc()).first()
-
-    recommendation_full = latest_update.recommendation if latest_update else None
-    recommendation_truncated = None
-    if recommendation_full:
-        words = recommendation_full.split()
-        if len(words) > 10:
-            recommendation_truncated = " ".join(words[:10]) + "..."
-        else:
-            recommendation_truncated = recommendation_full
-
-    return {
-        "id": garden.id,
-        "name": garden.name,
-        "status": garden.status,
-        "recommendation": recommendation_truncated,
-        "recommendation_full": recommendation_full,
-        "needs_watering": latest_update.needs_watering if latest_update else None,
-        "needs_fertilizer": latest_update.needs_fertilizer if latest_update else None,
-        "has_pests": latest_update.has_pests if latest_update else None,
-        "has_weeds": latest_update.has_weeds if latest_update else None,
-        "has_disease": latest_update.has_disease if latest_update else None,
-        "needs_sunlight": latest_update.needs_sunlight if latest_update else None,
-        "created_at": garden.created_at,
-        "plants": plant_responses
-    }
+    return schemas.GardenDetailsResponse(
+        id=garden.id,
+        name=garden.name,
+        status=garden.status,
+        summary=garden.summary,
+        created_at=garden.created_at,
+        photos=[schemas.GardenPhotoResponse.from_orm(p) for p in garden.photos],
+        plants=plant_responses
+    )
 
 # New: Get all gardens for a specific user
 @app.get("/users/{user_id}/gardens", response_model=List[schemas.GardenResponse])
@@ -603,4 +582,3 @@ if os.path.exists(frontend_dir):
                 raise ex
 
     app.mount("/", SPAStaticFiles(directory=frontend_dir, html=True), name="frontend")
-
