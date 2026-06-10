@@ -166,7 +166,7 @@ const App = () => {
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-16">
         <div>
           <h2 className="text-text-muted text-sm font-bold uppercase tracking-widest mb-1">Your Collection</h2>
-          <h1 className="text-4xl font-extrabold gradient-text">My Oasis</h1>
+          <h1 className="text-4xl font-extrabold gradient-text">My Gardens</h1>
         </div>
         <div className="flex flex-wrap items-center gap-4">
           {gardens.some(g => g.status === 'Ready to Process' || g.status === 'New') && (
