@@ -29,7 +29,7 @@ const { width } = Dimensions.get('window');
 const CARD_WIDTH = width * 0.85;
 const SPACER = (width - CARD_WIDTH) / 2;
 
-const SanctuaryCard = ({ garden, index, onPress, onDelete }) => {
+const GardenCard = ({ garden, index, onPress, onDelete }) => {
   const photoUrl = garden.photos && garden.photos.length > 0
     ? garden.photos[0].photo_url
     : 'https://images.unsplash.com/photo-1585320806297-9794b3e4eeae?auto=format&fit=crop&q=80&w=800';
@@ -65,7 +65,7 @@ const SanctuaryCard = ({ garden, index, onPress, onDelete }) => {
         </Text>
 
         <Text style={styles.recommendation} numberOfLines={2}>
-          {garden.recommendation || "Our AI is analyzing your botanical sanctuary to provide personalized care recommendations..."}
+          {garden.recommendation || "Our AI is analyzing your botanical garden to provide personalized care recommendations..."}
         </Text>
 
         <View style={styles.cardFooter}>
@@ -309,7 +309,7 @@ export default function App() {
 
   const handleDeleteGarden = (garden) => {
     Alert.alert(
-      "Delete Sanctuary",
+      "Delete Garden",
       `Are you sure you want to delete "${garden.name}"? This action cannot be undone.`,
       [
         { text: "Cancel", style: "cancel" },
@@ -407,12 +407,12 @@ export default function App() {
               <Leaf size={18} color={theme.colors.primary} />
               <Text style={styles.logoText}>ADD NEW GROWTH</Text>
             </View>
-            <Text style={[styles.title, { fontSize: 28 }]}>Capture Sanctuary</Text>
+            <Text style={[styles.title, { fontSize: 28 }]}>Capture Garden</Text>
           </View>
 
           <ScrollView contentContainerStyle={{ paddingHorizontal: theme.spacing.margin }}>
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Sanctuary Name</Text>
+              <Text style={styles.inputLabel}>Garden Name</Text>
               <TextInput
                 style={styles.textInput}
                 placeholder="e.g. Sunny Balcony, Indoor Jungle"
@@ -489,7 +489,7 @@ export default function App() {
                 </Text>
                 <Text style={styles.uploadSubtext}>High-res JPG or PNG works best</Text>
                 <Text style={[styles.uploadSubtext, { marginTop: 4, textAlign: 'center', paddingHorizontal: 20 }]}>
-                  You can upload multiple photos to cover all the plants in your sanctuary.
+                  You can upload multiple photos to cover all the plants in your garden.
                 </Text>
               </TouchableOpacity>
             </View>
@@ -536,7 +536,7 @@ export default function App() {
                 <Leaf size={18} color={theme.colors.primary} />
                 <Text style={styles.logoText}>BOTANICAL MANAGER</Text>
               </View>
-              <Text style={styles.title}>My Sanctuaries</Text>
+              <Text style={styles.title}>My Gardens</Text>
             </View>
             <TouchableOpacity style={styles.btnIcon} onPress={() => setIsUploading(true)}>
               <Plus size={24} color={theme.colors.tertiary} />
@@ -557,7 +557,7 @@ export default function App() {
               scrollEventThrottle={16}
             >
               {gardens.map((garden, index) => (
-                <SanctuaryCard
+                <GardenCard
                   key={garden.id}
                   garden={garden}
                   index={index}
@@ -573,7 +573,7 @@ export default function App() {
               </View>
               <Text style={[styles.title, { textAlign: 'center', marginBottom: 12 }]}>Bring Your Garden to Life</Text>
               <Text style={[styles.recommendation, { textAlign: 'center', fontSize: 16, lineHeight: 24 }]}>
-                It looks like you haven't started your botanical journey yet. Upload photos of your sanctuary to get personalized AI care recommendations.
+                It looks like you haven't started your botanical journey yet. Upload photos of your garden to get personalized AI care recommendations.
               </Text>
               
               <TouchableOpacity 
@@ -591,7 +591,7 @@ export default function App() {
               <View
                 style={[
                   styles.progressIndicator,
-                  { width: gardens.length > 0 ? (scrollX / (gardens.length * (CARD_WIDTH + 16))) * 100 + '%' : '0%' }
+                  { width: gardens.length > 0 ? (scrollX / (gardens.length * ( CARD_WIDTH + 16))) * 100 + '%' : '0%' }
                 ]}
               />
             </View>
@@ -607,7 +607,7 @@ export default function App() {
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingRight: theme.spacing.margin }}>
               <TouchableOpacity style={styles.backButton} onPress={() => setIsUploading(true)}>
                 <Plus size={20} color={theme.colors.primary} />
-                <Text style={styles.backText}>Add Sanctuary</Text>
+                <Text style={styles.backText}>Add Garden</Text>
               </TouchableOpacity>
               <TouchableOpacity style={[styles.backButton, { backgroundColor: 'transparent' }]} onPress={() => handleDeleteGarden(selectedGarden)}>
                 <Trash2 size={20} color={theme.colors.vibrantPink} />
@@ -618,7 +618,7 @@ export default function App() {
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingRight: theme.spacing.margin }}>
               <TouchableOpacity style={styles.backButton} onPress={() => setSelectedGarden(null)}>
                 <ArrowLeft size={20} color={theme.colors.primary} />
-                <Text style={styles.backText}>Back to Sanctuaries</Text>
+                <Text style={styles.backText}>Back to Gardens</Text>
               </TouchableOpacity>
               <TouchableOpacity style={[styles.backButton, { backgroundColor: 'transparent' }]} onPress={() => handleDeleteGarden(selectedGarden)}>
                 <Trash2 size={20} color={theme.colors.vibrantPink} />
@@ -691,7 +691,7 @@ export default function App() {
           {selectedGarden.status === 'Ready' && (
             <View style={{ paddingHorizontal: theme.spacing.margin, marginTop: 10 }}>
               <View style={[styles.analysisContainer, { backgroundColor: theme.colors.surfaceContainerLowest, flexDirection: 'column', alignItems: 'flex-start' }]}>
-                <Text style={[styles.analysisText, { color: theme.colors.primary, fontFamily: 'Manrope_700Bold' }]}>Sanctuary Overview</Text>
+                <Text style={[styles.analysisText, { color: theme.colors.primary, fontFamily: 'Manrope_700Bold' }]}>Garden Overview</Text>
                 <Text style={[styles.analysisText, { marginTop: 4, color: theme.colors.onSurface }]}>{selectedGarden.recommendation}</Text>
                 
                 {!!selectedGarden.immediate_changes && (
