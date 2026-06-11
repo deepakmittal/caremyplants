@@ -1,6 +1,29 @@
 from pydantic import BaseModel, EmailStr
-from typing import List, Optional
+from typing import List, Optional, Literal
 from datetime import datetime
+
+# --- NEW HEALTH OVERVIEW SCHEMAS ---
+
+class SanctuaryVitality(BaseModel):
+    """High-level summary of the garden's overall health."""
+    score: int
+    flourishingPlantsCount: int
+    careNeededPlantsCount: int
+
+class CareMetric(BaseModel):
+    """Detailed information for a specific care category."""
+    category: Literal["WATERING", "SUN_EXPOSURE", "SOIL_QUALITY", "VITALITY", "LEAF_CARE", "POT_STATUS", "PRUNING"]
+    status: str
+    isUnfavorable: bool
+    affectedPlantsCount: int
+    affectedPlantIds: List[int]
+
+class GardenHealthOverview(BaseModel):
+    """A comprehensive overview of the garden's health."""
+    sanctuaryVitality: SanctuaryVitality
+    metrics: List[CareMetric]
+
+# --- EXISTING SCHEMAS ---
 
 class UserBase(BaseModel):
     user_email: EmailStr
@@ -103,6 +126,9 @@ class GardenDetailsResponse(BaseModel):
     needs_sunlight: Optional[bool] = None
     created_at: datetime
     plants: List[PlantLatestUpdateResponse]
+    # --- NEW FIELD --- #
+    healthOverview: Optional[GardenHealthOverview] = None
+
 
     class Config:
         from_attributes = True

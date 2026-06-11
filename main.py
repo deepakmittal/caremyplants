@@ -287,6 +287,8 @@ def get_garden_plants(garden_id: int, db: Session = Depends(get_db)):
 # New: Get garden details including its plants
 @app.get("/gardens/{garden_id}/details", response_model=schemas.GardenDetailsResponse)
 def get_garden_details(garden_id: int, db: Session = Depends(get_db)):
+    from services import health_service
+
     garden = db.query(models.Garden).filter(models.Garden.id == garden_id).first()
     if not garden:
         raise HTTPException(status_code=404, detail="Garden not found")
@@ -312,12 +314,12 @@ def get_garden_details(garden_id: int, db: Session = Depends(get_db)):
         ))
     
     # Get latest garden-level recommendation from updates
-    latest_update = db.query(models.GardenUpdate).filter(
+    latest_garden_update = db.query(models.GardenUpdate).filter(
         models.GardenUpdate.garden_id == garden_id,
         models.GardenUpdate.recommendation.is_not(None)
     ).order_by(models.GardenUpdate.created_at.desc()).first()
 
-    recommendation_full = latest_update.recommendation if latest_update else None
+    recommendation_full = latest_garden_update.recommendation if latest_garden_update else None
     recommendation_truncated = None
     if recommendation_full:
         words = recommendation_full.split()
@@ -326,20 +328,24 @@ def get_garden_details(garden_id: int, db: Session = Depends(get_db)):
         else:
             recommendation_truncated = recommendation_full
 
+    # --- NEW: Calculate Health Overview ---
+    health_overview = health_service.calculate_garden_health(garden)
+
     return {
         "id": garden.id,
         "name": garden.name,
         "status": garden.status,
         "recommendation": recommendation_truncated,
         "recommendation_full": recommendation_full,
-        "needs_watering": latest_update.needs_watering if latest_update else None,
-        "needs_fertilizer": latest_update.needs_fertilizer if latest_update else None,
-        "has_pests": latest_update.has_pests if latest_update else None,
-        "has_weeds": latest_update.has_weeds if latest_update else None,
-        "has_disease": latest_update.has_disease if latest_update else None,
-        "needs_sunlight": latest_update.needs_sunlight if latest_update else None,
+        "needs_watering": latest_garden_update.needs_watering if latest_garden_update else None,
+        "needs_fertilizer": latest_garden_update.needs_fertilizer if latest_garden_update else None,
+        "has_pests": latest_garden_update.has_pests if latest_garden_update else None,
+        "has_weeds": latest_garden_update.has_weeds if latest_garden_update else None,
+        "has_disease": latest_garden_update.has_disease if latest_garden_update else None,
+        "needs_sunlight": latest_garden_update.needs_sunlight if latest_garden_update else None,
         "created_at": garden.created_at,
-        "plants": plant_responses
+        "plants": plant_responses,
+        "healthOverview": health_overview
     }
 
 # New: Get all gardens for a specific user
@@ -603,4 +609,3 @@ if os.path.exists(frontend_dir):
                 raise ex
 
     app.mount("/", SPAStaticFiles(directory=frontend_dir, html=True), name="frontend")
-
