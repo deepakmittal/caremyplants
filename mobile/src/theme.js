@@ -15,7 +15,7 @@ export const theme = {
         outlineVariant: '#c1c8c4',
         onSurfaceVariant: '#414846',
         error: '#ba1a1a',
-        vibrantPink: '#c2185b',
+        vibrantPink: '#D10056',
     },
     spacing: {
         xs: 4,
