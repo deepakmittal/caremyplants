@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useRef } from 'react';
 import {
   StyleSheet,
@@ -18,16 +19,121 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { theme } from './src/theme';
 import { getDetailedGardens, uploadGardenPhotos, updateGardenAccess, getGardenEnvironment, deleteGarden, uploadPlantPhoto } from './src/services/api';
-import { Leaf, ChevronRight, ArrowLeft, Droplets, Sun, Plus, Image as ImageIcon, Sparkles, Thermometer, MapPin, Trash2 } from 'lucide-react-native';
+import { 
+  Leaf, ChevronRight, ArrowLeft, Droplets, Sun, Plus, Image as ImageIcon, Sparkles, Thermometer, MapPin, Trash2,
+  CheckCircle2, HeartPulse, Sprout, Wind, Archive, Scissors 
+} from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import * as Font from 'expo-font';
 import { Manrope_400Regular, Manrope_600SemiBold, Manrope_700Bold } from '@expo-google-fonts/manrope';
 import PlantDetails from './src/components/PlantDetails';
+import Svg, { Circle } from 'react-native-svg'; // NOTE: Requires react-native-svg dependency
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width * 0.85;
-const SPACER = (width - CARD_WIDTH) / 2;
+
+// --- NEW COMPONENTS START ---
+
+const SanctuaryVitalityCard = ({ vitality }) => {
+  if (!vitality) return null;
+
+  const score = vitality.score || 0;
+  const size = 80;
+  const strokeWidth = 8;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = radius * 2 * Math.PI;
+  const progress = score / 100;
+  const strokeDashoffset = circumference * (1 - progress);
+
+  const strokeColor = score > 90 ? theme.colors.primary : theme.colors.vibrantPink;
+
+  return (
+    <View style={styles.vitalityCard}>
+      <View style={styles.vitalityContent}>
+        <Text style={styles.vitalityLabel}>SANCTUARY VITALITY</Text>
+        <Text style={styles.vitalityScore}>{score}%</Text>
+        <Text style={styles.vitalitySummary}>
+          {vitality.flourishingPlantsCount} plants are flourishing, {vitality.careNeededPlantsCount} need care.
+        </Text>
+      </View>
+      <View style={styles.vitalityChart}>
+        <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+          <Circle
+            stroke={theme.colors.outlineVariant}
+            opacity={0.3}
+            fill="none"
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            strokeWidth={strokeWidth}
+          />
+          <Circle
+            stroke={strokeColor}
+            fill="none"
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            strokeWidth={strokeWidth}
+            strokeDasharray={circumference}
+            strokeDashoffset={strokeDashoffset}
+            strokeLinecap="round"
+            transform={`rotate(-90 ${size/2} ${size/2})`}
+          />
+        </Svg>
+        <View style={styles.vitalityChartIcon}>
+          <Leaf size={24} color={strokeColor} />
+        </View>
+      </View>
+    </View>
+  );
+};
+
+const MetricTile = ({ metric }) => {
+  const METRIC_ICONS = {
+    WATERING: Droplets,
+    SUN_EXPOSURE: Sun,
+    SOIL_QUALITY: Sprout,
+    VITALITY: HeartPulse,
+    LEAF_CARE: Wind,
+    POT_STATUS: Archive,
+    PRUNING: Scissors,
+  };
+
+  const Icon = METRIC_ICONS[metric.category] || Leaf;
+
+  return (
+    <TouchableOpacity style={styles.metricTile} activeOpacity={0.8}>
+      {metric.isUnfavorable && (
+        <View style={styles.metricBadge}>
+          <Text style={styles.metricBadgeText}>{metric.affectedPlantsCount}</Text>
+        </View>
+      )}
+      <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'center'}}>
+        <Icon size={28} color={theme.colors.primary} />
+        {!metric.isUnfavorable && <CheckCircle2 size={16} color="green" style={{ marginLeft: 4 }} />}
+      </View>
+      <View>
+        <Text style={styles.metricLabel}>{metric.category.replace('_', ' ')}</Text>
+        <Text style={styles.metricStatus}>{metric.status}</Text>
+      </View>
+    </TouchableOpacity>
+  );
+};
+
+const MetricTileGrid = ({ metrics }) => {
+  if (!metrics || metrics.length === 0) return null;
+  return (
+    <View style={styles.metricGrid}>
+      {metrics.map((metric) => (
+        <MetricTile key={metric.category} metric={metric} />
+      ))}
+    </View>
+  );
+};
+
+// --- NEW COMPONENTS END ---
+
 
 const GardenCard = ({ garden, index, onPress, onDelete }) => {
   const photoUrl = garden.photos && garden.photos.length > 0
@@ -136,7 +242,7 @@ export default function App() {
         setFontsLoaded(true);
       } catch (e) {
         console.warn("Font loading failed, proceeding with system fonts", e);
-        setFontsLoaded(true); // Proceed anyway to avoid stuck screen
+        setFontsLoaded(true);
       }
     }
     loadFonts();
@@ -146,7 +252,6 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [selectedGarden, setSelectedGarden] = useState(null);
   const [selectedPlant, setSelectedPlant] = useState(null);
-  const [environmentData, setEnvironmentData] = useState(null);
   const initialLoadDone = useRef(false);
   const [scrollX, setScrollX] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
@@ -188,19 +293,16 @@ export default function App() {
   }, []);
 
   const pickImage = async () => {
-    // Request permissions explicitly
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
       alert('Sorry, we need camera roll permissions to make this work!');
       return;
     }
-
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: false,
       quality: 0.8,
     });
-
     if (!result.canceled) {
       setUploadData({ ...uploadData, photos: result.assets });
     }
@@ -212,14 +314,12 @@ export default function App() {
       alert('Sorry, we need camera roll permissions to make this work!');
       return;
     }
-
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: false,
       allowsMultipleSelection: true,
       quality: 0.8,
     });
-
     if (!result.canceled && result.assets && result.assets.length > 0) {
       setUploadingState(true);
       try {
@@ -237,28 +337,19 @@ export default function App() {
 
   const handleUploadSubmit = async () => {
     if (!uploadData.name || uploadData.photos.length === 0) return;
-    
     setUploadingState(true);
     try {
       const newGardenResponse = await uploadGardenPhotos(uploadData.photos, uploadData.name, 4, uploadData.location);
       setUploadData({ name: '', location: '', photos: [] });
       setIsUploading(false);
-      
-      // Fetch the fully populated list of gardens (including photos)
       const data = await getDetailedGardens(4);
-      const sorted = data.sort((a, b) => {
-        const dateA = a.last_accessed_at ? new Date(a.last_accessed_at) : new Date(a.created_at);
-        const dateB = b.last_accessed_at ? new Date(b.last_accessed_at) : new Date(b.created_at);
-        return dateB - dateA;
-      });
+      const sorted = data.sort((a, b) => new Date(b.last_accessed_at || b.created_at) - new Date(a.last_accessed_at || a.created_at));
       setGardens(sorted);
-
-      // Find the newly uploaded garden with its full details (photos, etc.) and auto-select it
       const newlyUploadedGarden = sorted.find(g => g.id === newGardenResponse.id);
       if (newlyUploadedGarden) {
         handleGardenPress(newlyUploadedGarden);
       } else {
-        await fetchData(); // fallback
+        await fetchData();
       }
     } catch (err) {
       console.error("Upload failed", err);
@@ -276,13 +367,8 @@ export default function App() {
         alert('Permission to access location was denied');
         return;
       }
-
       const location = await Location.getCurrentPositionAsync({});
-      const geocode = await Location.reverseGeocodeAsync({
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude
-      });
-
+      const geocode = await Location.reverseGeocodeAsync({ latitude: location.coords.latitude, longitude: location.coords.longitude });
       if (geocode.length > 0) {
         const city = geocode[0].city || geocode[0].subregion || geocode[0].region;
         setUploadData(prev => ({ ...prev, location: city }));
@@ -295,16 +381,8 @@ export default function App() {
     }
   };
 
-  const handleGardenPress = async (garden) => {
+  const handleGardenPress = (garden) => {
     setSelectedGarden(garden);
-    setEnvironmentData(null);
-    updateGardenAccess(garden.id).catch(console.error);
-    try {
-      const env = await getGardenEnvironment(garden.id);
-      setEnvironmentData(env);
-    } catch (e) {
-      console.error(e);
-    }
   };
 
   const handleDeleteGarden = (garden) => {
@@ -341,17 +419,10 @@ export default function App() {
       const sorted = [...data].sort((a, b) => new Date(b.last_accessed_at || 0) - new Date(a.last_accessed_at || 0));
       setGardens(sorted);
       
-      // Update selectedGarden if it exists to refresh its status and commentary
       if (selectedGarden) {
         const updatedSelected = sorted.find(g => g.id === selectedGarden.id);
         if (updatedSelected) {
           setSelectedGarden(updatedSelected);
-          // If it was processing and is still processing, or just became ready, refresh environment data
-          if (selectedGarden.status !== 'Ready') {
-            getGardenEnvironment(updatedSelected.id)
-              .then(env => setEnvironmentData(env))
-              .catch(console.error);
-          }
         }
       } else if (!initialLoadDone.current) {
         if (sorted.length > 0) {
@@ -368,16 +439,16 @@ export default function App() {
     }
   };
 
-    useEffect(() => {
-      let interval;
-      const hasProcessing = gardens.some(g => g.status !== 'Ready');
-      if (hasProcessing) {
-        interval = setInterval(() => {
-          fetchData(true);
-        }, 5000);
-      }
-      return () => clearInterval(interval);
-    }, [gardens, selectedGarden]);
+  useEffect(() => {
+    let interval;
+    const hasProcessing = gardens.some(g => g.status !== 'Ready');
+    if (hasProcessing) {
+      interval = setInterval(() => {
+        fetchData(true);
+      }, 5000);
+    }
+    return () => clearInterval(interval);
+  }, [gardens, selectedGarden]);
 
   if (!fontsLoaded || loading) {
     return (
@@ -391,7 +462,6 @@ export default function App() {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" />
-
       
       {selectedPlant ? (
         <PlantDetails plant={selectedPlant} onBack={() => setSelectedPlant(null)} onUpdate={() => fetchData(true)} />
@@ -401,7 +471,6 @@ export default function App() {
             <ArrowLeft size={20} color={theme.colors.primary} />
             <Text style={styles.backText}>Cancel</Text>
           </TouchableOpacity>
-
           <View style={[styles.header, { marginTop: 10, marginBottom: 20 }]}>
             <View style={styles.logoContainer}>
               <Leaf size={18} color={theme.colors.primary} />
@@ -409,342 +478,108 @@ export default function App() {
             </View>
             <Text style={[styles.title, { fontSize: 28 }]}>Capture Garden</Text>
           </View>
-
           <ScrollView contentContainerStyle={{ paddingHorizontal: theme.spacing.margin }}>
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>Garden Name</Text>
-              <TextInput
-                style={styles.textInput}
-                placeholder="e.g. Sunny Balcony, Indoor Jungle"
-                value={uploadData.name}
-                onChangeText={(text) => setUploadData({ ...uploadData, name: text })}
-              />
+              <TextInput style={styles.textInput} placeholder="e.g. Sunny Balcony" value={uploadData.name} onChangeText={(text) => setUploadData({ ...uploadData, name: text })} />
             </View>
-
             <View style={[styles.inputGroup, { zIndex: 10 }]}>
               <Text style={styles.inputLabel}>Location (City)</Text>
               <View style={styles.locationInputContainer}>
-                <TextInput
-                  style={[styles.textInput, { flex: 1, borderBottomWidth: 0 }]}
-                  placeholder="e.g. Bangalore, Mumbai"
-                  value={uploadData.location}
-                  onFocus={() => setShowLocationSuggestions(true)}
-                  onBlur={() => setTimeout(() => setShowLocationSuggestions(false), 200)}
-                  onChangeText={(text) => {
-                    setUploadData({ ...uploadData, location: text });
-                    setShowLocationSuggestions(true);
-                  }}
-                />
+                <TextInput style={[styles.textInput, { flex: 1, borderBottomWidth: 0 }]} placeholder="e.g. Bangalore" value={uploadData.location} onFocus={() => setShowLocationSuggestions(true)} onBlur={() => setTimeout(() => setShowLocationSuggestions(false), 200)} onChangeText={(text) => { setUploadData({ ...uploadData, location: text }); setShowLocationSuggestions(true); }} />
                 <TouchableOpacity onPress={handleAutoLocate} disabled={isLocating} style={{ padding: 8 }}>
-                  {isLocating ? (
-                    <ActivityIndicator size="small" color={theme.colors.primary} />
-                  ) : (
-                    <MapPin size={20} color={theme.colors.primary} />
-                  )}
+                  {isLocating ? <ActivityIndicator size="small" color={theme.colors.primary} /> : <MapPin size={20} color={theme.colors.primary} />}
                 </TouchableOpacity>
               </View>
               {showLocationSuggestions && filteredCities.length > 0 && (
                 <View style={styles.suggestionsContainer}>
                   {filteredCities.map((city) => (
-                    <TouchableOpacity 
-                      key={city} 
-                      style={styles.suggestionItem}
-                      onPress={() => {
-                        setUploadData({ ...uploadData, location: city });
-                        setShowLocationSuggestions(false);
-                      }}
-                    >
+                    <TouchableOpacity key={city} style={styles.suggestionItem} onPress={() => { setUploadData({ ...uploadData, location: city }); setShowLocationSuggestions(false); }}>
                       <Text style={styles.suggestionText}>{city}</Text>
                     </TouchableOpacity>
                   ))}
                 </View>
               )}
             </View>
-
             <View style={styles.inputGroup}>
               <Text style={styles.inputLabel}>Plant Photos</Text>
               <TouchableOpacity style={styles.uploadZone} onPress={pickImage}>
                 {uploadData.photos.length > 0 ? (
-                  <ScrollView 
-                    horizontal 
-                    showsHorizontalScrollIndicator={false} 
-                    style={{ width: '100%', marginBottom: 16 }}
-                    contentContainerStyle={{ gap: 8 }}
-                  >
-                    {uploadData.photos.map((photo, index) => (
-                      <Image 
-                        key={index} 
-                        source={{ uri: photo.uri }} 
-                        style={{ width: 80, height: 80, borderRadius: 8 }} 
-                      />
-                    ))}
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ width: '100%', marginBottom: 16 }} contentContainerStyle={{ gap: 8 }}>
+                    {uploadData.photos.map((photo, index) => <Image key={index} source={{ uri: photo.uri }} style={{ width: 80, height: 80, borderRadius: 8 }} />)}
                   </ScrollView>
-                ) : (
-                  <ImageIcon size={40} color={theme.colors.outline} style={{ marginBottom: 16 }} />
-                )}
-                <Text style={styles.uploadText}>
-                  {uploadData.photos.length > 0 
-                    ? `${uploadData.photos.length} photos selected` 
-                    : "Tap to select photos"}
-                </Text>
+                ) : <ImageIcon size={40} color={theme.colors.outline} style={{ marginBottom: 16 }} />}
+                <Text style={styles.uploadText}>{uploadData.photos.length > 0 ? `${uploadData.photos.length} photos selected` : "Tap to select photos"}</Text>
                 <Text style={styles.uploadSubtext}>High-res JPG or PNG works best</Text>
-                <Text style={[styles.uploadSubtext, { marginTop: 4, textAlign: 'center', paddingHorizontal: 20 }]}>
-                  You can upload multiple photos to cover all the plants in your garden.
-                </Text>
               </TouchableOpacity>
             </View>
-
-            <TouchableOpacity 
-              style={[
-                styles.btnPrimary, 
-                (uploadingState || uploadData.photos.length === 0 || !uploadData.name) 
-                  ? { backgroundColor: theme.colors.surfaceContainerHigh }
-                  : { backgroundColor: theme.colors.vibrantPink }
-              ]}
-              onPress={handleUploadSubmit}
-              disabled={uploadingState || uploadData.photos.length === 0 || !uploadData.name}
-            >
-              {uploadingState ? (
-                <ActivityIndicator color={theme.colors.onSurfaceVariant} size="small" />
-              ) : (
-                <Sparkles 
-                  size={20} 
-                  color={(uploadData.photos.length === 0 || !uploadData.name) ? theme.colors.onSurfaceVariant : '#ffffff'} 
-                />
-              )}
-              <Text style={[
-                styles.btnPrimaryText,
-                (uploadingState || uploadData.photos.length === 0 || !uploadData.name) 
-                  ? { color: theme.colors.onSurfaceVariant }
-                  : { color: '#ffffff' }
-              ]}>
-                {uploadingState ? 'Analyzing...' : 'Initialize AI Analysis'}
-              </Text>
+            <TouchableOpacity style={[styles.btnPrimary, (uploadingState || uploadData.photos.length === 0 || !uploadData.name) ? { backgroundColor: theme.colors.surfaceContainerHigh } : { backgroundColor: theme.colors.vibrantPink }]} onPress={handleUploadSubmit} disabled={uploadingState || uploadData.photos.length === 0 || !uploadData.name}>
+              {uploadingState ? <ActivityIndicator color={theme.colors.onSurfaceVariant} size="small" /> : <Sparkles size={20} color={(uploadData.photos.length === 0 || !uploadData.name) ? theme.colors.onSurfaceVariant : '#ffffff'} />}
+              <Text style={[styles.btnPrimaryText, (uploadingState || uploadData.photos.length === 0 || !uploadData.name) ? { color: theme.colors.onSurfaceVariant } : { color: '#ffffff' }]}>{uploadingState ? 'Analyzing...' : 'Initialize AI Analysis'}</Text>
             </TouchableOpacity>
           </ScrollView>
         </KeyboardAvoidingView>
       ) : !selectedGarden ? (
-
-        <ScrollView 
-          style={{ flex: 1 }} 
-          contentContainerStyle={{ flexGrow: 1 }}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} />}
-        >
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} />}>
           <View style={[styles.header, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
             <View>
-              <View style={styles.logoContainer}>
-                <Leaf size={18} color={theme.colors.primary} />
-                <Text style={styles.logoText}>BOTANICAL MANAGER</Text>
-              </View>
+              <View style={styles.logoContainer}><Leaf size={18} color={theme.colors.primary} /><Text style={styles.logoText}>BOTANICAL MANAGER</Text></View>
               <Text style={styles.title}>My Gardens</Text>
             </View>
-            <TouchableOpacity style={styles.btnIcon} onPress={() => setIsUploading(true)}>
-              <Plus size={24} color={theme.colors.tertiary} />
-            </TouchableOpacity>
+            <TouchableOpacity style={styles.btnIcon} onPress={() => setIsUploading(true)}><Plus size={24} color={theme.colors.tertiary} /></TouchableOpacity>
           </View>
-
           {gardens.length > 0 ? (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ paddingRight: theme.spacing.margin }}
-              snapToInterval={CARD_WIDTH + 16}
-              decelerationRate="fast"
-              onScroll={(e) => {
-                const x = e.nativeEvent.contentOffset.x;
-                setScrollX(x);
-              }}
-              scrollEventThrottle={16}
-            >
-              {gardens.map((garden, index) => (
-                <GardenCard
-                  key={garden.id}
-                  garden={garden}
-                  index={index}
-                  onPress={setSelectedGarden}
-                  onDelete={handleDeleteGarden}
-                />
-              ))}
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: theme.spacing.margin }} snapToInterval={CARD_WIDTH + 16} decelerationRate="fast" onScroll={(e) => setScrollX(e.nativeEvent.contentOffset.x)} scrollEventThrottle={16}>
+              {gardens.map((garden, index) => <GardenCard key={garden.id} garden={garden} index={index} onPress={handleGardenPress} onDelete={handleDeleteGarden} />)}
             </ScrollView>
           ) : (
             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 40, marginTop: 40 }}>
-              <View style={{ width: 120, height: 120, borderRadius: 60, backgroundColor: theme.colors.surfaceContainerLowest, justifyContent: 'center', alignItems: 'center', marginBottom: 24 }}>
-                <Leaf size={60} color={theme.colors.primary} opacity={0.5} />
-              </View>
+              <View style={{ width: 120, height: 120, borderRadius: 60, backgroundColor: theme.colors.surfaceContainerLowest, justifyContent: 'center', alignItems: 'center', marginBottom: 24 }}><Leaf size={60} color={theme.colors.primary} opacity={0.5} /></View>
               <Text style={[styles.title, { textAlign: 'center', marginBottom: 12 }]}>Bring Your Garden to Life</Text>
-              <Text style={[styles.recommendation, { textAlign: 'center', fontSize: 16, lineHeight: 24 }]}>
-                It looks like you haven't started your botanical journey yet. Upload photos of your garden to get personalized AI care recommendations.
-              </Text>
-              
-              <TouchableOpacity 
-                style={[styles.btnPrimary, { marginTop: 32, width: '100%', backgroundColor: theme.colors.vibrantPink }]} 
-                onPress={() => setIsUploading(true)}
-              >
-                <Plus size={20} color="#ffffff" />
-                <Text style={[styles.btnPrimaryText, { color: '#ffffff' }]}>Initialize First Analysis</Text>
-              </TouchableOpacity>
+              <Text style={[styles.recommendation, { textAlign: 'center', fontSize: 16, lineHeight: 24 }]}>Upload photos of your garden to get personalized AI care recommendations.</Text>
+              <TouchableOpacity style={[styles.btnPrimary, { marginTop: 32, width: '100%', backgroundColor: theme.colors.vibrantPink }]} onPress={() => setIsUploading(true)}><Plus size={20} color="#ffffff" /><Text style={[styles.btnPrimaryText, { color: '#ffffff' }]}>Initialize First Analysis</Text></TouchableOpacity>
             </View>
           )}
-
-          <View style={styles.progressBarContainer}>
-            <View style={styles.progressBar}>
-              <View
-                style={[
-                  styles.progressIndicator,
-                  { width: gardens.length > 0 ? (scrollX / (gardens.length * (CARD_WIDTH + 16))) * 100 + '%' : '0%' }
-                ]}
-              />
-            </View>
-          </View>
+          <View style={styles.progressBarContainer}><View style={styles.progressBar}><View style={[styles.progressIndicator, { width: gardens.length > 0 ? (scrollX / (gardens.length * (CARD_WIDTH + 16))) * 100 + '%' : '0%' }]} /></View></View>
         </ScrollView>
       ) : (
-        <ScrollView 
-          style={{ flex: 1 }} 
-          contentContainerStyle={{ flexGrow: 1 }}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} />}
-        >
-          {gardens.length === 1 ? (
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingRight: theme.spacing.margin }}>
-              <TouchableOpacity style={styles.backButton} onPress={() => setIsUploading(true)}>
-                <Plus size={20} color={theme.colors.primary} />
-                <Text style={styles.backText}>Add Garden</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.backButton, { backgroundColor: 'transparent' }]} onPress={() => handleDeleteGarden(selectedGarden)}>
-                <Trash2 size={20} color={theme.colors.vibrantPink} />
-                <Text style={[styles.backText, { color: theme.colors.vibrantPink }]}>Delete</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingRight: theme.spacing.margin }}>
-              <TouchableOpacity style={styles.backButton} onPress={() => setSelectedGarden(null)}>
-                <ArrowLeft size={20} color={theme.colors.primary} />
-                <Text style={styles.backText}>Back to Gardens</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.backButton, { backgroundColor: 'transparent' }]} onPress={() => handleDeleteGarden(selectedGarden)}>
-                <Trash2 size={20} color={theme.colors.vibrantPink} />
-                <Text style={[styles.backText, { color: theme.colors.vibrantPink }]}>Delete</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-
-          <View style={styles.heroContainer}>
-            {selectedGarden.photos && selectedGarden.photos.length > 0 ? (
-              <Image source={{ uri: selectedGarden.photos[0].photo_url }} style={styles.heroImage} resizeMode="cover" />
-            ) : (
-              <View style={[styles.heroImage, { backgroundColor: theme.colors.surfaceContainerHigh }]} />
-            )}
-            <View style={styles.heroOverlay}>
-              <Text style={styles.heroTitle}>{selectedGarden.name}</Text>
-              {!!selectedGarden.location && <Text style={styles.heroLocation}>{selectedGarden.location}</Text>}
-            </View>
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ flexGrow: 1 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.colors.primary} />}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingRight: theme.spacing.margin }}>
+            <TouchableOpacity style={styles.backButton} onPress={() => setSelectedGarden(null)}><ArrowLeft size={20} color={theme.colors.primary} /><Text style={styles.backText}>Back to Gardens</Text></TouchableOpacity>
+            <TouchableOpacity style={[styles.backButton, { backgroundColor: 'transparent' }]} onPress={() => handleDeleteGarden(selectedGarden)}><Trash2 size={20} color={theme.colors.vibrantPink} /><Text style={[styles.backText, { color: theme.colors.vibrantPink }]}>Delete</Text></TouchableOpacity>
           </View>
-
+          <View style={styles.heroContainer}>
+            {selectedGarden.photos && selectedGarden.photos.length > 0 ? <Image source={{ uri: selectedGarden.photos[0].photo_url }} style={styles.heroImage} resizeMode="cover" /> : <View style={[styles.heroImage, { backgroundColor: theme.colors.surfaceContainerHigh }]} />}
+            <View style={styles.heroOverlay}><Text style={styles.heroTitle}>{selectedGarden.name}</Text>{!!selectedGarden.location && <Text style={styles.heroLocation}>{selectedGarden.location}</Text>}</View>
+          </View>
           {selectedGarden.status !== 'Ready' && (
             <View style={styles.analysisContainer}>
               <ActivityIndicator size="small" color={theme.colors.vibrantPink} />
               <View style={{ flexShrink: 1 }}>
                 <Text style={styles.analysisText}>Photo Analysis in progress...</Text>
-                {!!selectedGarden.upload_commentry && (
-                  <Text style={[styles.analysisText, { marginTop: 4, fontFamily: 'Manrope_400Regular', color: theme.colors.outline }]}>
-                    {selectedGarden.upload_commentry}
-                  </Text>
-                )}
+                {!!selectedGarden.upload_commentry && <Text style={[styles.analysisText, { marginTop: 4, fontFamily: 'Manrope_400Regular', color: theme.colors.outline }]}>{selectedGarden.upload_commentry}</Text>}
               </View>
             </View>
           )}
 
-          <View style={styles.tilesGrid}>
-            <View style={styles.envTile}>
-              <View style={styles.envTileHeader}>
-                <Droplets size={24} color={theme.colors.tertiary} />
-                <Text style={styles.envTileLabel}>Hydration</Text>
-              </View>
-              <Text style={styles.envTileValue}>{environmentData?.hydration || '--'}</Text>
-            </View>
-            <View style={styles.envTile}>
-              <View style={styles.envTileHeader}>
-                <Sun size={24} color={theme.colors.vibrantPink} />
-                <Text style={styles.envTileLabel}>Exposure</Text>
-              </View>
-              <Text style={styles.envTileValue}>{environmentData?.exposure || '--'}</Text>
-            </View>
-            <View style={styles.envTile}>
-              <View style={styles.envTileHeader}>
-                <Thermometer size={24} color={theme.colors.tertiary} />
-                <Text style={styles.envTileLabel}>Temp</Text>
-              </View>
-              <Text style={styles.envTileValue}>
-                {environmentData === null ? (
-                  <ActivityIndicator size="small" color={theme.colors.primary} />
-                ) : environmentData.temperature}
-              </Text>
-            </View>
-            <View style={styles.envTile}>
-              <View style={styles.envTileHeader}>
-                <Sparkles size={24} color={theme.colors.vibrantPink} />
-                <Text style={styles.envTileLabel}>Vibrancy</Text>
-              </View>
-              <Text style={styles.envTileValue}>{environmentData?.vibrancy || '--'}</Text>
-            </View>
-          </View>
-
-          {selectedGarden.status === 'Ready' && (
-            <View style={{ paddingHorizontal: theme.spacing.margin, marginTop: 10 }}>
-              <View style={[styles.analysisContainer, { backgroundColor: theme.colors.surfaceContainerLowest, flexDirection: 'column', alignItems: 'flex-start' }]}>
-                <Text style={[styles.analysisText, { color: theme.colors.primary, fontFamily: 'Manrope_700Bold' }]}>Garden Overview</Text>
-                <Text style={[styles.analysisText, { marginTop: 4, color: theme.colors.onSurface }]}>{selectedGarden.recommendation}</Text>
-                
-                {!!selectedGarden.immediate_changes && (
-                  <>
-                    <Text style={[styles.analysisText, { marginTop: 16, color: theme.colors.vibrantPink, fontFamily: 'Manrope_700Bold' }]}>Immediate Changes</Text>
-                    <Text style={[styles.analysisText, { marginTop: 4, color: theme.colors.onSurface }]}>{selectedGarden.immediate_changes}</Text>
-                  </>
-                )}
-                
-                {!!selectedGarden.disease_overview && (
-                  <>
-                    <Text style={[styles.analysisText, { marginTop: 16, color: theme.colors.tertiary, fontFamily: 'Manrope_700Bold' }]}>Disease Overview</Text>
-                    <Text style={[styles.analysisText, { marginTop: 4, color: theme.colors.onSurface }]}>{selectedGarden.disease_overview}</Text>
-                  </>
-                )}
-
-                {!!selectedGarden.growth_trend && (
-                  <>
-                    <Text style={[styles.analysisText, { marginTop: 16, color: theme.colors.primary, fontFamily: 'Manrope_700Bold' }]}>Growth Trend</Text>
-                    <Text style={[styles.analysisText, { marginTop: 4, color: theme.colors.onSurface }]}>{selectedGarden.growth_trend}</Text>
-                  </>
-                )}
-              </View>
+          {/* --- MODIFIED SECTION --- */}
+          {selectedGarden.status === 'Ready' && selectedGarden.healthOverview && (
+            <View style={{ paddingHorizontal: theme.spacing.margin, marginTop: 24 }}>
+              <SanctuaryVitalityCard vitality={selectedGarden.healthOverview.sanctuaryVitality} />
+              <MetricTileGrid metrics={selectedGarden.healthOverview.metrics} />
             </View>
           )}
+          {/* --- END MODIFIED SECTION --- */}
 
           <View style={[styles.header, { marginTop: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
             <Text style={[styles.title, { fontSize: 28, marginBottom: 0 }]}>Botanical Residents</Text>
-            {uploadingState ? (
-              <ActivityIndicator size="small" color={theme.colors.primary} />
-            ) : (
-              <TouchableOpacity onPress={handleAddPlants} style={{ padding: 8, backgroundColor: theme.colors.surfaceContainerHigh, borderRadius: 20 }}>
-                <Plus size={20} color={theme.colors.primary} />
-              </TouchableOpacity>
-            )}
+            {uploadingState ? <ActivityIndicator size="small" color={theme.colors.primary} /> : <TouchableOpacity onPress={handleAddPlants} style={{ padding: 8, backgroundColor: theme.colors.surfaceContainerHigh, borderRadius: 20 }}><Plus size={20} color={theme.colors.primary} /></TouchableOpacity>}
           </View>
-
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingRight: theme.spacing.margin }}
-            snapToInterval={CARD_WIDTH - 4}
-            decelerationRate="fast"
-          >
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: theme.spacing.margin }} snapToInterval={CARD_WIDTH - 4} decelerationRate="fast">
             {selectedGarden.plants.length > 0 ? (
-              selectedGarden.plants.map((plant, index) => (
-                <PlantCard key={plant.id} plant={plant} index={index} gardenStatus={selectedGarden.status} onPress={setSelectedPlant} />
-              ))
+              selectedGarden.plants.map((plant, index) => <PlantCard key={plant.id} plant={plant} index={index} gardenStatus={selectedGarden.status} onPress={setSelectedPlant} />)
             ) : (
-              <View style={[styles.loadingContainer, { width: width - 48, height: 300 }]}>
-                <Leaf size={40} color={theme.colors.outline} opacity={0.3} />
-                <Text style={styles.loadingText}>No residents yet</Text>
-              </View>
+              <View style={[styles.loadingContainer, { width: width - 48, height: 300 }]}><Leaf size={40} color={theme.colors.outline} opacity={0.3} /><Text style={styles.loadingText}>No residents yet</Text></View>
             )}
           </ScrollView>
         </ScrollView>
@@ -754,371 +589,144 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: theme.colors.background,
-  },
-  loadingText: {
-    marginTop: 16,
-    color: theme.colors.primary,
-    fontFamily: 'Manrope_600SemiBold',
-  },
-  header: {
-    padding: theme.spacing.margin,
-    marginTop: 20,
-  },
-  logoContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  logoText: {
-    fontFamily: 'Manrope_700Bold',
-    fontSize: 12,
-    letterSpacing: 1.2,
-    color: theme.colors.primary,
-    marginLeft: 6,
-  },
-  title: {
-    fontFamily: 'Manrope_700Bold',
-    fontSize: 34,
-    color: theme.colors.primary,
-  },
-  subtitle: {
-    fontFamily: 'Manrope_600SemiBold',
-    fontSize: 14,
-    color: theme.colors.primary,
-    opacity: 0.6,
-  },
-  card: {
-    width: CARD_WIDTH,
-    backgroundColor: 'white',
+  container: { flex: 1, backgroundColor: theme.colors.background },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.colors.background },
+  loadingText: { marginTop: 16, color: theme.colors.primary, fontFamily: 'Manrope_600SemiBold' },
+  header: { padding: theme.spacing.margin, marginTop: 20 },
+  logoContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+  logoText: { fontFamily: 'Manrope_700Bold', fontSize: 12, letterSpacing: 1.2, color: theme.colors.primary, marginLeft: 6 },
+  title: { fontFamily: 'Manrope_700Bold', fontSize: 34, color: theme.colors.primary },
+  card: { width: CARD_WIDTH, backgroundColor: 'white', borderRadius: theme.roundness.xl, overflow: 'hidden', shadowColor: theme.colors.primary, shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.05, shadowRadius: 20, elevation: 5, marginBottom: 20, borderWidth: 1, borderColor: 'rgba(85, 97, 88, 0.05)' },
+  cardImage: { width: '100%', height: 300, backgroundColor: theme.colors.surfaceContainerLowest },
+  cardContent: { padding: 20 },
+  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 },
+  gardenName: { fontFamily: 'Manrope_600SemiBold', fontSize: 18, color: theme.colors.primary, flex: 1, marginRight: 10 },
+  statusChip: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
+  statusReady: { backgroundColor: theme.colors.primaryContainer },
+  statusProcessing: { backgroundColor: '#fff3e0' },
+  statusText: { fontSize: 10, fontFamily: 'Manrope_700Bold', color: theme.colors.tertiary, textTransform: 'uppercase' },
+  recommendation: { fontFamily: 'Manrope_400Regular', fontSize: 14, color: '#666', lineHeight: 20 },
+  cardFooter: { flexDirection: 'row', alignItems: 'center', marginTop: 20, paddingTop: 16, borderTopWidth: 1, borderTopColor: theme.colors.surfaceContainer },
+  footerText: { fontFamily: 'Manrope_600SemiBold', fontSize: 13, color: theme.colors.primary, flex: 1 },
+  plantVariety: { fontFamily: 'Manrope_700Bold', fontSize: 11, color: theme.colors.tertiary, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 },
+  conditionBadge: { backgroundColor: '#f1f8e9', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4, alignSelf: 'flex-start' },
+  conditionText: { color: '#2e7d32', fontFamily: 'Manrope_700Bold', fontSize: 11 },
+  plantStats: { flexDirection: 'row', gap: 15, marginTop: 20, paddingTop: 15, borderTopWidth: 1, borderTopColor: theme.colors.surfaceContainer },
+  statItem: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  statText: { fontFamily: 'Manrope_400Regular', fontSize: 12, color: theme.colors.outline },
+  progressBarContainer: { paddingHorizontal: theme.spacing.margin, marginTop: 10, marginBottom: 40 },
+  progressBar: { height: 3, backgroundColor: theme.colors.surfaceContainer, borderRadius: 2, position: 'relative', overflow: 'hidden' },
+  progressIndicator: { position: 'absolute', top: 0, left: 0, height: '100%', backgroundColor: theme.colors.primary },
+  backButton: { flexDirection: 'row', alignItems: 'center', padding: theme.spacing.margin, paddingBottom: 0 },
+  backText: { fontFamily: 'Manrope_600SemiBold', fontSize: 14, color: theme.colors.primary, marginLeft: 8 },
+  inputGroup: { marginBottom: 24 },
+  inputLabel: { fontFamily: 'Manrope_600SemiBold', fontSize: 14, color: theme.colors.primary, marginBottom: 8 },
+  textInput: { backgroundColor: 'white', borderWidth: 1, borderColor: theme.colors.outline, borderRadius: theme.roundness.md, padding: theme.spacing.md, fontFamily: 'Manrope_400Regular', fontSize: 16, color: theme.colors.onSurface },
+  locationInputContainer: { flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: theme.colors.surfaceContainer },
+  suggestionsContainer: { backgroundColor: 'white', borderWidth: 1, borderColor: theme.colors.outlineVariant + '4D', borderBottomLeftRadius: theme.roundness.md, borderBottomRightRadius: theme.roundness.md, borderTopWidth: 0, marginTop: -4, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 3, position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 20, maxHeight: 150 },
+  suggestionItem: { padding: theme.spacing.sm, paddingHorizontal: theme.spacing.md, borderBottomWidth: 1, borderBottomColor: theme.colors.surfaceContainer },
+  suggestionText: { fontFamily: 'Manrope_400Regular', fontSize: 14, color: theme.colors.onSurface },
+  uploadZone: { borderWidth: 2, borderStyle: 'dashed', borderColor: theme.colors.surfaceContainerHigh, borderRadius: theme.roundness.lg, padding: 40, alignItems: 'center', backgroundColor: theme.colors.background },
+  uploadText: { fontFamily: 'Manrope_600SemiBold', fontSize: 16, color: theme.colors.primary, marginBottom: 4 },
+  uploadSubtext: { fontFamily: 'Manrope_400Regular', fontSize: 12, color: theme.colors.outline },
+  btnPrimary: { backgroundColor: theme.colors.secondaryContainer, borderRadius: 48, padding: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 32, gap: 8 },
+  btnPrimaryText: { fontFamily: 'Manrope_700Bold', fontSize: 16, color: theme.colors.onSecondaryContainer },
+  btnIcon: { backgroundColor: theme.colors.primaryContainer, width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
+  heroContainer: { marginHorizontal: theme.spacing.margin, marginTop: theme.spacing.sm, height: 320, borderRadius: 32, overflow: 'hidden', position: 'relative', borderWidth: 1, borderColor: theme.colors.outlineVariant + '4D' },
+  heroImage: { width: '100%', height: '100%', resizeMode: 'cover' },
+  heroOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: theme.spacing.md, backgroundColor: 'rgba(0,0,0,0.4)' },
+  heroTitle: { fontFamily: 'Manrope_700Bold', fontSize: 32, color: '#ffffff' },
+  heroLocation: { fontFamily: 'Manrope_600SemiBold', fontSize: 14, color: '#ffffff', opacity: 0.9, marginTop: 4 },
+  analysisContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: theme.colors.primaryContainer, marginHorizontal: theme.spacing.margin, marginTop: theme.spacing.md, marginBottom: theme.spacing.md, padding: theme.spacing.md, borderRadius: theme.roundness.lg, gap: 12 },
+  analysisText: { fontFamily: 'Manrope_600SemiBold', fontSize: 14, color: theme.colors.onSurfaceVariant, flexShrink: 1 },
+  
+  // --- NEW STYLES ---
+  vitalityCard: {
+    backgroundColor: '#1A3C34', // Custom dark green, or theme.colors.primary
     borderRadius: theme.roundness.xl,
-    overflow: 'hidden',
-    shadowColor: theme.colors.primary,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.05,
-    shadowRadius: 20,
-    elevation: 5,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(85, 97, 88, 0.05)',
-  },
-  cardImage: {
-    width: '100%',
-    height: 300,
-    backgroundColor: theme.colors.surfaceContainerLowest,
-  },
-  cardContent: {
     padding: 20,
-  },
-  cardHeader: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 12,
+    marginBottom: 24,
   },
-  gardenName: {
-    fontFamily: 'Manrope_600SemiBold',
-    fontSize: 18,
-    color: theme.colors.primary,
+  vitalityContent: {
     flex: 1,
-    marginRight: 10,
   },
-  statusChip: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 20,
-  },
-  statusReady: {
-    backgroundColor: theme.colors.primaryContainer,
-  },
-  statusProcessing: {
-    backgroundColor: '#fff3e0',
-  },
-  statusText: {
+  vitalityLabel: {
+    fontFamily: 'Manrope_700Bold',
     fontSize: 10,
-    fontFamily: 'Manrope_700Bold',
-    color: theme.colors.tertiary,
-    textTransform: 'uppercase',
-  },
-  recommendation: {
-    fontFamily: 'Manrope_400Regular',
-    fontSize: 14,
-    color: '#666',
-    lineHeight: 20,
-  },
-  cardFooter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 20,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.surfaceContainer,
-  },
-  footerText: {
-    fontFamily: 'Manrope_600SemiBold',
-    fontSize: 13,
-    color: theme.colors.primary,
-    flex: 1,
-  },
-  plantVariety: {
-    fontFamily: 'Manrope_700Bold',
-    fontSize: 11,
-    color: theme.colors.tertiary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    color: theme.colors.primaryContainer,
+    letterSpacing: 1,
+    opacity: 0.8,
     marginBottom: 4,
   },
-  conditionBadge: {
-    backgroundColor: '#f1f8e9',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-    alignSelf: 'flex-start',
-  },
-  conditionText: {
-    color: '#2e7d32',
+  vitalityScore: {
     fontFamily: 'Manrope_700Bold',
-    fontSize: 11,
+    fontSize: 40,
+    color: 'white',
   },
-  plantStats: {
-    flexDirection: 'row',
-    gap: 15,
-    marginTop: 20,
-    paddingTop: 15,
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.surfaceContainer,
-  },
-  statItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-  },
-  statText: {
+  vitalitySummary: {
     fontFamily: 'Manrope_400Regular',
     fontSize: 12,
-    color: theme.colors.outline,
-  },
-  progressBarContainer: {
-    paddingHorizontal: theme.spacing.margin,
-    marginTop: 10,
-    marginBottom: 40,
-  },
-  progressBar: {
-    height: 3,
-    backgroundColor: theme.colors.surfaceContainer,
-    borderRadius: 2,
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  progressIndicator: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    height: '100%',
-    backgroundColor: theme.colors.primary,
-  },
-  backButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: theme.spacing.margin,
-    paddingBottom: 0,
-  },
-  backText: {
-    fontFamily: 'Manrope_600SemiBold',
-    fontSize: 14,
-    color: theme.colors.primary,
-    marginLeft: 8,
-  },
-
-  inputGroup: {
-    marginBottom: 24,
-  },
-  inputLabel: {
-    fontFamily: 'Manrope_600SemiBold',
-    fontSize: 14,
-    color: theme.colors.primary,
-    marginBottom: 8,
-  },
-  textInput: {
-    backgroundColor: 'white',
-    borderWidth: 1,
-    borderColor: theme.colors.outline,
-    borderRadius: theme.roundness.md,
-    padding: theme.spacing.md,
-    fontFamily: 'Manrope_400Regular',
-    fontSize: 16,
-    color: theme.colors.onSurface,
-  },
-  locationInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.surfaceContainer,
-  },
-  suggestionsContainer: {
-    backgroundColor: 'white',
-    borderWidth: 1,
-    borderColor: theme.colors.outlineVariant + '4D',
-    borderBottomLeftRadius: theme.roundness.md,
-    borderBottomRightRadius: theme.roundness.md,
-    borderTopWidth: 0,
-    marginTop: -4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 3,
-    position: 'absolute',
-    top: '100%',
-    left: 0,
-    right: 0,
-    zIndex: 20,
-    maxHeight: 150,
-  },
-  suggestionItem: {
-    padding: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.surfaceContainer,
-  },
-  suggestionText: {
-    fontFamily: 'Manrope_400Regular',
-    fontSize: 14,
-    color: theme.colors.onSurface,
-  },
-  uploadZone: {
-    borderWidth: 2,
-    borderStyle: 'dashed',
-    borderColor: theme.colors.surfaceContainerHigh,
-    borderRadius: theme.roundness.lg,
-    padding: 40,
-    alignItems: 'center',
-    backgroundColor: theme.colors.background,
-  },
-  uploadText: {
-    fontFamily: 'Manrope_600SemiBold',
-    fontSize: 16,
-    color: theme.colors.primary,
-    marginBottom: 4,
-  },
-  uploadSubtext: {
-    fontFamily: 'Manrope_400Regular',
-    fontSize: 12,
-    color: theme.colors.outline,
-  },
-  btnPrimary: {
-    backgroundColor: theme.colors.secondaryContainer,
-    borderRadius: 48,
-    padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 32,
-    gap: 8,
-  },
-  btnPrimaryText: {
-    fontFamily: 'Manrope_700Bold',
-    fontSize: 16,
-    color: theme.colors.onSecondaryContainer,
-  },
-  btnIcon: {
-    backgroundColor: theme.colors.primaryContainer,
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  tilesGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    paddingHorizontal: theme.spacing.margin,
-    gap: 16,
-    marginBottom: 24,
-  },
-  envTile: {
-    backgroundColor: theme.colors.surfaceContainerLow,
-    borderRadius: theme.roundness.lg,
-    borderWidth: 1,
-    borderColor: theme.colors.outlineVariant + '4D',
-    padding: 24,
-    flexDirection: 'column',
-    width: (width - (theme.spacing.margin * 2) - 16) / 2,
-    gap: 4,
-  },
-  envTileHeader: {
-    flexDirection: 'column',
-    alignItems: 'flex-start',
-    gap: 4,
-  },
-  envTileLabel: {
-    fontFamily: 'Manrope_600SemiBold',
-    fontSize: 13,
-    color: theme.colors.onSurfaceVariant,
-  },
-  envTileValue: {
-    fontFamily: 'Manrope_600SemiBold',
-    fontSize: 24,
-    color: theme.colors.onSurface,
-  },
-  heroContainer: {
-    marginHorizontal: theme.spacing.margin,
-    marginTop: theme.spacing.sm,
-    height: 320,
-    borderRadius: 32,
-    overflow: 'hidden',
-    position: 'relative',
-    borderWidth: 1,
-    borderColor: theme.colors.outlineVariant + '4D',
-  },
-  heroImage: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-  },
-  heroOverlay: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: theme.spacing.md,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-  },
-  heroTitle: {
-    fontFamily: 'Manrope_700Bold',
-    fontSize: 32,
-    color: '#ffffff',
-  },
-  heroLocation: {
-    fontFamily: 'Manrope_600SemiBold',
-    fontSize: 14,
-    color: '#ffffff',
-    opacity: 0.9,
+    color: theme.colors.outlineVariant,
     marginTop: 4,
   },
-  analysisContainer: {
-    flexDirection: 'row',
+  vitalityChart: {
+    width: 80,
+    height: 80,
+    justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: theme.colors.primaryContainer,
-    marginHorizontal: theme.spacing.margin,
-    marginTop: theme.spacing.md,
-    marginBottom: theme.spacing.md,
-    padding: theme.spacing.md,
-    borderRadius: theme.roundness.lg,
+  },
+  vitalityChartIcon: {
+    position: 'absolute',
+  },
+  metricGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
     gap: 12,
   },
-  analysisText: {
+  metricTile: {
+    width: (width - (theme.spacing.margin * 2) - 24) / 3, // 3 columns with 12px gap
+    height: 120,
+    backgroundColor: theme.colors.surfaceContainerLowest,
+    borderRadius: theme.roundness.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.surfaceContainerHigh,
+    padding: 12,
+    alignItems: 'center',
+    justifyContent: 'space-around',
+  },
+  metricBadge: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    backgroundColor: theme.colors.vibrantPink,
+    borderRadius: 10,
+    width: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1,
+  },
+  metricBadgeText: {
+    color: 'white',
+    fontFamily: 'Manrope_700Bold',
+    fontSize: 10,
+  },
+  metricLabel: {
     fontFamily: 'Manrope_600SemiBold',
-    fontSize: 14,
-    color: theme.colors.onSurfaceVariant,
-    flexShrink: 1,
+    fontSize: 10,
+    color: theme.colors.outline,
+    textAlign: 'center',
+    textTransform: 'uppercase',
+    marginTop: 4,
+  },
+  metricStatus: {
+    fontFamily: 'Manrope_700Bold',
+    fontSize: 16,
+    color: theme.colors.primary,
+    textAlign: 'center',
   },
 });
