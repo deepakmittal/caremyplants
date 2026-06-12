@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from typing import List, Optional, Literal
 from datetime import datetime
 
@@ -49,7 +49,7 @@ class GardenCreate(BaseModel):
 class GardenResponse(BaseModel):
     id: int
     name: str
-    status: Optional[str] = None
+    status: Optional[str] = Field(None, description="The final status of the garden after processing is complete (e.g., 'Ready'). For updates that are currently being processed, query the GET /updates/{update_id}/status endpoint to get the real-time status.")
     garden_update_id: Optional[int] = None
     created_at: datetime
 
@@ -101,7 +101,7 @@ class PlantLatestUpdateResponse(BaseModel):
 class GardenWithPhotosResponse(BaseModel):
     id: int
     name: str
-    status: Optional[str] = None
+    status: Optional[str] = Field(None, description="The final status of the garden after processing is complete (e.g., 'Ready'). For updates that are currently being processed, query the GET /updates/{update_id}/status endpoint to get the real-time status.")
     summary: Optional[str] = None
     upload_commentry: Optional[str] = None
     recommendation: Optional[str] = None
@@ -115,7 +115,7 @@ class GardenWithPhotosResponse(BaseModel):
 class GardenDetailsResponse(BaseModel):
     id: int
     name: str
-    status: Optional[str] = None
+    status: Optional[str] = Field(None, description="The final status of the garden after processing is complete (e.g., 'Ready'). For updates that are currently being processed, query the GET /updates/{update_id}/status endpoint to get the real-time status.")
     recommendation: Optional[str] = None
     recommendation_full: Optional[str] = None
     needs_watering: Optional[bool] = None
@@ -136,3 +136,16 @@ class GardenDetailsResponse(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str
+
+# --- TEMPORAL WORKFLOW SCHEMAS ---
+
+class WorkflowStartResponse(BaseModel):
+    garden_id: int
+    garden_update_id: int
+    workflow_id: str
+
+class WorkflowStatusResponse(BaseModel):
+    workflow_id: str
+    status: Literal["RUNNING", "COMPLETED", "FAILED", "TIMED_OUT", "CANCELED"]
+    current_activity: Optional[str] = None
+    details: Optional[str] = None
