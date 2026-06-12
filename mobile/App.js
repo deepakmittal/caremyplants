@@ -18,9 +18,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { theme } from './src/theme';
-import { getDetailedGardens, uploadGardenPhotos, updateGardenAccess, getGardenEnvironment, deleteGarden, uploadPlantPhoto } from './src/services/api';
+import { getDetailedGardens, uploadGardenPhotos, getWorkflowStatus, deleteGarden } from './src/services/api';
 import { 
-  Leaf, ChevronRight, ArrowLeft, Droplets, Sun, Plus, Image as ImageIcon, Sparkles, Thermometer, MapPin, Trash2,
+  Leaf, ChevronRight, ArrowLeft, Droplets, Sun, Plus, Image as ImageIcon, Sparkles, MapPin, Trash2,
   CheckCircle2, HeartPulse, Sprout, Wind, Archive, Scissors 
 } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
@@ -28,10 +28,17 @@ import * as Location from 'expo-location';
 import * as Font from 'expo-font';
 import { Manrope_400Regular, Manrope_600SemiBold, Manrope_700Bold } from '@expo-google-fonts/manrope';
 import PlantDetails from './src/components/PlantDetails';
-import Svg, { Circle } from 'react-native-svg'; // NOTE: Requires react-native-svg dependency
+import Svg, { Circle } from 'react-native-svg';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width * 0.85;
+
+const activityFriendlyNames = {
+  'Gather garden level details from AI': 'Analyzing garden overview...',
+  'Cut plants images from garden images.': 'Identifying individual plants...',
+  'Gather Plants level details from AI': 'Analyzing each plant...',
+  'Update garden level flags using Plants level details': 'Finalizing analysis...',
+};
 
 // --- NEW COMPONENTS START ---
 
@@ -256,20 +263,14 @@ export default function App() {
   const [scrollX, setScrollX] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  
+  const [activeUpdateId, setActiveUpdateId] = useState(null);
+  const [workflowStatus, setWorkflowStatus] = useState(null);
 
   const onRefresh = async () => {
     setRefreshing(true);
     try {
-      const data = await getDetailedGardens(4);
-      setGardens(data);
-      if (selectedGarden) {
-        const updatedSelected = data.find(g => g.id === selectedGarden.id);
-        if (updatedSelected) {
-          setSelectedGarden(updatedSelected);
-        } else {
-          setSelectedGarden(null);
-        }
-      }
+      await fetchData(true);
     } catch (error) {
       console.error(error);
     } finally {
@@ -292,6 +293,31 @@ export default function App() {
     fetchData();
   }, []);
 
+  useEffect(() => {
+    if (activeUpdateId) {
+      const interval = setInterval(async () => {
+        try {
+          const statusData = await getWorkflowStatus(activeUpdateId);
+          setWorkflowStatus(statusData);
+
+          if (['COMPLETED', 'FAILED', 'TIMED_OUT', 'CANCELED'].includes(statusData.status)) {
+            clearInterval(interval);
+            setActiveUpdateId(null);
+            setWorkflowStatus(null);
+            await fetchData(true);
+          }
+        } catch (error) {
+          console.error("Failed to fetch workflow status", error);
+          clearInterval(interval);
+          setActiveUpdateId(null);
+          setWorkflowStatus(null);
+        }
+      }, 3000);
+
+      return () => clearInterval(interval);
+    }
+  }, [activeUpdateId]);
+
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
@@ -302,6 +328,7 @@ export default function App() {
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: false,
       quality: 0.8,
+      allowsMultipleSelection: true,
     });
     if (!result.canceled) {
       setUploadData({ ...uploadData, photos: result.assets });
@@ -323,7 +350,8 @@ export default function App() {
     if (!result.canceled && result.assets && result.assets.length > 0) {
       setUploadingState(true);
       try {
-        await uploadGardenPhotos(result.assets, selectedGarden.name, 4, selectedGarden.location);
+        const response = await uploadGardenPhotos(result.assets, selectedGarden.name, 4, selectedGarden.location);
+        setActiveUpdateId(response.garden_update_id);
         fetchData(true);
         alert("Photos uploaded successfully! The AI is analyzing them in the background.");
       } catch (err) {
@@ -342,10 +370,13 @@ export default function App() {
       const newGardenResponse = await uploadGardenPhotos(uploadData.photos, uploadData.name, 4, uploadData.location);
       setUploadData({ name: '', location: '', photos: [] });
       setIsUploading(false);
+      setActiveUpdateId(newGardenResponse.garden_update_id);
+      
       const data = await getDetailedGardens(4);
       const sorted = data.sort((a, b) => new Date(b.last_accessed_at || b.created_at) - new Date(a.last_accessed_at || a.created_at));
       setGardens(sorted);
-      const newlyUploadedGarden = sorted.find(g => g.id === newGardenResponse.id);
+      
+      const newlyUploadedGarden = sorted.find(g => g.id === newGardenResponse.garden_id);
       if (newlyUploadedGarden) {
         handleGardenPress(newlyUploadedGarden);
       } else {
@@ -439,17 +470,6 @@ export default function App() {
     }
   };
 
-  useEffect(() => {
-    let interval;
-    const hasProcessing = gardens.some(g => g.status !== 'Ready');
-    if (hasProcessing) {
-      interval = setInterval(() => {
-        fetchData(true);
-      }, 5000);
-    }
-    return () => clearInterval(interval);
-  }, [gardens, selectedGarden]);
-
   if (!fontsLoaded || loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -458,6 +478,13 @@ export default function App() {
       </View>
     );
   }
+
+  const getAnalysisMessage = () => {
+    if (workflowStatus && selectedGarden?.latest_update_id === activeUpdateId) {
+      return activityFriendlyNames[workflowStatus.current_activity] || 'Processing...';
+    }
+    return selectedGarden?.upload_commentry || 'Photo Analysis in progress...';
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -515,7 +542,7 @@ export default function App() {
             </View>
             <TouchableOpacity style={[styles.btnPrimary, (uploadingState || uploadData.photos.length === 0 || !uploadData.name) ? { backgroundColor: theme.colors.surfaceContainerHigh } : { backgroundColor: theme.colors.vibrantPink }]} onPress={handleUploadSubmit} disabled={uploadingState || uploadData.photos.length === 0 || !uploadData.name}>
               {uploadingState ? <ActivityIndicator color={theme.colors.onSurfaceVariant} size="small" /> : <Sparkles size={20} color={(uploadData.photos.length === 0 || !uploadData.name) ? theme.colors.onSurfaceVariant : '#ffffff'} />}
-              <Text style={[styles.btnPrimaryText, (uploadingState || uploadData.photos.length === 0 || !uploadData.name) ? { color: theme.colors.onSurfaceVariant } : { color: '#ffffff' }]}>{uploadingState ? 'Analyzing...' : 'Initialize AI Analysis'}</Text>
+              <Text style={[styles.btnPrimaryText, (uploadingState || uploadData.photos.length === 0 || !uploadData.name) ? { color: theme.colors.onSurfaceVariant } : { color: '#ffffff' }]}>{uploadingState ? 'Analyzing...' : 'Upload and Analyze'}</Text>
             </TouchableOpacity>
           </ScrollView>
         </KeyboardAvoidingView>
@@ -556,8 +583,7 @@ export default function App() {
             <View style={styles.analysisContainer}>
               <ActivityIndicator size="small" color={theme.colors.vibrantPink} />
               <View style={{ flexShrink: 1 }}>
-                <Text style={styles.analysisText}>Photo Analysis in progress...</Text>
-                {!!selectedGarden.upload_commentry && <Text style={[styles.analysisText, { marginTop: 4, fontFamily: 'Manrope_400Regular', color: theme.colors.outline }]}>{selectedGarden.upload_commentry}</Text>}
+                <Text style={styles.analysisText}>{getAnalysisMessage()}</Text>
               </View>
             </View>
           )}
