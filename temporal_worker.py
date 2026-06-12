@@ -21,7 +21,8 @@ async def main():
     namespace = os.getenv("TEMPORAL_NAMESPACE", "default")
     
     logger.info(f"Connecting to Temporal server at {temporal_server_url} (namespace: {namespace})...")
-    client = await Client.connect(temporal_server_url, namespace=namespace)
+    from temporal.client import get_temporal_client
+    client = await get_temporal_client()
     
     worker = Worker(
         client,
