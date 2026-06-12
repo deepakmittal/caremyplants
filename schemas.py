@@ -46,11 +46,13 @@ class UserResponse(UserBase):
 class GardenCreate(BaseModel):
     name: str
 
+# MODIFIED GardenResponse
 class GardenResponse(BaseModel):
     id: int
     name: str
-    status: Optional[str] = Field(None, description="The final status of the garden after processing is complete (e.g., 'Ready'). For updates that are currently being processed, query the GET /updates/{update_id}/status endpoint to get the real-time status.")
+    status: Optional[str] = Field(None, description="The initial status of the garden update (e.g., 'Queued'). For real-time processing status, query the GET /updates/{update_id}/status endpoint.")
     garden_update_id: Optional[int] = None
+    workflow_id: str = Field(..., description="The unique identifier for the Temporal workflow processing this garden update.")
     created_at: datetime
 
     class Config:
@@ -137,15 +139,24 @@ class Token(BaseModel):
     access_token: str
     token_type: str
 
-# --- TEMPORAL WORKFLOW SCHEMAS ---
+# --- NEW TEMPORAL WORKFLOW SCHEMAS ---
 
-class WorkflowStartResponse(BaseModel):
-    garden_id: int
-    garden_update_id: int
-    workflow_id: str
+class ActivityStatus(BaseModel):
+    name: Literal[
+        "GATHER_GARDEN_DETAILS",
+        "CUT_PLANT_IMAGES",
+        "GATHER_PLANT_DETAILS",
+        "UPDATE_GARDEN_FLAGS"
+    ]
+    status: Literal["PENDING", "RUNNING", "COMPLETED", "FAILED"]
+    started_at: Optional[datetime] = None
+    completed_at: Optional[datetime] = None
 
 class WorkflowStatusResponse(BaseModel):
     workflow_id: str
-    status: Literal["RUNNING", "COMPLETED", "FAILED", "TIMED_OUT", "CANCELED"]
-    current_activity: Optional[str] = None
-    details: Optional[str] = None
+    update_id: int
+    status: Literal["RUNNING", "COMPLETED", "FAILED", "CANCELED", "TIMED_OUT"]
+    created_at: datetime
+    updated_at: datetime
+    activities: List[ActivityStatus]
+    error_message: Optional[str] = None
