@@ -37,6 +37,11 @@ export const uploadGardenPhotos = async (photos, gardenName, userId) => {
     return response.data;
 };
 
+export const getWorkflowStatus = async (updateId) => {
+    const response = await api.get(`/updates/${updateId}/status`);
+    return response.data;
+};
+
 export const getGardenDetails = async (gardenId) => {
     const response = await api.get(`/gardens/${gardenId}/details`);
     return response.data;

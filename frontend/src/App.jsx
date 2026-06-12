@@ -26,10 +26,10 @@ const App = () => {
   const [workflowStatus, setWorkflowStatus] = useState(null);
 
   const activityFriendlyNames = {
-    'Gather garden level details from AI': 'Analyzing garden overview...',
-    'Cut plants images from garden images.': 'Identifying individual plants...',
-    'Gather Plants level details from AI': 'Analyzing each plant...',
-    'Update garden level flags using Plants level details': 'Finalizing analysis...',
+    'GATHER_GARDEN_DETAILS': 'Analyzing garden overview...',
+    'CUT_PLANT_IMAGES': 'Identifying individual plants...',
+    'GATHER_PLANT_DETAILS': 'Analyzing each plant...',
+    'UPDATE_GARDEN_FLAGS': 'Finalizing analysis...',
   };
 
   // Initial Auth Sync and Navigation
@@ -171,7 +171,13 @@ const App = () => {
   const GardensPage = () => {
     const getGardenStatusInfo = (garden) => {
       if (workflowStatus && garden.latest_update_id === activeUpdateId) {
-        const statusText = activityFriendlyNames[workflowStatus.current_activity] || 'Processing...';
+        let currentActivity = workflowStatus.activities?.find(a => a.status === 'RUNNING');
+        if (!currentActivity) {
+            currentActivity = workflowStatus.activities?.find(a => a.status === 'PENDING');
+        }
+
+        const statusText = currentActivity ? activityFriendlyNames[currentActivity.name] : 'Processing...';
+
         return {
           status: workflowStatus.status === 'RUNNING' ? 'Processing' : garden.status,
           message: statusText,
@@ -338,7 +344,7 @@ const App = () => {
                 type="text"
                 value={newGardenName}
                 onChange={(e) => setNewGardenName(e.target.value)}
-                className="input-field"
+                className="input-.field"
                 placeholder="Give your garden a name (e.g. Sunny Balcony)"
                 required
               />

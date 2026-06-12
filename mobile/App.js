@@ -34,10 +34,10 @@ const { width } = Dimensions.get('window');
 const CARD_WIDTH = width * 0.85;
 
 const activityFriendlyNames = {
-  'Gather garden level details from AI': 'Analyzing garden overview...',
-  'Cut plants images from garden images.': 'Identifying individual plants...',
-  'Gather Plants level details from AI': 'Analyzing each plant...',
-  'Update garden level flags using Plants level details': 'Finalizing analysis...',
+  'GATHER_GARDEN_DETAILS': 'Analyzing garden overview...',
+  'CUT_PLANT_IMAGES': 'Identifying individual plants...',
+  'GATHER_PLANT_DETAILS': 'Analyzing each plant...',
+  'UPDATE_GARDEN_FLAGS': 'Finalizing analysis...',
 };
 
 // --- NEW COMPONENTS START ---
@@ -481,7 +481,11 @@ export default function App() {
 
   const getAnalysisMessage = () => {
     if (workflowStatus && selectedGarden?.latest_update_id === activeUpdateId) {
-      return activityFriendlyNames[workflowStatus.current_activity] || 'Processing...';
+      let currentActivity = workflowStatus.activities?.find(a => a.status === 'RUNNING');
+      if (!currentActivity) {
+          currentActivity = workflowStatus.activities?.find(a => a.status === 'PENDING');
+      }
+      return currentActivity ? activityFriendlyNames[currentActivity.name] : 'Processing...';
     }
     return selectedGarden?.upload_commentry || 'Photo Analysis in progress...';
   };
