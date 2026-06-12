@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Camera, Plus, Leaf, LogOut, ChevronRight, Loader2, Image as ImageIcon, ChevronLeft, Sparkles, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { loginWithGoogle, uploadGardenPhotos, getUserGardens, getGardenDetails } from './services/api';
+import { loginWithGoogle, uploadGardenPhotos, getUserGardens, getGardenDetails, getWorkflowStatus } from './services/api';
 import Carousel from './components/Carousel';
 import GoogleLoginButton from './components/GoogleLoginButton';
 
@@ -21,16 +21,52 @@ const App = () => {
   const [selectedPhotos, setSelectedPhotos] = useState([]);
   const [uploading, setUploading] = useState(false);
 
+  // Workflow and Status State
+  const [activeUpdateId, setActiveUpdateId] = useState(null);
+  const [workflowStatus, setWorkflowStatus] = useState(null);
+
+  const activityFriendlyNames = {
+    'Gather garden level details from AI': 'Analyzing garden overview...',
+    'Cut plants images from garden images.': 'Identifying individual plants...',
+    'Gather Plants level details from AI': 'Analyzing each plant...',
+    'Update garden level flags using Plants level details': 'Finalizing analysis...',
+  };
+
   // Initial Auth Sync and Navigation
   useEffect(() => {
     if (user) {
       fetchGardens();
-      const interval = setInterval(fetchGardens, 5000); // Polling for AI status updates
-      return () => clearInterval(interval);
     } else {
       setCurrentPage('login');
     }
   }, [user]);
+
+  // Polling for workflow status
+  useEffect(() => {
+    if (activeUpdateId) {
+      const interval = setInterval(async () => {
+        try {
+          const statusData = await getWorkflowStatus(activeUpdateId);
+          setWorkflowStatus(statusData);
+
+          if (['COMPLETED', 'FAILED', 'TIMED_OUT', 'CANCELED'].includes(statusData.status)) {
+            clearInterval(interval);
+            setActiveUpdateId(null);
+            setWorkflowStatus(null);
+            await fetchGardens(); // Refresh garden list
+          }
+        } catch (error) {
+          console.error("Failed to fetch workflow status", error);
+          clearInterval(interval); // Stop polling on error
+          setActiveUpdateId(null);
+          setWorkflowStatus(null);
+        }
+      }, 3000);
+
+      return () => clearInterval(interval);
+    }
+  }, [activeUpdateId]);
+
 
   // Navigate to correct page based on garden count
   useEffect(() => {
@@ -91,10 +127,11 @@ const App = () => {
     if (selectedPhotos.length === 0) return;
     setUploading(true);
     try {
-      await uploadGardenPhotos(selectedPhotos, newGardenName, user.user_id);
+      const response = await uploadGardenPhotos(selectedPhotos, newGardenName, user.user_id);
       setNewGardenName('');
       setSelectedPhotos([]);
-      await fetchGardens();
+      setActiveUpdateId(response.garden_update_id);
+      await fetchGardens(); // Fetch gardens immediately to show the new "Processing" garden
       setCurrentPage('gardens');
     } catch (err) {
       alert("Upload failed.");
@@ -131,119 +168,76 @@ const App = () => {
     </div>
   );
 
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [logs, setLogs] = useState([]);
-  const [showLogs, setShowLogs] = useState(false);
-
-  const handleStartProcessing = () => {
-    setLogs([]);
-    setShowLogs(true);
-    setIsProcessing(true);
-    
-    // In a real app, API_BASE_URL would be used
-    const eventSource = new EventSource('https://caremyplants-1059916488233.us-central1.run.app/jobs/process?stream=true');
-    
-    eventSource.onmessage = (event) => {
-      if (event.data === '[DONE]') {
-        eventSource.close();
-        setIsProcessing(false);
-        fetchGardens();
-        return;
+  const GardensPage = () => {
+    const getGardenStatusInfo = (garden) => {
+      if (workflowStatus && garden.latest_update_id === activeUpdateId) {
+        const statusText = activityFriendlyNames[workflowStatus.current_activity] || 'Processing...';
+        return {
+          status: workflowStatus.status === 'RUNNING' ? 'Processing' : garden.status,
+          message: statusText,
+          isProcessing: true,
+        };
       }
-      setLogs(prev => [...prev.slice(-20), event.data]); // Keep last 20 logs
+      return {
+        status: garden.status,
+        message: garden.status === 'Ready' ? 'Thriving and healthy.' : 'Analyzing plant health...',
+        isProcessing: garden.status !== 'Ready',
+      };
     };
 
-    eventSource.onerror = (err) => {
-      console.error("SSE Error:", err);
-      eventSource.close();
-      setIsProcessing(false);
-      setLogs(prev => [...prev, "Connection lost or finished."]);
-    };
-  };
-
-  const GardensPage = () => (
-    <div className="min-h-screen p-6 md:p-12 max-w-7xl mx-auto">
-      <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-16">
-        <div>
-          <h2 className="text-text-muted text-sm font-bold uppercase tracking-widest mb-1">Your Collection</h2>
-          <h1 className="text-4xl font-extrabold gradient-text">My Gardens</h1>
-        </div>
-        <div className="flex flex-wrap items-center gap-4">
-          {gardens.some(g => g.status === 'Ready to Process' || g.status === 'New') && (
-            <button 
-              onClick={handleStartProcessing} 
-              disabled={isProcessing}
-              className="btn-secondary flex items-center gap-2"
-            >
-              <Sparkles size={20} className={isProcessing ? "animate-spin" : ""} />
-              {isProcessing ? 'Processing...' : 'Initialize AI Analysis'}
+    return (
+      <div className="min-h-screen p-6 md:p-12 max-w-7xl mx-auto">
+        <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-16">
+          <div>
+            <h2 className="text-text-muted text-sm font-bold uppercase tracking-widest mb-1">Your Collection</h2>
+            <h1 className="text-4xl font-extrabold gradient-text">My Gardens</h1>
+          </div>
+          <div className="flex flex-wrap items-center gap-4">
+            <button onClick={() => setCurrentPage('create_garden')} className="btn-primary flex items-center gap-2">
+              <Plus size={20} />
+              Add Garden
             </button>
-          )}
-          <button onClick={() => setCurrentPage('create_garden')} className="btn-primary flex items-center gap-2">
-            <Plus size={20} />
-            Add Garden
-          </button>
-          <button onClick={handleLogout} className="p-2 text-text-muted hover:text-white transition-colors">
-            <LogOut size={24} />
-          </button>
-        </div>
-      </header>
-
-      <AnimatePresence>
-        {showLogs && (
-          <motion.div 
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="mb-8 glass-card p-6 overflow-hidden"
-          >
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-sm font-bold uppercase tracking-widest text-primary flex items-center gap-2">
-                <Loader2 size={16} className="animate-spin" />
-                Live AI Logs
-              </h3>
-              <button onClick={() => setShowLogs(false)} className="text-xs text-text-muted hover:text-white">Close</button>
-            </div>
-            <div className="bg-white/80 rounded-xl p-4 font-mono text-xs space-y-1 max-h-40 overflow-y-auto border border-glass-border">
-              {logs.length === 0 && <p className="text-text-muted">Connecting to AI core...</p>}
-              {logs.map((log, i) => (
-                <div key={i} className="text-emerald-400/80 border-l-2 border-emerald-500/30 pl-3 py-1">
-                  {log}
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <Carousel>
-        {gardens.map((garden) => (
-          <div key={garden.id} className="glass-card glass-card-hover p-8 h-full flex flex-col justify-between">
-            <div>
-              <div className="flex justify-between items-start mb-6">
-                <div className="bg-primary/10 p-4 rounded-2xl">
-                  <Leaf className="text-primary" size={32} />
-                </div>
-                <span className={`status-badge ${garden.status === 'Ready' ? 'status-ready' : 'status-processing'}`}>
-                  {garden.status}
-                </span>
-              </div>
-              <h3 className="text-2xl font-bold mb-2">{garden.name}</h3>
-              <p className="text-text-muted mb-8 italic">"{garden.status === 'Ready' ? 'Thriving and healthy.' : 'Analyzing plant health...'}"</p>
-            </div>
-            <button
-              onClick={() => handleOpenGarden(garden)}
-              disabled={garden.status !== 'Ready'}
-              className="w-full py-4 rounded-2xl bg-primary/10 hover:bg-primary/20 text-primary font-bold flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              View Plants
-              <ChevronRight size={20} />
+            <button onClick={handleLogout} className="p-2 text-text-muted hover:text-white transition-colors">
+              <LogOut size={24} />
             </button>
           </div>
-        ))}
-      </Carousel>
-    </div>
-  );
+        </header>
+
+        <Carousel>
+          {gardens.map((garden) => {
+            const { status, message, isProcessing } = getGardenStatusInfo(garden);
+            return (
+              <div key={garden.id} className="glass-card glass-card-hover p-8 h-full flex flex-col justify-between">
+                <div>
+                  <div className="flex justify-between items-start mb-6">
+                    <div className="bg-primary/10 p-4 rounded-2xl">
+                      <Leaf className="text-primary" size={32} />
+                    </div>
+                    <span className={`status-badge ${status === 'Ready' ? 'status-ready' : 'status-processing'}`}>
+                      {isProcessing ? (
+                        <Loader2 size={16} className="animate-spin mr-2" />
+                      ) : null}
+                      {status}
+                    </span>
+                  </div>
+                  <h3 className="text-2xl font-bold mb-2">{garden.name}</h3>
+                  <p className="text-text-muted mb-8 italic">"{message}"</p>
+                </div>
+                <button
+                  onClick={() => handleOpenGarden(garden)}
+                  disabled={status !== 'Ready'}
+                  className="w-full py-4 rounded-2xl bg-primary/10 hover:bg-primary/20 text-primary font-bold flex items-center justify-center gap-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  View Plants
+                  <ChevronRight size={20} />
+                </button>
+              </div>
+            );
+          })}
+        </Carousel>
+      </div>
+    );
+  };
 
   const PlantsPage = () => (
     <div className="min-h-screen p-6 md:p-12 max-w-7xl mx-auto">
@@ -365,7 +359,7 @@ const App = () => {
                 {uploading ? <Loader2 className="animate-spin" size={24} /> : (
                   <>
                     <Sparkles size={24} />
-                    Initialize AI Analysis
+                    Upload and Analyze
                   </>
                 )}
               </button>
