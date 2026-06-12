@@ -15,5 +15,8 @@ else
   export PORT=${PORT:-8000}
 fi
 
+echo "Starting Temporal Worker..."
+python3 temporal_worker.py &
+
 echo "Starting uvicorn on port $PORT..."
 exec uvicorn main:app --host 0.0.0.0 --port $PORT
