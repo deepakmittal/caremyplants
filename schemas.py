@@ -52,7 +52,7 @@ class GardenResponse(BaseModel):
     name: str
     status: Optional[str] = Field(None, description="The initial status of the garden update (e.g., 'Queued'). For real-time processing status, query the GET /updates/{update_id}/status endpoint.")
     garden_update_id: Optional[int] = None
-    workflow_id: str = Field(..., description="The unique identifier for the Temporal workflow processing this garden update.")
+    workflow_id: Optional[str] = Field(None, description="The unique identifier for the Temporal workflow processing this garden update.")
     created_at: datetime
 
     class Config:

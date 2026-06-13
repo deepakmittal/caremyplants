@@ -251,6 +251,7 @@ async def upload_garden_photos(
 
     response = schemas.GardenResponse.from_orm(db_garden)
     response.garden_update_id = db_update.id
+    response.workflow_id = f"garden-update-{db_update.id}"
     return response
 
 # New: Push photos to an existing update
