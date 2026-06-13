@@ -414,7 +414,7 @@ def get_user_gardens_detailed(user_id: int, db: Session = Depends(get_db)):
                     "id": plant.id,
                     "name": plant.name,
                     "plant_variety": plant.plant_variety,
-                    "image_url": plant.image_url,
+                    "image_url": latest_p_update.image_url if (latest_p_update and latest_p_update.image_url) else plant.image_url,
                     "latest_condition": latest_p_update.condition_text if latest_p_update else None,
                     "latest_recommendation": latest_p_update.recommendation if latest_p_update else None,
                     "last_update_date": latest_p_update.created_at if latest_p_update else None
