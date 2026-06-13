@@ -46,7 +46,8 @@ class GardenProcessingWorkflow:
 
         # Wait for all plant detail tasks to complete
         if plant_detail_tasks:
-            await workflow.gather(*plant_detail_tasks)
+            import asyncio
+            await asyncio.gather(*plant_detail_tasks)
 
 
         # 4. Finalize the garden update
