@@ -17,6 +17,7 @@ fi
 
 echo "Starting Temporal Worker..."
 python3 temporal_worker.py &
+sleep 3
 
 echo "Starting uvicorn on port $PORT..."
 exec uvicorn main:app --host 0.0.0.0 --port $PORT
