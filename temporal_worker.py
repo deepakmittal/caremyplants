@@ -24,6 +24,8 @@ async def main():
     from temporal.client import get_temporal_client
     client = await get_temporal_client()
     
+    from concurrent.futures import ThreadPoolExecutor
+
     worker = Worker(
         client,
         task_queue="garden-processing-task-queue",
@@ -34,6 +36,7 @@ async def main():
             gather_plant_details,
             update_garden_flags,
         ],
+        activity_executor=ThreadPoolExecutor(max_workers=20),
     )
     logger.info("Starting Garden Temporal Worker on task queue 'garden-processing-task-queue'...")
     await worker.run()
