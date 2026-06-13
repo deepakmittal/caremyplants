@@ -70,7 +70,7 @@ def _get_last_plant_update_details(db: Session, plant_id: int):
 # --- Activities ---
 
 @activity.defn
-async def gather_garden_details(update_id: int) -> dict:
+def gather_garden_details(update_id: int) -> dict:
     db = _get_db()
     try:
         activity.heartbeat()
@@ -112,7 +112,7 @@ async def gather_garden_details(update_id: int) -> dict:
 
 
 @activity.defn
-async def cut_plant_images(update_id: int, garden_id: int, plants_list: list) -> list[int]:
+def cut_plant_images(update_id: int, garden_id: int, plants_list: list) -> list[int]:
     db = _get_db()
     try:
         logger.info(f"Activity 2: CUT_PLANT_IMAGES for garden {garden_id}")
@@ -162,7 +162,7 @@ async def cut_plant_images(update_id: int, garden_id: int, plants_list: list) ->
 
 
 @activity.defn
-async def gather_plant_details(plant_update_id: int) -> None:
+def gather_plant_details(plant_update_id: int) -> None:
     db = _get_db()
     try:
         logger.info(f"Activity 3: GATHER_PLANT_DETAILS for plant_update {plant_update_id}")
@@ -207,7 +207,7 @@ async def gather_plant_details(plant_update_id: int) -> None:
 
 
 @activity.defn
-async def update_garden_flags(update_id: int) -> None:
+def update_garden_flags(update_id: int) -> None:
     db = _get_db()
     try:
         logger.info(f"Activity 4: UPDATE_GARDEN_FLAGS for update {update_id}")
