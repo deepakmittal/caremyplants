@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Camera, Plus, Leaf, LogOut, ChevronRight, Loader2, Image as ImageIcon, ChevronLeft, Sparkles, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { Camera, Plus, Leaf, LogOut, ChevronRight, Loader2, Image as ImageIcon, ChevronLeft, Sparkles, ArrowLeft, CheckCircle2, Droplets, Sun, Sprout, TrendingUp, Box, Scissors, Check, AlertCircle, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { loginWithGoogle, uploadGardenPhotos, getUserGardens, getGardenDetails, getWorkflowStatus } from './services/api';
 import Carousel from './components/Carousel';
@@ -24,6 +24,7 @@ const App = () => {
   // Workflow and Status State
   const [activeUpdateId, setActiveUpdateId] = useState(null);
   const [workflowStatus, setWorkflowStatus] = useState(null);
+  const [activeMetric, setActiveMetric] = useState(null);
 
   const activityFriendlyNames = {
     'GATHER_GARDEN_DETAILS': 'Analyzing garden overview...',
@@ -245,71 +246,303 @@ const App = () => {
     );
   };
 
-  const PlantsPage = () => (
-    <div className="min-h-screen p-6 md:p-12 max-w-7xl mx-auto">
-      <header className="mb-12">
-        <button
-          onClick={() => setCurrentPage('gardens')}
-          className="flex items-center gap-2 text-text-muted hover:text-white transition-colors mb-6 font-semibold"
-        >
-          <ArrowLeft size={20} />
-          Back to Gardens
-        </button>
-        <div className="flex justify-between items-end">
-          <div>
-            <h2 className="text-text-muted text-sm font-bold uppercase tracking-widest mb-1">{selectedGarden?.name}</h2>
-            <h1 className="text-4xl font-extrabold gradient-text">Health Report</h1>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="bg-primary/10 px-4 py-2 rounded-xl text-primary font-bold flex items-center gap-2">
-              <Sparkles size={18} />
-              AI Analysis Live
-            </div>
-            <button onClick={handleLogout} className="p-2 text-text-muted hover:text-white transition-colors">
-              <LogOut size={24} />
-            </button>
-          </div>
-        </div>
-      </header>
+  const PlantsPage = () => {
+    const vitality = gardenDetails?.healthOverview?.sanctuaryVitality || {
+      score: 85,
+      flourishingPlantsCount: 12,
+      careNeededPlantsCount: 4,
+    };
 
-      {loading ? (
-        <div className="flex flex-col items-center justify-center py-20">
-          <Loader2 className="animate-spin text-primary mb-4" size={48} />
-          <p className="text-text-muted animate-pulse">Fetching plant intelligence...</p>
-        </div>
-      ) : (
-        <Carousel>
-          {gardenDetails?.plants.map((plant) => (
-            <div key={plant.id} className="glass-card overflow-hidden h-full flex flex-col">
-              <div className="relative h-64 overflow-hidden">
-                <img
-                  src={plant.image_url.startsWith('http') ? plant.image_url : `/static/${plant.image_url.split('/').pop()}`}
-                  className="w-full h-full object-cover transition-transform duration-700 hover:scale-110"
-                  alt={plant.name}
-                />
-                <div className="absolute top-4 right-4 capitalize bg-white/80 backdrop-blur-md px-3 py-1 rounded-lg text-xs font-bold text-primary">
-                  {plant.plant_variety || 'Unknown Species'}
-                </div>
+    const metrics = gardenDetails?.healthOverview?.metrics || [
+      { category: 'WATERING', status: 'High', isUnfavorable: true, affectedPlantsCount: 5, affectedPlantIds: [] },
+      { category: 'SUN_EXPOSURE', status: 'Optimal', isUnfavorable: false, affectedPlantsCount: 0, affectedPlantIds: [] },
+      { category: 'SOIL_QUALITY', status: 'Poor', isUnfavorable: true, affectedPlantsCount: 3, affectedPlantIds: [] },
+      { category: 'VITALITY', status: 'Optimal', isUnfavorable: false, affectedPlantsCount: 0, affectedPlantIds: [] },
+      { category: 'LEAF_CARE', status: 'Dusty', isUnfavorable: true, affectedPlantsCount: 4, affectedPlantIds: [] },
+      { category: 'POT_STATUS', status: 'Balanced', isUnfavorable: false, affectedPlantsCount: 0, affectedPlantIds: [] },
+      { category: 'PRUNING', status: 'Overdue', isUnfavorable: true, affectedPlantsCount: 4, affectedPlantIds: [] },
+    ];
+
+    const categoryIcons = {
+      WATERING: Droplets,
+      SUN_EXPOSURE: Sun,
+      SOIL_QUALITY: Sprout,
+      VITALITY: TrendingUp,
+      LEAF_CARE: Sparkles,
+      POT_STATUS: Box,
+      PRUNING: Scissors
+    };
+
+    const categoryNames = {
+      WATERING: 'Watering',
+      SUN_EXPOSURE: 'Sun Exposure',
+      SOIL_QUALITY: 'Soil Quality',
+      VITALITY: 'Vitality',
+      LEAF_CARE: 'Leaf Care',
+      POT_STATUS: 'Pot Status',
+      PRUNING: 'Pruning'
+    };
+
+    const radius = 24;
+    const circumference = 2 * Math.PI * radius;
+    const strokeDashoffset = circumference - (vitality.score / 100) * circumference;
+    const isHealthyScore = vitality.score > 90;
+    const radialColor = isHealthyScore ? '#aacec3' : '#D10056';
+
+    return (
+      <div className="min-h-screen bg-[#F7FAF9] p-6 md:p-12 max-w-7xl mx-auto flex flex-col">
+        <header className="mb-8">
+          <button
+            onClick={() => setCurrentPage('gardens')}
+            className="flex items-center gap-2 text-gray-500 hover:text-[#1A3C34] transition-colors mb-6 font-semibold"
+          >
+            <ArrowLeft size={20} />
+            Back to Gardens
+          </button>
+          <div className="flex justify-between items-end">
+            <div>
+              <h2 className="text-[#1A3C34] opacity-60 text-sm font-bold uppercase tracking-widest mb-1">{selectedGarden?.name}</h2>
+              <h1 className="text-4xl font-extrabold text-[#1A3C34]">Balanced Health Overview</h1>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="bg-[#1A3C34]/10 px-4 py-2 rounded-xl text-[#1A3C34] font-bold flex items-center gap-2">
+                <Sparkles size={18} />
+                AI Analysis Live
               </div>
-              <div className="p-8 flex-grow">
-                <h3 className="text-2xl font-bold mb-4">{plant.name}</h3>
-                <div className="space-y-4">
-                  <div className="bg-primary/5 p-4 rounded-xl">
-                    <p className="text-sm font-bold text-primary uppercase mb-1">Recommendation</p>
-                    <p className="text-sm leading-relaxed">{plant.latest_recommendation || "Maintain current watering schedule."}</p>
-                  </div>
-                  <div className="bg-primary/5 p-4 rounded-xl">
-                    <p className="text-sm font-bold text-secondary uppercase mb-1">Current Condition</p>
-                    <p className="text-sm italic text-text-muted">{plant.latest_condition || "Analyzing..."}</p>
-                  </div>
+              <button onClick={handleLogout} className="p-2 text-gray-500 hover:text-[#1A3C34] transition-colors">
+                <LogOut size={24} />
+              </button>
+            </div>
+          </div>
+        </header>
+
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-20 flex-grow">
+            <Loader2 className="animate-spin text-[#1A3C34] mb-4" size={48} />
+            <p className="text-gray-500 animate-pulse font-medium">Fetching plant intelligence...</p>
+          </div>
+        ) : (
+          <div className="space-y-8 flex-grow pb-12">
+            {/* Sanctuary Vitality Section */}
+            <div className="bg-[#1A3C34] text-white p-6 rounded-2xl flex items-center justify-between shadow-xl">
+              <div className="flex flex-col">
+                <span className="text-xs font-bold uppercase tracking-wider text-[#aacec3] opacity-80">SANCTUARY VITALITY</span>
+                <h2 className="text-5xl font-extrabold my-2">{vitality.score}%</h2>
+                <p className="text-sm text-[#eaf6f2] opacity-90">
+                  {vitality.flourishingPlantsCount} plants are flourishing, {vitality.careNeededPlantsCount} need care
+                </p>
+              </div>
+              <div className="relative w-16 h-16 flex items-center justify-center shrink-0">
+                <svg className="w-full h-full transform -rotate-90">
+                  <circle
+                    cx="32"
+                    cy="32"
+                    r={radius}
+                    stroke="#132c26"
+                    strokeWidth="4"
+                    fill="transparent"
+                  />
+                  <circle
+                    cx="32"
+                    cy="32"
+                    r={radius}
+                    stroke={radialColor}
+                    strokeWidth="4"
+                    fill="transparent"
+                    strokeDasharray={circumference}
+                    strokeDashoffset={strokeDashoffset}
+                    strokeLinecap="round"
+                    className="transition-all duration-500"
+                  />
+                </svg>
+                <div className="absolute flex items-center justify-center">
+                  <Leaf size={18} className="text-white fill-current" />
                 </div>
               </div>
             </div>
-          ))}
-        </Carousel>
-      )}
-    </div>
-  );
+
+            {/* Metric Tile Grid */}
+            <div className="grid grid-cols-3 gap-3">
+              {metrics.map((metric) => {
+                const IconComponent = categoryIcons[metric.category] || Sprout;
+                const displayName = categoryNames[metric.category] || metric.category;
+                
+                return (
+                  <div
+                    key={metric.category}
+                    onClick={() => {
+                      setActiveMetric(metric);
+                    }}
+                    className="bg-white border border-[#eaf6f2] hover:border-[#1A3C34] transition-all p-3 rounded-2xl relative flex flex-col items-center justify-center cursor-pointer shadow-sm min-h-[96px] text-center"
+                  >
+                    {metric.isUnfavorable && (
+                      <div className="absolute top-2 right-2 bg-[#D10056] text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center shadow-md">
+                        {metric.affectedPlantsCount}
+                      </div>
+                    )}
+                    
+                    <div className="mb-2">
+                      <IconComponent
+                        size={20}
+                        className={metric.isUnfavorable ? "text-[#D10056]" : "text-[#1A3C34]"}
+                      />
+                    </div>
+                    
+                    <span className="text-[9px] text-gray-400 uppercase font-bold tracking-wider mb-1">
+                      {displayName}
+                    </span>
+                    
+                    <div className="flex items-center gap-1 justify-center">
+                      <span className={`text-xs font-extrabold ${metric.isUnfavorable ? 'text-[#D10056]' : 'text-[#1A3C34]'}`}>
+                        {metric.status}
+                      </span>
+                      {!metric.isUnfavorable && (
+                        <Check size={12} className="text-emerald-600 stroke-[3]" />
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* My Plants Carousel Section */}
+            <div>
+              <h2 className="text-2xl font-extrabold text-[#1A3C34] mb-4">My Plants</h2>
+              <Carousel>
+                {gardenDetails?.plants.map((plant) => (
+                  <div key={plant.id} className="bg-white rounded-3xl border border-[#eaf6f2] overflow-hidden shadow-sm h-full flex flex-col">
+                    <div className="relative h-48 overflow-hidden">
+                      <img
+                        src={plant.image_url.startsWith('http') ? plant.image_url : `/static/${plant.image_url.split('/').pop()}`}
+                        className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
+                        alt={plant.name}
+                      />
+                      <div className="absolute top-4 right-4 capitalize bg-white/90 backdrop-blur-md px-3 py-1 rounded-xl text-xs font-bold text-[#1A3C34] border border-[#eaf6f2]">
+                        {plant.plant_variety || 'Unknown Species'}
+                      </div>
+                    </div>
+                    <div className="p-6 flex-grow flex flex-col justify-between">
+                      <div>
+                        <h3 className="text-xl font-bold text-[#1A3C34] mb-4">{plant.name}</h3>
+                        <div className="space-y-3">
+                          <div className="bg-[#f7faf9] p-3 rounded-xl border border-[#eaf6f2]">
+                            <p className="text-xs font-extrabold text-[#1A3C34] uppercase mb-1">Recommendation</p>
+                            <p className="text-xs leading-relaxed text-gray-600">{plant.latest_recommendation || "Maintain current watering schedule."}</p>
+                          </div>
+                          <div className="bg-[#f7faf9] p-3 rounded-xl border border-[#eaf6f2]">
+                            <p className="text-xs font-extrabold text-[#D10056] uppercase mb-1">Current Condition</p>
+                            <p className="text-xs italic text-gray-500">{plant.latest_condition || "Analyzing..."}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </Carousel>
+            </div>
+          </div>
+        )}
+
+        {/* Bottom Sheet / Expanded View Modal */}
+        <AnimatePresence>
+          {activeMetric && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-[#01261f]/40 backdrop-blur-sm z-[100] flex items-end justify-center"
+              onClick={() => setActiveMetric(null)}
+            >
+              <motion.div
+                initial={{ y: "100%" }}
+                animate={{ y: 0 }}
+                exit={{ y: "100%" }}
+                transition={{ type: "spring", damping: 25, stiffness: 350 }}
+                className="bg-white w-full max-w-lg rounded-t-3xl shadow-2xl overflow-hidden p-6 max-h-[85vh] flex flex-col"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex justify-between items-center border-b border-[#eaf6f2] pb-4 mb-4">
+                  <div>
+                    <span className="text-xs font-bold text-gray-400 uppercase tracking-widest">
+                      {categoryNames[activeMetric.category] || activeMetric.category} Details
+                    </span>
+                    <h3 className="text-2xl font-extrabold text-[#1A3C34] flex items-center gap-2">
+                      Status: <span className={activeMetric.isUnfavorable ? "text-[#D10056]" : "text-emerald-600"}>
+                        {activeMetric.isUnfavorable ? activeMetric.status : "Optimal"}
+                      </span>
+                    </h3>
+                  </div>
+                  <button
+                    onClick={() => setActiveMetric(null)}
+                    className="p-2 bg-gray-100 hover:bg-gray-200 transition-colors rounded-full text-gray-500"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+
+                <div className="overflow-y-auto flex-grow space-y-4 pr-1">
+                  {activeMetric.isUnfavorable ? (
+                    gardenDetails?.plants.filter(p => activeMetric.affectedPlantIds.includes(p.id)).length > 0 ? (
+                      gardenDetails?.plants.filter(p => activeMetric.affectedPlantIds.includes(p.id)).map((plant) => (
+                        <div key={plant.id} className="flex gap-4 p-4 bg-[#f7faf9] rounded-2xl border border-[#eaf6f2]">
+                          <div className="w-16 h-16 rounded-xl overflow-hidden shrink-0">
+                            <img
+                              src={plant.image_url.startsWith('http') ? plant.image_url : `/static/${plant.image_url.split('/').pop()}`}
+                              className="w-full h-full object-cover"
+                              alt={plant.name}
+                            />
+                          </div>
+                          <div className="flex-grow flex flex-col justify-between">
+                            <div>
+                              <h4 className="font-bold text-[#1A3C34]">{plant.name}</h4>
+                              <span className="text-xs text-gray-400 capitalize">{plant.plant_variety || 'Unknown Species'}</span>
+                            </div>
+                            
+                            <div className="mt-2 text-xs font-bold text-[#D10056] bg-[#D10056]/5 py-1 px-3 rounded-lg border border-[#D10056]/20 inline-block w-fit">
+                              {activeMetric.category === 'WATERING' && `Needs watering attention: ${plant.latest_condition || 'Dry/Overwatered'}`}
+                              {activeMetric.category === 'SUN_EXPOSURE' && `Inadequate lighting: ${plant.latest_condition || 'Poor exposure'}`}
+                              {activeMetric.category === 'SOIL_QUALITY' && `Needs fertilization: ${plant.latest_condition || 'Nutrient deficit'}`}
+                              {activeMetric.category === 'VITALITY' && `Stagnant growth: ${plant.latest_condition || 'Low momentum'}`}
+                              {activeMetric.category === 'LEAF_CARE' && `Leaf Care Overdue: ${plant.latest_condition || 'Dusty leaves'}`}
+                              {activeMetric.category === 'POT_STATUS' && `Cramped Pot: ${plant.latest_condition || 'Needs repotting'}`}
+                              {activeMetric.category === 'PRUNING' && `Overdue Trimming: ${plant.latest_condition || 'Overgrown/Dead leaves'}`}
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-8 text-gray-400 font-medium">
+                        No specific plant records found for this issue, but general status needs attention.
+                      </div>
+                    )
+                  ) : (
+                    <div className="text-center py-12 flex flex-col items-center justify-center">
+                      <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-600 mb-4">
+                        <Check size={36} className="stroke-[3]" />
+                      </div>
+                      <h4 className="font-bold text-[#1A3C34] text-lg mb-1">All Good!</h4>
+                      <p className="text-sm text-gray-400 max-w-xs">
+                        All plants in this sanctuary are currently healthy and have optimal {categoryNames[activeMetric.category]?.toLowerCase() || 'conditions'}.
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                <div className="pt-4 mt-4 border-t border-[#eaf6f2]">
+                  <button
+                    onClick={() => setActiveMetric(null)}
+                    className="w-full py-4 bg-[#1A3C34] hover:bg-[#132c26] text-white font-bold rounded-2xl transition-all shadow-md"
+                  >
+                    Done
+                  </button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    );
+  };
 
   const CreateGardenPage = () => (
     <div className="min-h-screen p-6 md:p-12 max-w-7xl mx-auto">

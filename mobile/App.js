@@ -14,7 +14,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   RefreshControl,
-  Alert
+  Alert,
+  Modal
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { theme } from './src/theme';
@@ -53,7 +54,7 @@ const SanctuaryVitalityCard = ({ vitality }) => {
   const progress = score / 100;
   const strokeDashoffset = circumference * (1 - progress);
 
-  const strokeColor = score > 90 ? theme.colors.primary : theme.colors.vibrantPink;
+  const strokeColor = score > 90 ? theme.colors.primaryContainer : theme.colors.vibrantPink;
 
   return (
     <View style={styles.vitalityCard}>
@@ -96,7 +97,7 @@ const SanctuaryVitalityCard = ({ vitality }) => {
   );
 };
 
-const MetricTile = ({ metric }) => {
+const MetricTile = ({ metric, onPress }) => {
   const METRIC_ICONS = {
     WATERING: Droplets,
     SUN_EXPOSURE: Sun,
@@ -110,30 +111,30 @@ const MetricTile = ({ metric }) => {
   const Icon = METRIC_ICONS[metric.category] || Leaf;
 
   return (
-    <TouchableOpacity style={styles.metricTile} activeOpacity={0.8}>
+    <TouchableOpacity style={styles.metricTile} activeOpacity={0.8} onPress={() => onPress(metric)}>
       {metric.isUnfavorable && (
         <View style={styles.metricBadge}>
           <Text style={styles.metricBadgeText}>{metric.affectedPlantsCount}</Text>
         </View>
       )}
       <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'center'}}>
-        <Icon size={28} color={theme.colors.primary} />
+        <Icon size={28} color={metric.isUnfavorable ? theme.colors.vibrantPink : theme.colors.primary} />
         {!metric.isUnfavorable && <CheckCircle2 size={16} color="green" style={{ marginLeft: 4 }} />}
       </View>
       <View>
         <Text style={styles.metricLabel}>{metric.category.replace('_', ' ')}</Text>
-        <Text style={styles.metricStatus}>{metric.status}</Text>
+        <Text style={[styles.metricStatus, metric.isUnfavorable ? { color: theme.colors.vibrantPink } : { color: theme.colors.primary }]}>{metric.status}</Text>
       </View>
     </TouchableOpacity>
   );
 };
 
-const MetricTileGrid = ({ metrics }) => {
+const MetricTileGrid = ({ metrics, onMetricPress }) => {
   if (!metrics || metrics.length === 0) return null;
   return (
     <View style={styles.metricGrid}>
       {metrics.map((metric) => (
-        <MetricTile key={metric.category} metric={metric} />
+        <MetricTile key={metric.category} metric={metric} onPress={onMetricPress} />
       ))}
     </View>
   );
@@ -266,6 +267,7 @@ export default function App() {
   
   const [activeUpdateId, setActiveUpdateId] = useState(null);
   const [workflowStatus, setWorkflowStatus] = useState(null);
+  const [activeMetric, setActiveMetric] = useState(null);
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -596,7 +598,7 @@ export default function App() {
           {selectedGarden.status === 'Ready' && selectedGarden.healthOverview && (
             <View style={{ paddingHorizontal: theme.spacing.margin, marginTop: 24 }}>
               <SanctuaryVitalityCard vitality={selectedGarden.healthOverview.sanctuaryVitality} />
-              <MetricTileGrid metrics={selectedGarden.healthOverview.metrics} />
+              <MetricTileGrid metrics={selectedGarden.healthOverview.metrics} onMetricPress={setActiveMetric} />
             </View>
           )}
           {/* --- END MODIFIED SECTION --- */}
@@ -614,6 +616,83 @@ export default function App() {
           </ScrollView>
         </ScrollView>
       )}
+
+      {/* Triage Bottom Sheet Modal */}
+      <Modal
+        visible={activeMetric !== null}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setActiveMetric(null)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <View>
+                <Text style={styles.modalSubTitle}>{activeMetric?.category?.replace('_', ' ')} DETAILS</Text>
+                <Text style={styles.modalTitle}>
+                  Status:{' '}
+                  <Text style={activeMetric?.isUnfavorable ? { color: theme.colors.vibrantPink } : { color: 'green' }}>
+                    {activeMetric?.isUnfavorable ? activeMetric.status : 'Optimal'}
+                  </Text>
+                </Text>
+              </View>
+              <TouchableOpacity onPress={() => setActiveMetric(null)} style={styles.modalCloseButton}>
+                <Text style={{ fontSize: 16, fontWeight: 'bold', color: theme.colors.outline }}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={{ flex: 1, marginTop: 16 }}>
+              {activeMetric?.isUnfavorable ? (
+                selectedGarden?.plants.filter(p => activeMetric.affectedPlantIds.includes(p.id)).length > 0 ? (
+                  selectedGarden?.plants.filter(p => activeMetric.affectedPlantIds.includes(p.id)).map((plant) => (
+                    <View key={plant.id} style={styles.modalPlantCard}>
+                      {plant.image_url ? (
+                        <Image source={{ uri: plant.image_url }} style={styles.modalPlantImage} />
+                      ) : (
+                        <View style={[styles.modalPlantImage, { backgroundColor: theme.colors.surfaceContainerHigh, justifyContent: 'center', alignItems: 'center' }]}>
+                          <Leaf size={24} color={theme.colors.outline} />
+                        </View>
+                      )}
+                      <View style={{ flex: 1, justifyContent: 'space-between' }}>
+                        <View>
+                          <Text style={styles.modalPlantName}>{plant.name}</Text>
+                          <Text style={styles.modalPlantVariety}>{plant.plant_variety || 'Unknown Species'}</Text>
+                        </View>
+                        
+                        <View style={styles.issueHighlight}>
+                          <Text style={styles.issueHighlightText}>
+                            {activeMetric.category === 'WATERING' && `Needs watering: ${plant.latest_condition || 'Dry/Overwatered'}`}
+                            {activeMetric.category === 'SUN_EXPOSURE' && `Inadequate lighting: ${plant.latest_condition || 'Poor exposure'}`}
+                            {activeMetric.category === 'SOIL_QUALITY' && `Needs fertilizer: ${plant.latest_condition || 'Nutrient deficit'}`}
+                            {activeMetric.category === 'VITALITY' && `Stagnant growth: ${plant.latest_condition || 'Low momentum'}`}
+                            {activeMetric.category === 'LEAF_CARE' && `Leaf Care Overdue: ${plant.latest_condition || 'Dusty leaves'}`}
+                            {activeMetric.category === 'POT_STATUS' && `Cramped Pot: ${plant.latest_condition || 'Needs repotting'}`}
+                            {activeMetric.category === 'PRUNING' && `Overdue Trimming: ${plant.latest_condition || 'Overgrown/Dead leaves'}`}
+                          </Text>
+                        </View>
+                      </View>
+                    </View>
+                  ))
+                ) : (
+                  <Text style={styles.emptyText}>No specific plants registered with this issue.</Text>
+                )
+              ) : (
+                <View style={{ alignItems: 'center', paddingVertical: 32 }}>
+                  <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: '#e8f5e9', justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
+                    <CheckCircle2 size={36} color="green" />
+                  </View>
+                  <Text style={[styles.modalPlantName, { marginBottom: 4 }]}>All Good!</Text>
+                  <Text style={[styles.emptyText, { marginTop: 0 }]}>All plants in this sanctuary are healthy and have optimal conditions.</Text>
+                </View>
+              )}
+            </ScrollView>
+
+            <TouchableOpacity style={styles.modalDismissButton} onPress={() => setActiveMetric(null)}>
+              <Text style={styles.modalDismissButtonText}>Done</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -758,5 +837,114 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: theme.colors.primary,
     textAlign: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(1, 38, 31, 0.4)',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    width: '100%',
+    maxHeight: '85%',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -10 },
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#eaf6f2',
+    paddingBottom: 16,
+  },
+  modalSubTitle: {
+    fontFamily: 'Manrope_700Bold',
+    fontSize: 10,
+    color: '#717976',
+    letterSpacing: 1,
+  },
+  modalTitle: {
+    fontFamily: 'Manrope_700Bold',
+    fontSize: 22,
+    color: '#1a3c34',
+    marginTop: 4,
+  },
+  modalCloseButton: {
+    backgroundColor: '#f1f4f3',
+    padding: 8,
+    borderRadius: 20,
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalPlantCard: {
+    flexDirection: 'row',
+    gap: 16,
+    padding: 16,
+    backgroundColor: '#f7faf9',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#eaf6f2',
+    marginBottom: 12,
+  },
+  modalPlantImage: {
+    width: 64,
+    height: 64,
+    borderRadius: 12,
+    backgroundColor: '#dfebe6',
+  },
+  modalPlantName: {
+    fontFamily: 'Manrope_700Bold',
+    fontSize: 16,
+    color: '#1a3c34',
+  },
+  modalPlantVariety: {
+    fontFamily: 'Manrope_600SemiBold',
+    fontSize: 12,
+    color: '#717976',
+    textTransform: 'capitalize',
+  },
+  issueHighlight: {
+    marginTop: 8,
+    backgroundColor: 'rgba(209, 0, 86, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(209, 0, 86, 0.2)',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+  },
+  issueHighlightText: {
+    color: '#D10056',
+    fontFamily: 'Manrope_700Bold',
+    fontSize: 11,
+  },
+  emptyText: {
+    fontFamily: 'Manrope_600SemiBold',
+    fontSize: 14,
+    color: '#717976',
+    textAlign: 'center',
+    marginTop: 24,
+  },
+  modalDismissButton: {
+    backgroundColor: '#1a3c34',
+    paddingVertical: 16,
+    borderRadius: 16,
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  modalDismissButtonText: {
+    color: 'white',
+    fontFamily: 'Manrope_700Bold',
+    fontSize: 16,
   },
 });
