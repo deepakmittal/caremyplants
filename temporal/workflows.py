@@ -26,7 +26,7 @@ class GardenProcessingWorkflow:
         garden_details_result = await workflow.execute_activity(
             gather_garden_details,
             update_id,
-            start_to_close_timeout=timedelta(minutes=5),
+            start_to_close_timeout=timedelta(minutes=15),
             retry_policy=NO_RETRY_POLICY,
         )
 
@@ -37,7 +37,7 @@ class GardenProcessingWorkflow:
         plant_update_ids = await workflow.execute_activity(
             cut_plant_images,
             args=[update_id, garden_id, plants_list],
-            start_to_close_timeout=timedelta(minutes=10),
+            start_to_close_timeout=timedelta(minutes=40),
             retry_policy=NO_RETRY_POLICY,
         )
 
@@ -47,7 +47,7 @@ class GardenProcessingWorkflow:
             task = workflow.execute_activity(
                 gather_plant_details,
                 plant_update_id,
-                start_to_close_timeout=timedelta(minutes=3),
+                start_to_close_timeout=timedelta(minutes=15),
                 retry_policy=NO_RETRY_POLICY,
             )
             plant_detail_tasks.append(task)
@@ -62,7 +62,7 @@ class GardenProcessingWorkflow:
         await workflow.execute_activity(
             update_garden_flags,
             update_id,
-            start_to_close_timeout=timedelta(minutes=1),
+            start_to_close_timeout=timedelta(minutes=5),
             retry_policy=NO_RETRY_POLICY,
         )
 
