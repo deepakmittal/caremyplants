@@ -1,5 +1,6 @@
 from datetime import timedelta
 from temporalio import workflow
+from temporalio.common import RetryPolicy
 
 with workflow.unsafe.imports_passed_through():
     from temporal.activities import (
@@ -8,6 +9,10 @@ with workflow.unsafe.imports_passed_through():
         gather_plant_details,
         update_garden_flags,
     )
+
+
+# Retry policy configuration: maximum_attempts=1 disables all retries
+NO_RETRY_POLICY = RetryPolicy(maximum_attempts=1)
 
 
 @workflow.defn
@@ -22,6 +27,7 @@ class GardenProcessingWorkflow:
             gather_garden_details,
             update_id,
             start_to_close_timeout=timedelta(minutes=5),
+            retry_policy=NO_RETRY_POLICY,
         )
 
         plants_list = garden_details_result["plants_list"]
@@ -32,6 +38,7 @@ class GardenProcessingWorkflow:
             cut_plant_images,
             args=[update_id, garden_id, plants_list],
             start_to_close_timeout=timedelta(minutes=10),
+            retry_policy=NO_RETRY_POLICY,
         )
 
         # 3. Gather details for each plant in parallel
@@ -41,6 +48,7 @@ class GardenProcessingWorkflow:
                 gather_plant_details,
                 plant_update_id,
                 start_to_close_timeout=timedelta(minutes=3),
+                retry_policy=NO_RETRY_POLICY,
             )
             plant_detail_tasks.append(task)
 
@@ -55,6 +63,7 @@ class GardenProcessingWorkflow:
             update_garden_flags,
             update_id,
             start_to_close_timeout=timedelta(minutes=1),
+            retry_policy=NO_RETRY_POLICY,
         )
 
         return "COMPLETED"
