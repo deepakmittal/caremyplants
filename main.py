@@ -429,6 +429,9 @@ def get_user_gardens_detailed(user_id: int, db: Session = Depends(get_db)):
                     "created_at": photo.created_at
                 })
 
+            from services import health_service
+            health_overview = health_service.calculate_garden_health(garden)
+
             results.append({
                 "id": garden.id,
                 "name": garden.name,
@@ -438,7 +441,8 @@ def get_user_gardens_detailed(user_id: int, db: Session = Depends(get_db)):
                 "recommendation": getattr(latest_update_with_rec, 'recommendation', None),
                 "created_at": garden.created_at,
                 "photos": photo_responses,
-                "plants": plant_responses
+                "plants": plant_responses,
+                "healthOverview": health_overview
             })
         return results
     except Exception as e:

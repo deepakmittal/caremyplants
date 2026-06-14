@@ -110,6 +110,7 @@ class GardenWithPhotosResponse(BaseModel):
     created_at: datetime
     photos: List[GardenPhotoResponse]
     plants: List[PlantLatestUpdateResponse] = []
+    healthOverview: Optional[GardenHealthOverview] = None
 
     class Config:
         from_attributes = True

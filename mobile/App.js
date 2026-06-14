@@ -418,31 +418,44 @@ export default function App() {
     setSelectedGarden(garden);
   };
 
+  const performDelete = async (garden) => {
+    try {
+      await deleteGarden(garden.id);
+      const data = await getDetailedGardens(4);
+      setGardens(data);
+      if (selectedGarden && selectedGarden.id === garden.id) {
+        setSelectedGarden(null);
+      }
+    } catch (error) {
+      console.error("Delete failed", error);
+      if (Platform.OS === 'web') {
+        window.alert("Failed to delete garden. Please try again.");
+      } else {
+        Alert.alert("Error", "Failed to delete garden. Please try again.");
+      }
+    }
+  };
+
   const handleDeleteGarden = (garden) => {
-    Alert.alert(
-      "Delete Garden",
-      `Are you sure you want to delete "${garden.name}"? This action cannot be undone.`,
-      [
-        { text: "Cancel", style: "cancel" },
-        { 
-          text: "Delete", 
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await deleteGarden(garden.id);
-              const data = await getDetailedGardens(4);
-              setGardens(data);
-              if (selectedGarden && selectedGarden.id === garden.id) {
-                setSelectedGarden(null);
-              }
-            } catch (error) {
-              console.error("Delete failed", error);
-              Alert.alert("Error", "Failed to delete garden. Please try again.");
-            }
+    if (Platform.OS === 'web') {
+      const confirmDelete = window.confirm(`Are you sure you want to delete "${garden.name}"? This action cannot be undone.`);
+      if (confirmDelete) {
+        performDelete(garden);
+      }
+    } else {
+      Alert.alert(
+        "Delete Garden",
+        `Are you sure you want to delete "${garden.name}"? This action cannot be undone.`,
+        [
+          { text: "Cancel", style: "cancel" },
+          { 
+            text: "Delete", 
+            style: "destructive",
+            onPress: () => performDelete(garden)
           }
-        }
-      ]
-    );
+        ]
+      );
+    }
   };
 
   const fetchData = async (silent = false) => {
