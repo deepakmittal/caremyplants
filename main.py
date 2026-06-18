@@ -182,7 +182,7 @@ async def upload_garden_photos(
     Upload multiple garden photos and create a new garden update entry.
 
     - If **garden_id** is provided: uses an existing garden (returns 404 if not found).
-    - If **garden_id** is omitted: creates a new garden (name defaults to 'My Garden'
+    - If **garden_id** is omitted: creates a new garden (name defaults to 'My Gardens'
       if garden_name is also omitted). Optionally associates it with a user via user_id.
 
     Garden status transitions during processing:
@@ -196,7 +196,7 @@ async def upload_garden_photos(
             raise HTTPException(status_code=404, detail=f"Garden with id {garden_id} not found")
     else:
         # Auto-create a new garden
-        name = garden_name or "My Garden"
+        name = garden_name or "My Gardens"
         db_garden = models.Garden(name=name, status="New")
         db.add(db_garden)
         db.commit()
