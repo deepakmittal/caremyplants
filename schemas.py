@@ -23,6 +23,30 @@ class GardenHealthOverview(BaseModel):
     sanctuaryVitality: SanctuaryVitality
     metrics: List[CareMetric]
 
+# --- NEW VISUALIZATION SCHEMAS ---
+
+class ProductRecommendation(BaseModel):
+    title: str
+    reason: str
+    product_url: str
+    image_url: str
+
+    class Config:
+        from_attributes = True
+
+class GardenVisualization(BaseModel):
+    image_url: str
+    recommendations: List[ProductRecommendation] = []
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class JobStatusResponse(BaseModel):
+    job_id: str
+    status: str
+    message: str
+
 # --- EXISTING SCHEMAS ---
 
 class UserBase(BaseModel):
@@ -63,7 +87,6 @@ class PlantUpdateResponse(BaseModel):
     condition_text: Optional[str] = None
     recommendation: Optional[str] = None
     image_url: Optional[str] = None
-    changes_from_previous: Optional[str] = None
     created_at: datetime
 
     class Config:
@@ -129,8 +152,8 @@ class GardenDetailsResponse(BaseModel):
     needs_sunlight: Optional[bool] = None
     created_at: datetime
     plants: List[PlantLatestUpdateResponse]
-    # --- NEW FIELD --- #
     healthOverview: Optional[GardenHealthOverview] = None
+    visualization: Optional[GardenVisualization] = None
 
 
     class Config:

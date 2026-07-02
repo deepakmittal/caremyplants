@@ -52,4 +52,10 @@ export const getUserGardens = async (userId) => {
     return response.data;
 };
 
+export const generateGardenVisualization = async (gardenId) => {
+    const response = await api.post(`/gardens/${gardenId}/visualize`);
+    return response.data;
+};
+
+
 export default api;

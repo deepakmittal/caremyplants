@@ -6,6 +6,7 @@ from typing import List, Optional
 import os
 import uuid
 import datetime
+import asyncio
 
 from database import engine, Base, get_db
 import models, schemas
@@ -364,7 +365,8 @@ def get_garden_details(garden_id: int, db: Session = Depends(get_db)):
         "needs_sunlight": latest_garden_update.needs_sunlight if latest_garden_update else None,
         "created_at": garden.created_at,
         "plants": plant_responses,
-        "healthOverview": health_overview
+        "healthOverview": health_overview,
+        "visualization": garden.visualization
     }
 
 # New: Get all gardens for a specific user
@@ -615,6 +617,80 @@ async def trigger_garden_processing(stream: bool = True, db: Session = Depends(g
             yield f"data: Error in stream: {str(e)}\n\n"
 
     return StreamingResponse(log_generator(), media_type="text/event-stream")
+
+async def generate_visualization_background(garden_id: int, db: Session):
+    """
+    Placeholder for the actual AI visualization generation logic.
+    This will be a long-running task.
+    """
+    await asyncio.sleep(10)  # Simulate a long-running AI task
+
+    # Mock data for now
+    image_url = "https://storage.googleapis.com/caremyplants-dev-images/garden_20/859d164e-0825-427d-9020-e6fdeda24881_sample.jpeg"
+    recommendations = [
+        {
+            "title": "Bee Creative Attractive Outdoor Multipurpose Pot",
+            "reason": "Your garden has many smaller plants covering the floor or plants are not organised properly.",
+            "product_url": "https://www.amazon.in/Bee-Creative-Attractive-Outdoor-Multipurpose/dp/B09SBLJXN7",
+            "image_url": "https://m.media-amazon.com/images/I/51F2+t84+gL._SX300_SY300_QL70_FMwebp_.jpg"
+        },
+        {
+            "title": "Ugaoo Organic Garden Soil for Plants",
+            "reason": "Your soil quality needs improvement.",
+            "product_url": "https://www.amazon.in/Ugaoo-Organic-Garden-Soil-Plants/dp/B07SC9Q2RL",
+            "image_url": "https://m.media-amazon.com/images/I/71q2Z5c4JdL._AC_UL480_FMwebp_QL65_.jpg"
+        }
+    ]
+
+    # Check if a visualization already exists
+    visualization = db.query(models.GardenVisualization).filter(models.GardenVisualization.garden_id == garden_id).first()
+    if visualization:
+        # Clear existing recommendations
+        for rec in visualization.recommendations:
+            db.delete(rec)
+        db.commit()
+        
+        # Update existing visualization
+        visualization.image_url = image_url
+        visualization.created_at = datetime.datetime.utcnow()
+    else:
+        # Create new visualization
+        visualization = models.GardenVisualization(
+            garden_id=garden_id,
+            image_url=image_url
+        )
+        db.add(visualization)
+        db.commit()
+        db.refresh(visualization)
+
+    # Add new recommendations
+    for rec_data in recommendations:
+        recommendation = models.ProductRecommendation(
+            visualization_id=visualization.id,
+            **rec_data
+        )
+        db.add(recommendation)
+    
+    db.commit()
+
+@app.post("/gardens/{garden_id}/visualize", response_model=schemas.JobStatusResponse, status_code=202)
+async def generate_garden_visualization(
+    garden_id: int,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db)
+):
+    garden = db.query(models.Garden).filter(models.Garden.id == garden_id).first()
+    if not garden:
+        raise HTTPException(status_code=404, detail="Garden not found")
+
+    job_id = str(uuid.uuid4())
+    background_tasks.add_task(generate_visualization_background, garden_id, db)
+
+    return {
+        "job_id": job_id,
+        "status": "queued",
+        "message": "Garden visualization job has been started."
+    }
 
 # Mount Web UI static assets at / for Cloud Run serving
 frontend_dir = "/var/www/html"
