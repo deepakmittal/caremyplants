@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Form, BackgroundTasks, Request
+from fastapi import FastAPI, Depends, HTTPException, UploadFile, File, Form, BackgroundTasks, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
@@ -364,8 +364,20 @@ def get_garden_details(garden_id: int, db: Session = Depends(get_db)):
         "needs_sunlight": latest_garden_update.needs_sunlight if latest_garden_update else None,
         "created_at": garden.created_at,
         "plants": plant_responses,
-        "healthOverview": health_overview
+        "healthOverview": health_overview,
+        "visualization": garden.visualization
     }
+
+@app.post("/gardens/{garden_id}/visualize", status_code=status.HTTP_202_ACCEPTED)
+def visualize_garden(garden_id: int, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+    from services import garden_processor
+
+    garden = db.query(models.Garden).filter(models.Garden.id == garden_id).first()
+    if not garden:
+        raise HTTPException(status_code=404, detail="Garden not found")
+
+    background_tasks.add_task(garden_processor.generate_garden_visualization, garden.id)
+    return Response(status_code=status.HTTP_202_ACCEPTED)
 
 # New: Get all gardens for a specific user
 @app.get("/users/{user_id}/gardens", response_model=List[schemas.GardenResponse])

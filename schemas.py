@@ -2,6 +2,27 @@ from pydantic import BaseModel, EmailStr, Field
 from typing import List, Optional, Literal
 from datetime import datetime
 
+# --- NEW GARDEN VISUALIZATION SCHEMAS ---
+
+class RecommendedProduct(BaseModel):
+    name: str
+    reason: str
+    url: str
+    product_type: Literal[
+        "PLANTER_BOX",
+        "HIGH_POT",
+        "HANGING_POT",
+        "SOIL",
+        "MANURE",
+        "DECORATIVE_POT",
+        "STANDARD_POT",
+        "WATERING_CAN"
+    ]
+
+class GardenVisualizationResponse(BaseModel):
+    image_url: str
+    products: List[RecommendedProduct]
+
 # --- NEW HEALTH OVERVIEW SCHEMAS ---
 
 class SanctuaryVitality(BaseModel):
@@ -129,8 +150,8 @@ class GardenDetailsResponse(BaseModel):
     needs_sunlight: Optional[bool] = None
     created_at: datetime
     plants: List[PlantLatestUpdateResponse]
-    # --- NEW FIELD --- #
     healthOverview: Optional[GardenHealthOverview] = None
+    visualization: Optional[GardenVisualizationResponse] = Field(None, description="The AI-generated visualization and product recommendations for the garden. Null if not yet generated or processed.")
 
 
     class Config:

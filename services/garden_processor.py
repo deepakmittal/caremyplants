@@ -542,3 +542,86 @@ def process_new_gardens(db: Session) -> int:
                 logger.error(f"Execution failed for plant update {uid}: {e}")
 
     return len(garden_update_ids) + len(plant_update_ids)
+
+def generate_garden_visualization(garden_id: int):
+    """
+    Analyzes a garden and generates AI visualization and product recommendations.
+    This is intended to be run in a background task.
+    """
+    db: Session = SessionLocal()
+    try:
+        logger.info(f"Generating visualization for garden {garden_id}")
+        garden = db.query(models.Garden).filter(models.Garden.id == garden_id).first()
+        if not garden:
+            logger.error(f"Garden {garden_id} not found for visualization.")
+            return
+
+        latest_update = db.query(models.GardenUpdate).filter(models.GardenUpdate.garden_id == garden_id).order_by(models.GardenUpdate.created_at.desc()).first()
+        plants = garden.plants
+        
+        products = []
+
+        # --- Recommendation Logic ---
+        if latest_update:
+            if latest_update.needs_watering:
+                products.append({
+                    "name": "Watering Can",
+                    "reason": "Your plants need better watering.",
+                    "url": "https://www.amazon.in/Ugaoo-Litre-Large-Watering-Garden-Green/dp/B0BXB5TGQR",
+                    "product_type": "WATERING_CAN"
+                })
+            if latest_update.needs_fertilizer:
+                products.append({
+                    "name": "Cow Manure",
+                    "reason": "Your plants need manure.",
+                    "url": "https://www.amazon.in/Ugaoo-Cow-Manure-Kg-Fertilizer/dp/B07RGTVD1P",
+                    "product_type": "MANURE"
+                })
+            if latest_update.has_disease or latest_update.has_pests:
+                products.append({
+                    "name": "Organic Garden Soil",
+                    "reason": "Soil quality needs improvement.",
+                    "url": "https://www.amazon.in/Ugaoo-Organic-Garden-Soil-Plants/dp/B07SC9Q2RL",
+                    "product_type": "SOIL"
+                })
+
+        if len(plants) > 5:
+             products.append({
+                "name": "Planter Box",
+                "reason": "You have many smaller plants that could be better organized.",
+                "url": "https://www.amazon.in/Bee-Creative-Attractive-Outdoor-Multipurpose/dp/B09SBLJXN7",
+                "product_type": "PLANTER_BOX"
+            })
+        elif 1 <= len(plants) <= 2:
+            products.append({
+                "name": "Mid-Century Style Flower Pot",
+                "reason": "You have a few large plants that would look great in these decorative pots.",
+                "url": "https://www.amazon.in/StyleX-Store-Flower-Pot-Mid-Century/dp/B0FKMVG8SL",
+                "product_type": "DECORATIVE_POT"
+            })
+        
+        # Generic recommendations
+        products.append({
+            "name": "White Pots",
+            "reason": "Your pots are worn out or could look better.",
+            "url": "https://www.amazon.in/StyleX-Store-Drainage-Planters-Containers/dp/B0DWX68ZG7",
+            "product_type": "STANDARD_POT"
+        })
+
+        # Mock image URL
+        image_url = f"https://storage.googleapis.com/garden_ai_images/mock_garden_{garden_id}.jpg"
+
+        visualization_data = {
+            "image_url": image_url,
+            "products": products
+        }
+
+        garden.visualization = visualization_data
+        db.commit()
+        logger.info(f"Successfully generated and saved visualization for garden {garden_id}")
+
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error generating visualization for garden {garden_id}: {e}")
+    finally:
+        db.close()

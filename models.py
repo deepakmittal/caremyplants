@@ -1,5 +1,6 @@
 from sqlalchemy import Column, Integer, String, TIMESTAMP, ForeignKey, Table, Text, LargeBinary, Boolean
 from sqlalchemy.orm import relationship
+from sqlalchemy.types import JSON
 from database import Base
 import datetime
 
@@ -31,6 +32,7 @@ class Garden(Base):
     status = Column(String(50), default="New", nullable=False)
     created_at = Column(TIMESTAMP, default=datetime.datetime.utcnow)
     updated_at = Column(TIMESTAMP, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+    visualization = Column(JSON) # To store GardenVisualizationResponse
 
     users = relationship("User", secondary=garden_users, back_populates="gardens")
     plants = relationship("Plant", back_populates="garden", cascade="all, delete-orphan")
@@ -101,7 +103,7 @@ class PlantUpdate(Base):
     condition_text = Column(Text)
     recommendation = Column(Text)
     image_url = Column(String(512))
-    changes_from_previous = Column(Text)
+    changes_.from_previous = Column(Text)
     # Status lifecycle: 'New' -> 'Processing' -> 'Ready'
     status = Column(String(50), default="New", nullable=False)
     created_at = Column(TIMESTAMP, default=datetime.datetime.utcnow)
