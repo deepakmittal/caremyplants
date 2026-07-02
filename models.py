@@ -36,6 +36,7 @@ class Garden(Base):
     plants = relationship("Plant", back_populates="garden", cascade="all, delete-orphan")
     updates = relationship("GardenUpdate", back_populates="garden", cascade="all, delete-orphan")
     photos = relationship("GardenPhoto", back_populates="garden", cascade="all, delete-orphan")
+    visualization = relationship("GardenVisualization", back_populates="garden", uselist=False, cascade="all, delete-orphan")
     location = Column(String(512))
     summary = Column(String(512))
     upload_commentry = Column(String(512))
@@ -101,10 +102,30 @@ class PlantUpdate(Base):
     condition_text = Column(Text)
     recommendation = Column(Text)
     image_url = Column(String(512))
-    changes_from_previous = Column(Text)
     # Status lifecycle: 'New' -> 'Processing' -> 'Ready'
     status = Column(String(50), default="New", nullable=False)
     created_at = Column(TIMESTAMP, default=datetime.datetime.utcnow)
     updated_at = Column(TIMESTAMP, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
 
     plant = relationship("Plant", back_populates="updates")
+
+class GardenVisualization(Base):
+    __tablename__ = "garden_visualizations"
+    id = Column(Integer, primary_key=True, index=True)
+    garden_id = Column(Integer, ForeignKey("gardens.id", ondelete="CASCADE"), nullable=False, unique=True)
+    image_url = Column(String(512))
+    created_at = Column(TIMESTAMP, default=datetime.datetime.utcnow)
+
+    garden = relationship("Garden", back_populates="visualization")
+    recommendations = relationship("ProductRecommendation", back_populates="visualization", cascade="all, delete-orphan")
+
+class ProductRecommendation(Base):
+    __tablename__ = "product_recommendations"
+    id = Column(Integer, primary_key=True, index=True)
+    visualization_id = Column(Integer, ForeignKey("garden_visualizations.id", ondelete="CASCADE"), nullable=False)
+    title = Column(String(255))
+    reason = Column(Text)
+    product_url = Column(String(512))
+    image_url = Column(String(512))
+
+    visualization = relationship("GardenVisualization", back_populates="recommendations")
