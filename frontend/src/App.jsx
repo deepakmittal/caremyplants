@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Camera, Plus, Leaf, LogOut, ChevronRight, Loader2, Image as ImageIcon, ChevronLeft, Sparkles, ArrowLeft, CheckCircle2, Droplets, Sun, Sprout, TrendingUp, Box, Scissors, Check, AlertCircle, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { loginWithGoogle, uploadGardenPhotos, getUserGardens, getGardenDetails, getWorkflowStatus } from './services/api';
+import { loginWithGoogle, uploadGardenPhotos, getUserGardens, getGardenDetails, getWorkflowStatus, visualizeGarden } from './services/api';
 import Carousel from './components/Carousel';
 import GoogleLoginButton from './components/GoogleLoginButton';
 
@@ -25,6 +25,8 @@ const App = () => {
   const [activeUpdateId, setActiveUpdateId] = useState(null);
   const [workflowStatus, setWorkflowStatus] = useState(null);
   const [activeMetric, setActiveMetric] = useState(null);
+  const [isVisualizing, setIsVisualizing] = useState(false);
+  const [visualizationPoller, setVisualizationPoller] = useState(null);
 
   const activityFriendlyNames = {
     'GATHER_GARDEN_DETAILS': 'Analyzing garden overview...',
@@ -67,6 +69,14 @@ const App = () => {
       return () => clearInterval(interval);
     }
   }, [activeUpdateId]);
+
+  useEffect(() => {
+    return () => {
+        if (visualizationPoller) {
+            clearInterval(visualizationPoller);
+        }
+    };
+  }, [visualizationPoller]);
 
 
   // Navigate to correct page based on garden count
@@ -139,6 +149,31 @@ const App = () => {
     } finally {
       setUploading(false);
     }
+  };
+
+  const handleVisualize = async (gardenId) => {
+      setIsVisualizing(true);
+      try {
+          await visualizeGarden(gardenId);
+          const poller = setInterval(async () => {
+              try {
+                  const details = await getGardenDetails(gardenId);
+                  if (details.visualization) {
+                      setGardenDetails(details);
+                      setIsVisualizing(false);
+                      clearInterval(poller);
+                  }
+              } catch (error) {
+                  console.error("Failed to poll for visualization.", error);
+                  setIsVisualizing(false);
+                  clearInterval(poller);
+              }
+          }, 3000);
+          setVisualizationPoller(poller);
+      } catch (error) {
+          console.error("Failed to start visualization.", error);
+          setIsVisualizing(false);
+      }
   };
 
   // --- Sub-Components (Pages) ---
@@ -405,6 +440,44 @@ const App = () => {
               })}
             </div>
 
+            {/* Garden Visualization Section */}
+            <div>
+                <h2 className="text-2xl font-extrabold text-[#1A3C34] mb-4">Garden Visualization</h2>
+                {isVisualizing ? (
+                    <div className="flex flex-col items-center justify-center py-20">
+                        <Loader2 className="animate-spin text-[#1A3C34] mb-4" size={48} />
+                        <p className="text-gray-500 animate-pulse font-medium">Generating your garden's future look...</p>
+                    </div>
+                ) : gardenDetails.visualization ? (
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div>
+                            <img src={gardenDetails.visualization.image_url} alt="Garden Visualization" className="rounded-2xl shadow-lg" />
+                        </div>
+                        <div>
+                            <h3 className="text-xl font-bold text-[#1A3C34] mb-4">Recommended Products</h3>
+                            <div className="space-y-4">
+                                {gardenDetails.visualization.products.map((product, index) => (
+                                    <div key={index} className="bg-white p-4 rounded-2xl border border-[#eaf6f2] shadow-sm">
+                                        <h4 className="font-bold text-[#1A3C34]">{product.name}</h4>
+                                        <p className="text-sm text-gray-600 mb-2">{product.reason}</p>
+                                        <a href={product.url} target="_blank" rel="noopener noreferrer" className="text-sm font-bold text-primary hover:underline">
+                                            View Product
+                                        </a>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="text-center py-8">
+                        <button onClick={() => handleVisualize(selectedGarden.id)} className="btn-primary flex items-center gap-2 mx-auto">
+                            <Sparkles size={20} />
+                            Visualize My Garden
+                        </button>
+                    </div>
+                )}
+            </div>
+
             {/* My Plants Carousel Section */}
             <div>
               <h2 className="text-2xl font-extrabold text-[#1A3C34] mb-4">My Plants</h2>
@@ -427,7 +500,7 @@ const App = () => {
                         <div className="space-y-3">
                           <div className="bg-[#f7faf9] p-3 rounded-xl border border-[#eaf6f2]">
                             <p className="text-xs font-extrabold text-[#1A3C34] uppercase mb-1">Recommendation</p>
-                            <p className="text-xs leading-relaxed text-gray-600">{plant.latest_recommendation || "Maintain current watering schedule."}</p>
+                            <p className="text-xs leading-relaxed text-gray-600">{plant..latest_recommendation || "Maintain current watering schedule."}</p>
                           </div>
                           <div className="bg-[#f7faf9] p-3 rounded-xl border border-[#eaf6f2]">
                             <p className="text-xs font-extrabold text-[#D10056] uppercase mb-1">Current Condition</p>
