@@ -19,7 +19,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { theme } from './src/theme';
-import { getDetailedGardens, uploadGardenPhotos, getWorkflowStatus, deleteGarden } from './src/services/api';
+import { getDetailedGardens, uploadGardenPhotos, deleteGarden } from './src/services/api';
 import { 
   Leaf, ChevronRight, ArrowLeft, Droplets, Sun, Plus, Image as ImageIcon, Sparkles, MapPin, Trash2,
   CheckCircle2, HeartPulse, Sprout, Wind, Archive, Scissors 
@@ -33,13 +33,6 @@ import Svg, { Circle } from 'react-native-svg';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width * 0.85;
-
-const activityFriendlyNames = {
-  'GATHER_GARDEN_DETAILS': 'Analyzing garden overview...',
-  'CUT_PLANT_IMAGES': 'Identifying individual plants...',
-  'GATHER_PLANT_DETAILS': 'Analyzing each plant...',
-  'UPDATE_GARDEN_FLAGS': 'Finalizing analysis...',
-};
 
 // --- NEW COMPONENTS START ---
 
@@ -265,8 +258,6 @@ export default function App() {
   const [isUploading, setIsUploading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   
-  const [activeUpdateId, setActiveUpdateId] = useState(null);
-  const [workflowStatus, setWorkflowStatus] = useState(null);
   const [activeMetric, setActiveMetric] = useState(null);
 
   const onRefresh = async () => {
@@ -296,29 +287,21 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (activeUpdateId) {
-      const interval = setInterval(async () => {
-        try {
-          const statusData = await getWorkflowStatus(activeUpdateId);
-          setWorkflowStatus(statusData);
-
-          if (['COMPLETED', 'FAILED', 'TIMED_OUT', 'CANCELED'].includes(statusData.status)) {
-            clearInterval(interval);
-            setActiveUpdateId(null);
-            setWorkflowStatus(null);
-            await fetchData(true);
-          }
-        } catch (error) {
-          console.error("Failed to fetch workflow status", error);
-          clearInterval(interval);
-          setActiveUpdateId(null);
-          setWorkflowStatus(null);
-        }
-      }, 3000);
-
-      return () => clearInterval(interval);
+    const processingGardens = gardens.filter(g => g.status !== 'Ready');
+    if (processingGardens.length === 0) {
+      return;
     }
-  }, [activeUpdateId]);
+
+    const interval = setInterval(async () => {
+      try {
+        await fetchData(true);
+      } catch (error) {
+        console.error("Failed to poll for garden status", error);
+      }
+    }, 5000); // Poll every 5 seconds
+
+    return () => clearInterval(interval);
+  }, [gardens]);
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -352,8 +335,7 @@ export default function App() {
     if (!result.canceled && result.assets && result.assets.length > 0) {
       setUploadingState(true);
       try {
-        const response = await uploadGardenPhotos(result.assets, selectedGarden.name, 4, selectedGarden.location);
-        setActiveUpdateId(response.garden_update_id);
+        await uploadGardenPhotos(result.assets, selectedGarden.name, 4, selectedGarden.location);
         fetchData(true);
         alert("Photos uploaded successfully! The AI is analyzing them in the background.");
       } catch (err) {
@@ -372,7 +354,6 @@ export default function App() {
       const newGardenResponse = await uploadGardenPhotos(uploadData.photos, uploadData.name, 4, uploadData.location);
       setUploadData({ name: '', location: '', photos: [] });
       setIsUploading(false);
-      setActiveUpdateId(newGardenResponse.garden_update_id);
       
       const data = await getDetailedGardens(4);
       const sorted = data.sort((a, b) => new Date(b.last_accessed_at || b.created_at) - new Date(a.last_accessed_at || a.created_at));
@@ -495,13 +476,6 @@ export default function App() {
   }
 
   const getAnalysisMessage = () => {
-    if (workflowStatus && selectedGarden?.latest_update_id === activeUpdateId) {
-      let currentActivity = workflowStatus.activities?.find(a => a.status === 'RUNNING');
-      if (!currentActivity) {
-          currentActivity = workflowStatus.activities?.find(a => a.status === 'PENDING');
-      }
-      return currentActivity ? activityFriendlyNames[currentActivity.name] : 'Processing...';
-    }
     return selectedGarden?.upload_commentry || 'Photo Analysis in progress...';
   };
 

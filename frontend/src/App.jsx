@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Camera, Plus, Leaf, LogOut, ChevronRight, Loader2, Image as ImageIcon, ChevronLeft, Sparkles, ArrowLeft, CheckCircle2, Droplets, Sun, Sprout, TrendingUp, Box, Scissors, Check, AlertCircle, X } from 'lucide-react';
+import { Camera, Plus, Leaf, LogOut, ChevronRight, Loader2, Image as ImageIcon, ChevronLeft, Sparkles, ArrowLeft, CheckCircle2, Droplets, Sun, Sprout, TrendingUp, Box, Scissors, Check, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { loginWithGoogle, uploadGardenPhotos, getUserGardens, getGardenDetails, getWorkflowStatus, generateGardenVisualization } from './services/api';
+import { loginWithGoogle, uploadGardenPhotos, getUserGardens, getGardenDetails } from './services/api';
 import Carousel from './components/Carousel';
 import GoogleLoginButton from './components/GoogleLoginButton';
 
@@ -21,19 +21,9 @@ const App = () => {
   const [selectedPhotos, setSelectedPhotos] = useState([]);
   const [uploading, setUploading] = useState(false);
 
-  // Workflow and Status State
-  const [activeUpdateId, setActiveUpdateId] = useState(null);
-  const [workflowStatus, setWorkflowStatus] = useState(null);
+  // UI State
   const [activeMetric, setActiveMetric] = useState(null);
-  const [visualizing, setVisualizing] = useState(false);
-
-  const activityFriendlyNames = {
-    'GATHER_GARDEN_DETAILS': 'Analyzing garden overview...',
-    'CUT_PLANT_IMAGES': 'Identifying individual plants...',
-    'GATHER_PLANT_DETAILS': 'Analyzing each plant...',
-    'UPDATE_GARDEN_FLAGS': 'Finalizing analysis...',
-  };
-
+  
   // Initial Auth Sync and Navigation
   useEffect(() => {
     if (user) {
@@ -43,31 +33,24 @@ const App = () => {
     }
   }, [user]);
 
-  // Polling for workflow status
+  // Polling for gardens that are not in a "Ready" state
   useEffect(() => {
-    if (activeUpdateId) {
-      const interval = setInterval(async () => {
-        try {
-          const statusData = await getWorkflowStatus(activeUpdateId);
-          setWorkflowStatus(statusData);
-
-          if (['COMPLETED', 'FAILED', 'TIMED_OUT', 'CANCELED'].includes(statusData.status)) {
-            clearInterval(interval);
-            setActiveUpdateId(null);
-            setWorkflowStatus(null);
-            await fetchGardens(); // Refresh garden list
-          }
-        } catch (error) {
-          console.error("Failed to fetch workflow status", error);
-          clearInterval(interval); // Stop polling on error
-          setActiveUpdateId(null);
-          setWorkflowStatus(null);
-        }
-      }, 3000);
-
-      return () => clearInterval(interval);
+    const processingGardens = gardens.filter(g => g.status !== 'Ready');
+    if (processingGardens.length === 0) {
+      return;
     }
-  }, [activeUpdateId]);
+
+    const interval = setInterval(async () => {
+      try {
+        // Refetch the whole list of gardens
+        await fetchGardens();
+      } catch (error) {
+        console.error("Failed to poll for garden status", error);
+      }
+    }, 5000); // Poll every 5 seconds
+
+    return () => clearInterval(interval);
+  }, [gardens]);
 
 
   // Navigate to correct page based on garden count
@@ -129,42 +112,15 @@ const App = () => {
     if (selectedPhotos.length === 0) return;
     setUploading(true);
     try {
-      const response = await uploadGardenPhotos(selectedPhotos, newGardenName, user.user_id);
+      await uploadGardenPhotos(selectedPhotos, newGardenName, user.user_id);
       setNewGardenName('');
       setSelectedPhotos([]);
-      setActiveUpdateId(response.garden_update_id);
       await fetchGardens(); // Fetch gardens immediately to show the new "Processing" garden
       setCurrentPage('gardens');
     } catch (err) {
       alert("Upload failed.");
     } finally {
       setUploading(false);
-    }
-  };
-
-  const handleVisualize = async () => {
-    if (!selectedGarden) return;
-    setVisualizing(true);
-    try {
-      await generateGardenVisualization(selectedGarden.id);
-      // Poll for updated garden details
-      const interval = setInterval(async () => {
-        try {
-          const details = await getGardenDetails(selectedGarden.id);
-          if (details.visualization) {
-            setGardenDetails(details);
-            setVisualizing(false);
-            clearInterval(interval);
-          }
-        } catch (err) {
-          console.error("Failed to poll for visualization", err);
-          setVisualizing(false);
-          clearInterval(interval);
-        }
-      }, 5000);
-    } catch (err) {
-      alert("Failed to start visualization.");
-      setVisualizing(false);
     }
   };
 
@@ -198,24 +154,11 @@ const App = () => {
 
   const GardensPage = () => {
     const getGardenStatusInfo = (garden) => {
-      if (workflowStatus && garden.latest_update_id === activeUpdateId) {
-        let currentActivity = workflowStatus.activities?.find(a => a.status === 'RUNNING');
-        if (!currentActivity) {
-            currentActivity = workflowStatus.activities?.find(a => a.status === 'PENDING');
-        }
-
-        const statusText = currentActivity ? activityFriendlyNames[currentActivity.name] : 'Processing...';
-
-        return {
-          status: workflowStatus.status === 'RUNNING' ? 'Processing' : garden.status,
-          message: statusText,
-          isProcessing: true,
-        };
-      }
+      const isProcessing = garden.status !== 'Ready';
       return {
         status: garden.status,
-        message: garden.status === 'Ready' ? 'Thriving and healthy.' : 'Analyzing plant health...',
-        isProcessing: garden.status !== 'Ready',
+        message: isProcessing ? 'Analyzing your garden...' : 'Thriving and healthy.',
+        isProcessing: isProcessing,
       };
     };
 
@@ -433,14 +376,9 @@ const App = () => {
             </div>
 
             {/* Garden Visualization Section */}
-            <div className="bg-white p-6 rounded-2xl border border-[#eaf6f2] shadow-sm">
-              <h2 className="text-2xl font-extrabold text-[#1A3C34] mb-4">Garden Visualization</h2>
-              {visualizing ? (
-                <div className="flex flex-col items-center justify-center py-12">
-                  <Loader2 className="animate-spin text-[#1A3C34] mb-4" size={32} />
-                  <p className="text-gray-500 font-medium">Generating your garden's potential...</p>
-                </div>
-              ) : gardenDetails?.visualization ? (
+            {gardenDetails?.visualization && (
+              <div className="bg-white p-6 rounded-2xl border border-[#eaf6f2] shadow-sm">
+                <h2 className="text-2xl font-extrabold text-[#1A3C34] mb-4">Garden Visualization</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <img src={gardenDetails.visualization.image_url} alt="Garden Visualization" className="rounded-xl object-cover w-full h-full" />
@@ -460,16 +398,8 @@ const App = () => {
                     </ul>
                   </div>
                 </div>
-              ) : (
-                <div className="text-center py-8">
-                  <p className="text-gray-500 mb-4">See how your garden could look with a little love.</p>
-                  <button onClick={handleVisualize} className="btn-primary flex items-center gap-2 mx-auto">
-                    <Sparkles size={20} />
-                    Visualize My Garden
-                  </button>
-                </div>
-              )}
-            </div>
+              </div>
+            )}
 
             {/* My Plants Carousel Section */}
             <div>
