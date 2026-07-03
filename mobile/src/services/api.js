@@ -11,16 +11,6 @@ const api = axios.create({
     baseURL: API_URL,
 });
 
-export const getWorkflowStatus = async (updateId) => {
-    try {
-        const response = await api.get(`/updates/${updateId}/status`);
-        return response.data;
-    } catch (error) {
-        console.error('Error fetching workflow status:', error);
-        throw error;
-    }
-};
-
 export const getDetailedGardens = async (userId) => {
     try {
         const response = await api.get(`/users/${userId}/gardens/detailed`);
