@@ -180,14 +180,12 @@ async def upload_garden_photos(
     db: Session = Depends(get_db)
 ):
     """
-    Upload multiple garden photos and create a new garden update entry.
+    Upload multiple garden photos to create a new garden update and automatically trigger the complete AI analysis workflow. This single action initiates garden and plant analysis, health assessment, and the generation of a visualization with product recommendations.
 
-    - If **garden_id** is provided: uses an existing garden (returns 404 if not found).
-    - If **garden_id** is omitted: creates a new garden (name defaults to 'My Garden'
-      if garden_name is also omitted). Optionally associates it with a user via user_id.
+    - If **garden_id** is provided: creates a new update for an existing garden (returns 404 if not found).
+    - If **garden_id** is omitted: creates a new garden (name defaults to 'My Garden' if garden_name is also omitted). Optionally associates it with a user via user_id.
 
-    Garden status transitions during processing:
-      New → Processing Garden → Processing Plants → Ready
+    The response will include a `workflow_id` for the background job. The final results of the analysis, including the visualization, can be retrieved from the `GET /gardens/{garden_id}/details` endpoint once the garden's status is 'Ready'.
     """
     from services import gcs
     if garden_id is not None:
@@ -533,164 +531,6 @@ def delete_garden(garden_id: int, db: Session = Depends(get_db)):
     db.delete(garden)
     db.commit()
     return {"status": "ok", "message": f"Garden {garden_id} deleted successfully"}
-
-class LogQueueHandler(logging.Handler):
-    def __init__(self, log_queue):
-        super().__init__()
-        self.log_queue = log_queue
-
-    def emit(self, record):
-        log_entry = self.format(record)
-        self.log_queue.put(log_entry)
-
-@app.api_route("/jobs/process", methods=["GET", "POST"])
-async def trigger_garden_processing(stream: bool = True, db: Session = Depends(get_db)):
-    """
-    Trigger the garden AI processing pipeline.
-    - stream=true (default): Streams logs via SSE. HTTP status is 200 as long as the stream starts.
-    - stream=false: Runs synchronously. Returns 200 on success, or 500 with details on failure.
-    """
-    from services import garden_processor
-    if not stream:
-        try:
-            logging.info("Sync Trigger: Starting garden processing job...")
-            count = garden_processor.process_new_gardens(db)
-            logging.info(f"Sync Trigger: Finished processing {count} garden(s).")
-            return {"status": "success", "processed_count": count}
-        except Exception as e:
-            logging.error(f"Sync Trigger ERROR: {str(e)}")
-            import traceback
-            error_details = traceback.format_exc()
-            raise HTTPException(
-                status_code=500,
-                detail={
-                    "error": str(e),
-                    "traceback": error_details
-                }
-            )
-
-    # --- SSE Streaming Mode ---
-    log_queue = queue.Queue()
-    queue_handler = LogQueueHandler(log_queue)
-    queue_handler.setFormatter(logging.Formatter("%(asctime)s - %(levelname)s - %(message)s"))
-    
-    # Capture logs from the entire application to provide detailed feedback
-    root_logger = logging.getLogger()
-    root_logger.addHandler(queue_handler)
-
-    def run_processing():
-        try:
-            logging.info("SSE Stream: Starting garden processing job...")
-            # Use a new session to avoid thread safety issues
-            from database import SessionLocal
-            thread_db = SessionLocal()
-            try:
-                count = garden_processor.process_new_gardens(thread_db)
-                logging.info(f"SSE Stream: Finished processing {count} garden(s).")
-            finally:
-                thread_db.close()
-        except Exception as e:
-            logging.error(f"SSE Stream ERROR: {str(e)}")
-            import traceback
-            logging.error(traceback.format_exc())
-        finally:
-            # Signal the end of the stream
-            log_queue.put(None)
-            root_logger.removeHandler(queue_handler)
-
-    # Start processing in a background thread
-    threading.Thread(target=run_processing).start()
-
-    async def log_generator():
-        try:
-            while True:
-                try:
-                    message = log_queue.get(timeout=1.0)
-                    if message is None:
-                        yield "data: [DONE]\n\n"
-                        break
-                    yield f"data: {message}\n\n"
-                except queue.Empty:
-                    # Keep-alive
-                    yield ": keep-alive\n\n"
-        except Exception as e:
-            yield f"data: Error in stream: {str(e)}\n\n"
-
-    return StreamingResponse(log_generator(), media_type="text/event-stream")
-
-async def generate_visualization_background(garden_id: int, db: Session):
-    """
-    Placeholder for the actual AI visualization generation logic.
-    This will be a long-running task.
-    """
-    await asyncio.sleep(10)  # Simulate a long-running AI task
-
-    # Mock data for now
-    image_url = "https://storage.googleapis.com/caremyplants-dev-images/garden_20/859d164e-0825-427d-9020-e6fdeda24881_sample.jpeg"
-    recommendations = [
-        {
-            "title": "Bee Creative Attractive Outdoor Multipurpose Pot",
-            "reason": "Your garden has many smaller plants covering the floor or plants are not organised properly.",
-            "product_url": "https://www.amazon.in/Bee-Creative-Attractive-Outdoor-Multipurpose/dp/B09SBLJXN7",
-            "image_url": "https://m.media-amazon.com/images/I/51F2+t84+gL._SX300_SY300_QL70_FMwebp_.jpg"
-        },
-        {
-            "title": "Ugaoo Organic Garden Soil for Plants",
-            "reason": "Your soil quality needs improvement.",
-            "product_url": "https://www.amazon.in/Ugaoo-Organic-Garden-Soil-Plants/dp/B07SC9Q2RL",
-            "image_url": "https://m.media-amazon.com/images/I/71q2Z5c4JdL._AC_UL480_FMwebp_QL65_.jpg"
-        }
-    ]
-
-    # Check if a visualization already exists
-    visualization = db.query(models.GardenVisualization).filter(models.GardenVisualization.garden_id == garden_id).first()
-    if visualization:
-        # Clear existing recommendations
-        for rec in visualization.recommendations:
-            db.delete(rec)
-        db.commit()
-        
-        # Update existing visualization
-        visualization.image_url = image_url
-        visualization.created_at = datetime.datetime.utcnow()
-    else:
-        # Create new visualization
-        visualization = models.GardenVisualization(
-            garden_id=garden_id,
-            image_url=image_url
-        )
-        db.add(visualization)
-        db.commit()
-        db.refresh(visualization)
-
-    # Add new recommendations
-    for rec_data in recommendations:
-        recommendation = models.ProductRecommendation(
-            visualization_id=visualization.id,
-            **rec_data
-        )
-        db.add(recommendation)
-    
-    db.commit()
-
-@app.post("/gardens/{garden_id}/visualize", response_model=schemas.JobStatusResponse, status_code=202)
-async def generate_garden_visualization(
-    garden_id: int,
-    background_tasks: BackgroundTasks,
-    db: Session = Depends(get_db)
-):
-    garden = db.query(models.Garden).filter(models.Garden.id == garden_id).first()
-    if not garden:
-        raise HTTPException(status_code=404, detail="Garden not found")
-
-    job_id = str(uuid.uuid4())
-    background_tasks.add_task(generate_visualization_background, garden_id, db)
-
-    return {
-        "job_id": job_id,
-        "status": "queued",
-        "message": "Garden visualization job has been started."
-    }
 
 # Mount Web UI static assets at / for Cloud Run serving
 frontend_dir = "/var/www/html"
