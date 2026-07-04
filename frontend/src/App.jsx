@@ -112,11 +112,15 @@ const App = () => {
     if (selectedPhotos.length === 0) return;
     setUploading(true);
     try {
-      await uploadGardenPhotos(selectedPhotos, newGardenName, user.user_id);
+      const newGarden = await uploadGardenPhotos(selectedPhotos, newGardenName, user.user_id);
       setNewGardenName('');
       setSelectedPhotos([]);
-      await fetchGardens(); // Fetch gardens immediately to show the new "Processing" garden
-      setCurrentPage('gardens');
+      await fetchGardens();
+      if (newGarden && newGarden.id) {
+        handleOpenGarden(newGarden);
+      } else {
+        setCurrentPage('gardens');
+      }
     } catch (err) {
       alert("Upload failed.");
     } finally {
