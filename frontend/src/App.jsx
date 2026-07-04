@@ -5,6 +5,19 @@ import { loginWithGoogle, uploadGardenPhotos, getUserGardens, getGardenDetails }
 import Carousel from './components/Carousel';
 import GoogleLoginButton from './components/GoogleLoginButton';
 
+const StarRating = ({ rating }) => {
+  const stars = [];
+  for (let i = 1; i <= 5; i++) {
+    stars.push(
+      <span key={i} className={`text-3xl ${i <= rating ? 'text-yellow-400' : 'text-gray-600'}`}>
+        ★
+      </span>
+    );
+  }
+  return <div className="flex">{stars}</div>;
+};
+
+
 const App = () => {
   // Auth and Navigation State
   const [user, setUser] = useState(() => JSON.parse(localStorage.getItem('garden_user')));
@@ -222,19 +235,19 @@ const App = () => {
 
   const PlantsPage = () => {
     const vitality = gardenDetails?.healthOverview?.sanctuaryVitality || {
-      score: 85,
+      score: 4,
       flourishingPlantsCount: 12,
       careNeededPlantsCount: 4,
     };
 
     const metrics = gardenDetails?.healthOverview?.metrics || [
-      { category: 'WATERING', status: 'High', isUnfavorable: true, affectedPlantsCount: 5, affectedPlantIds: [] },
-      { category: 'SUN_EXPOSURE', status: 'Optimal', isUnfavorable: false, affectedPlantsCount: 0, affectedPlantIds: [] },
-      { category: 'SOIL_QUALITY', status: 'Poor', isUnfavorable: true, affectedPlantsCount: 3, affectedPlantIds: [] },
-      { category: 'VITALITY', status: 'Optimal', isUnfavorable: false, affectedPlantsCount: 0, affectedPlantIds: [] },
-      { category: 'LEAF_CARE', status: 'Dusty', isUnfavorable: true, affectedPlantsCount: 4, affectedPlantIds: [] },
-      { category: 'POT_STATUS', status: 'Balanced', isUnfavorable: false, affectedPlantsCount: 0, affectedPlantIds: [] },
-      { category: 'PRUNING', status: 'Overdue', isUnfavorable: true, affectedPlantsCount: 4, affectedPlantIds: [] },
+      { category: 'WATERING', status: 'Overwatered', isUnfavorable: true, affectedPlantsCount: 5, affectedPlantIds: [] },
+      { category: 'SUN_EXPOSURE', status: 'Sunny', isUnfavorable: false, affectedPlantsCount: 0, affectedPlantIds: [] },
+      { category: 'SOIL_QUALITY', status: 'Nutrient-Rich', isUnfavorable: false, affectedPlantsCount: 0, affectedPlantIds: [] },
+      { category: 'VITALITY', status: 'Thriving', isUnfavorable: false, affectedPlantsCount: 0, affectedPlantIds: [] },
+      { category: 'LEAF_CARE', status: 'Pristine', isUnfavorable: false, affectedPlantsCount: 0, affectedPlantIds: [] },
+      { category: 'POT_STATUS', 'status': 'Room to Grow', isUnfavorable: false, affectedPlantsCount: 0, affectedPlantIds: [] },
+      { category: 'PRUNING', status: 'Well-Maintained', isUnfavorable: false, affectedPlantsCount: 0, affectedPlantIds: [] },
     ];
 
     const categoryIcons = {
@@ -256,12 +269,6 @@ const App = () => {
       POT_STATUS: 'Pot Status',
       PRUNING: 'Pruning'
     };
-
-    const radius = 24;
-    const circumference = 2 * Math.PI * radius;
-    const strokeDashoffset = circumference - (vitality.score / 100) * circumference;
-    const isHealthyScore = vitality.score > 90;
-    const radialColor = isHealthyScore ? '#aacec3' : '#D10056';
 
     return (
       <div className="min-h-screen bg-[#F7FAF9] p-6 md:p-12 max-w-7xl mx-auto flex flex-col">
@@ -301,37 +308,15 @@ const App = () => {
             <div className="bg-[#1A3C34] text-white p-6 rounded-2xl flex items-center justify-between shadow-xl">
               <div className="flex flex-col">
                 <span className="text-xs font-bold uppercase tracking-wider text-[#aacec3] opacity-80">SANCTUARY VITALITY</span>
-                <h2 className="text-5xl font-extrabold my-2">{vitality.score}%</h2>
+                <div className="my-2">
+                  <StarRating rating={vitality.score} />
+                </div>
                 <p className="text-sm text-[#eaf6f2] opacity-90">
                   {vitality.flourishingPlantsCount} plants are flourishing, {vitality.careNeededPlantsCount} need care
                 </p>
               </div>
               <div className="relative w-16 h-16 flex items-center justify-center shrink-0">
-                <svg className="w-full h-full transform -rotate-90">
-                  <circle
-                    cx="32"
-                    cy="32"
-                    r={radius}
-                    stroke="#132c26"
-                    strokeWidth="4"
-                    fill="transparent"
-                  />
-                  <circle
-                    cx="32"
-                    cy="32"
-                    r={radius}
-                    stroke={radialColor}
-                    strokeWidth="4"
-                    fill="transparent"
-                    strokeDasharray={circumference}
-                    strokeDashoffset={strokeDashoffset}
-                    strokeLinecap="round"
-                    className="transition-all duration-500"
-                  />
-                </svg>
-                <div className="absolute flex items-center justify-center">
-                  <Leaf size={18} className="text-white fill-current" />
-                </div>
+                <Leaf size={32} className="text-white" />
               </div>
             </div>
 
