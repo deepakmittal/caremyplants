@@ -79,6 +79,10 @@ class GardenUpdate(Base):
     has_weeds = Column(Boolean, default=False)
     has_disease = Column(Boolean, default=False)
     needs_sunlight = Column(Boolean, default=False)
+    score = Column(Integer)
+    sun_exposure_status = Column(String(255))
+    watering_status = Column(String(255))
+    soil_quality_status = Column(String(255))
     created_at = Column(TIMESTAMP, default=datetime.datetime.utcnow)
 
     garden = relationship("Garden", back_populates="updates")
