@@ -8,6 +8,9 @@ from typing import List, Dict, Any
 from sqlalchemy.orm import Session
 import models
 import schemas
+from services.gemini import assess_garden_health_with_ai
+from services.gcs import download_from_gcs
+from urllib.parse import urlparse
 
 def _get_latest_garden_update(db_garden: models.Garden) -> models.GardenUpdate | None:
     """Retrieves the most recent 'Ready' garden update."""
@@ -56,12 +59,30 @@ def calculate_garden_health(db_garden: models.Garden) -> schemas.GardenHealthOve
         # Return a default empty state if there are no plants
         return schemas.GardenHealthOverview(
             sanctuaryVitality=schemas.SanctuaryVitality(
-                score=100,
+                score=1,
                 flourishingPlantsCount=0,
                 careNeededPlantsCount=0
             ),
             metrics=[]
         )
+
+    # --- Download Garden Images ---
+    image_bytes_list = []
+    for photo in db_garden.photos:
+        try:
+            parsed_url = urlparse(photo.photo_url)
+            blob_name = parsed_url.path.lstrip('/')
+            # The blob name is everything after the bucket name in the path
+            blob_name = blob_name.split('/', 1)[1]
+            image_bytes_list.append(download_from_gcs(blob_name))
+        except Exception as e:
+            print(f"Error downloading image {photo.photo_url}: {e}")
+            continue
+
+    # --- Get AI Health Assessment ---
+    ai_assessment = {}
+    if image_bytes_list:
+        ai_assessment = assess_garden_health_with_ai(image_bytes_list)
 
     # --- Sanctuary Vitality Calculation ---
     care_needed_plants_count = 0
@@ -74,16 +95,16 @@ def calculate_garden_health(db_garden: models.Garden) -> schemas.GardenHealthOve
                 care_needed_plants_count += 1
 
     flourishing_plants_count = total_plants - care_needed_plants_count
-    score = int((flourishing_plants_count / total_plants) * 100) if total_plants > 0 else 100
     
     sanctuary_vitality = schemas.SanctuaryVitality(
-        score=score,
+        score=ai_assessment.get("score", 3), # Default to 3 if AI fails
         flourishingPlantsCount=flourishing_plants_count,
         careNeededPlantsCount=care_needed_plants_count
     )
 
     # --- Metrics Calculation ---
     metrics = []
+    ai_metrics = ai_assessment.get("metrics", {})
     
     # Helper to create a metric
     def create_metric(category, status, is_unfavorable, affected_ids):
@@ -98,29 +119,31 @@ def calculate_garden_health(db_garden: models.Garden) -> schemas.GardenHealthOve
     # 1. Watering
     watering_ids = []
     if latest_garden_update and latest_garden_update.needs_watering:
-        # Heuristic: Assume 1/3 of plants are affected if the flag is true
         num_affected = max(1, total_plants // 3)
         watering_ids = [p.id for p in random.sample(plants, num_affected)]
-    metrics.append(create_metric("WATERING", "Low" if watering_ids else "Optimal", bool(watering_ids), watering_ids))
+    watering_status = ai_metrics.get("WATERING", "Properly Watered")
+    metrics.append(create_metric("WATERING", watering_status, watering_status != "Properly Watered", watering_ids))
 
     # 2. Sun Exposure
     sun_ids = []
     if latest_garden_update and latest_garden_update.needs_sunlight:
         num_affected = max(1, total_plants // 4)
         sun_ids = [p.id for p in random.sample(plants, num_affected)]
-    metrics.append(create_metric("SUN_EXPOSURE", "Low" if sun_ids else "Optimal", bool(sun_ids), sun_ids))
+    sun_status = ai_metrics.get("SUN_EXPOSURE", "Sunny")
+    metrics.append(create_metric("SUN_EXPOSURE", sun_status, sun_status != "Sunny", sun_ids))
 
     # 3. Soil Quality (Fertilizer)
     soil_ids = []
     if latest_garden_update and latest_garden_update.needs_fertilizer:
         num_affected = max(1, total_plants // 3)
         soil_ids = [p.id for p in random.sample(plants, num_affected)]
-    metrics.append(create_metric("SOIL_QUALITY", "Poor" if soil_ids else "Optimal", bool(soil_ids), soil_ids))
+    soil_status = ai_metrics.get("SOIL_QUALITY", "Balanced")
+    metrics.append(create_metric("SOIL_QUALITY", soil_status, soil_status != "Balanced" and soil_status != "Rich", soil_ids))
 
     # Metrics derived from parsing individual plant recommendations
     pruning_ids = []
     pot_ids = []
-    leaf_care_ids = [] # Assuming "Dusty" is a proxy for leaf care
+    leaf_care_ids = []
 
     for plant in plants:
         latest_plant_update = _get_latest_plant_update(plant)
@@ -133,21 +156,21 @@ def calculate_garden_health(db_garden: models.Garden) -> schemas.GardenHealthOve
             if parsed_rec.get("Pot Assessment", "").lower() == "cramped":
                 pot_ids.append(plant.id)
             
-            # This is a heuristic, as "Leaf Care" is not an explicit field
             if "dusty" in latest_plant_update.recommendation.lower():
                  leaf_care_ids.append(plant.id)
 
-    metrics.append(create_metric("PRUNING", "Overdue" if pruning_ids else "Good", bool(pruning_ids), pruning_ids))
-    metrics.append(create_metric("POT_STATUS", "Cramped" if pot_ids else "Balanced", bool(pot_ids), pot_ids))
-    metrics.append(create_metric("LEAF_CARE", "Dusty" if leaf_care_ids else "Clean", bool(leaf_care_ids), leaf_care_ids))
+    pruning_status = ai_metrics.get("PRUNING", "Well-Maintained")
+    metrics.append(create_metric("PRUNING", pruning_status, pruning_status != "Well-Maintained", pruning_ids))
+    
+    pot_status = ai_metrics.get("POT_STATUS", "Adequate")
+    metrics.append(create_metric("POT_STATUS", pot_status, pot_status == "Cramped", pot_ids))
 
-    # 4. Vitality (Growth Trend)
-    vitality_status = "Good"
-    if latest_garden_update and latest_garden_update.growth_trend:
-        trend = latest_garden_update.growth_trend.lower()
-        if "stagnant" in trend or "declining" in trend:
-            vitality_status = "Poor"
-    metrics.append(create_metric("VITALITY", vitality_status, vitality_status != "Good", []))
+    leaf_care_status = ai_metrics.get("LEAF_CARE", "Pristine")
+    metrics.append(create_metric("LEAF_CARE", leaf_care_status, leaf_care_status != "Pristine", leaf_care_ids))
+
+    # 4. Vitality
+    vitality_status = ai_metrics.get("VITALITY", "Stable")
+    metrics.append(create_metric("VITALITY", vitality_status, vitality_status == "Struggling", []))
 
 
     return schemas.GardenHealthOverview(

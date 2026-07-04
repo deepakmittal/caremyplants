@@ -6,14 +6,14 @@ from datetime import datetime
 
 class SanctuaryVitality(BaseModel):
     """High-level summary of the garden's overall health."""
-    score: int
+    score: int = Field(..., ge=1, le=5, description="An overall garden rating from 1 to 5, where 5 represents a perfect garden and 1 indicates significant improvements are needed.")
     flourishingPlantsCount: int
     careNeededPlantsCount: int
 
 class CareMetric(BaseModel):
     """Detailed information for a specific care category."""
     category: Literal["WATERING", "SUN_EXPOSURE", "SOIL_QUALITY", "VITALITY", "LEAF_CARE", "POT_STATUS", "PRUNING"]
-    status: str
+    status: str = Field(..., description="An AI-generated assessment category for the given metric. The possible values depend on the 'category' field. For example, for 'SUN_EXPOSURE', values could be 'Too Sunny', 'Sunny', or 'Dark'. For 'WATERING', values could be 'Overwatered', 'Properly Watered', or 'Underwatered'.")
     isUnfavorable: bool
     affectedPlantsCount: int
     affectedPlantIds: List[int]

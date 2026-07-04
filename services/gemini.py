@@ -78,6 +78,53 @@ def _pil_to_part(img: Image.Image) -> types.Part:
     img.save(buf, format="JPEG")
     return types.Part.from_bytes(data=buf.getvalue(), mime_type="image/jpeg")
 
+def assess_garden_health_with_ai(image_list: List[bytes]) -> dict:
+    """
+    Provides a detailed garden health assessment using a star rating and categorical statuses.
+    """
+    parts = []
+    for img_bytes in image_list:
+        try:
+            img = Image.open(io.BytesIO(img_bytes))
+            parts.append(_pil_to_part(img))
+        except:
+            continue
+
+    if not parts:
+        return {}
+
+    prompt = f"""
+    Analyze the provided garden photos and generate a detailed health assessment.
+
+    1.  **Overall Score:** Provide a single integer score from 1 to 5 for the entire garden, where 5 is a perfect, flourishing garden and 1 is a garden in critical need of attention.
+
+    2.  **Metric Statuses:** For each category below, provide a concise status from the given options.
+
+        -   **WATERING:** Choose one: `Overwatered`, `Properly Watered`, `Underwatered`
+        -   **SUN_EXPOSURE:** Choose one: `Too Sunny`, `Sunny`, `Dark`
+        -   **SOIL_QUALITY:** Choose one: `Rich`, `Balanced`, `Poor`
+        -   **VITALITY:** Choose one: `Thriving`, `Stable`, `Struggling`
+        -   **LEAF_CARE:** Choose one: `Pristine`, `Dusty`, `Diseased`
+        -   **POT_STATUS:** Choose one: `Spacious`, `Adequate`, `Cramped`
+        -   **PRUNING:** Choose one: `Well-Maintained`, `Needs Light Pruning`, `Overgrown`
+
+    Return ONLY a JSON object in the following format:
+    {{
+      "score": <integer from 1 to 5>,
+      "metrics": {{
+        "WATERING": "...",
+        "SUN_EXPOSURE": "...",
+        "SOIL_QUALITY": "...",
+        "VITALITY": "...",
+        "LEAF_CARE": "...",
+        "POT_STATUS": "...",
+        "PRUNING": "..."
+      }}
+    }}
+    """
+    return _call_gemini([prompt] + parts)
+
+
 def identify_plants_with_gemini(image_list: List[bytes], existing_plants: Optional[List[str]] = None):
     """
     Identifies plants and suggests a garden name.
