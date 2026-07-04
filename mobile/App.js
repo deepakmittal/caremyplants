@@ -36,55 +36,34 @@ const CARD_WIDTH = width * 0.85;
 
 // --- NEW COMPONENTS START ---
 
+const StarRating = ({ rating }) => {
+  const stars = [];
+  for (let i = 1; i <= 5; i++) {
+    stars.push(
+      <Text key={i} style={[styles.star, i <= rating ? styles.starFilled : {}]}>
+        ★
+      </Text>
+    );
+  }
+  return <View style={{ flexDirection: 'row' }}>{stars}</View>;
+};
+
 const SanctuaryVitalityCard = ({ vitality }) => {
   if (!vitality) return null;
 
   const score = vitality.score || 0;
-  const size = 80;
-  const strokeWidth = 8;
-  const radius = (size - strokeWidth) / 2;
-  const circumference = radius * 2 * Math.PI;
-  const progress = score / 100;
-  const strokeDashoffset = circumference * (1 - progress);
-
-  const strokeColor = score > 90 ? theme.colors.primaryContainer : theme.colors.vibrantPink;
 
   return (
     <View style={styles.vitalityCard}>
       <View style={styles.vitalityContent}>
         <Text style={styles.vitalityLabel}>SANCTUARY VITALITY</Text>
-        <Text style={styles.vitalityScore}>{score}%</Text>
+        <StarRating rating={score} />
         <Text style={styles.vitalitySummary}>
           {vitality.flourishingPlantsCount} plants are flourishing, {vitality.careNeededPlantsCount} need care.
         </Text>
       </View>
       <View style={styles.vitalityChart}>
-        <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-          <Circle
-            stroke={theme.colors.outlineVariant}
-            opacity={0.3}
-            fill="none"
-            cx={size / 2}
-            cy={size / 2}
-            r={radius}
-            strokeWidth={strokeWidth}
-          />
-          <Circle
-            stroke={strokeColor}
-            fill="none"
-            cx={size / 2}
-            cy={size / 2}
-            r={radius}
-            strokeWidth={strokeWidth}
-            strokeDasharray={circumference}
-            strokeDashoffset={strokeDashoffset}
-            strokeLinecap="round"
-            transform={`rotate(-90 ${size/2} ${size/2})`}
-          />
-        </Svg>
-        <View style={styles.vitalityChartIcon}>
-          <Leaf size={24} color={strokeColor} />
-        </View>
+        <Leaf size={32} color={theme.colors.primaryContainer} />
       </View>
     </View>
   );
@@ -737,6 +716,14 @@ const styles = StyleSheet.create({
   analysisText: { fontFamily: 'Manrope_600SemiBold', fontSize: 14, color: theme.colors.onSurfaceVariant, flexShrink: 1 },
   
   // --- NEW STYLES ---
+  star: {
+    fontSize: 32,
+    color: '#ccc',
+    marginHorizontal: 2,
+  },
+  starFilled: {
+    color: '#ffc107',
+  },
   vitalityCard: {
     backgroundColor: '#1A3C34', // Custom dark green, or theme.colors.primary
     borderRadius: theme.roundness.xl,
