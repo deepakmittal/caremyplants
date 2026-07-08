@@ -202,22 +202,19 @@ def analyze_garden_overview(image_list: List[bytes], last_update_recommendation:
     Previous Recommendation: {last_update_recommendation or 'None'}
 
     Provide:
-    1. hydration (Low/Medium/High)
-    2. exposure (Low/Medium/High)
-    3. vibrancy (Low/Medium/High)
-    4. immediate_changes
-    5. growth_trend
-    6. disease_overview
-    7. general_suggestions
-    8. needs_watering (boolean)
-    9. needs_fertilizer (boolean)
-    10. has_pests (boolean)
-    11. has_weeds (boolean)
-    12. has_disease (boolean)
-    13. needs_sunlight (boolean)
+    1. A score from 1 to 5 representing the overall garden health, where 5 is a perfect garden and 1 means significant improvements are needed.
+    2. For each of the following categories, provide a specific status:
+        - SUN_EXPOSURE: Choose one of 'Too Sunny', 'Sunny', 'Dark'.
+        - WATERING: Choose one of 'Overwatered', 'Properly Watered', 'Underwatered'.
+        - SOIL_QUALITY: Choose one of 'Poor', 'Average', 'Good'.
+    3. General garden overview fields.
 
     Return ONLY JSON:
     {{
+      "score": 5,
+      "sun_exposure_status": "Sunny",
+      "watering_status": "Properly Watered",
+      "soil_quality_status": "Good",
       "summary": "comma separated summary (e.g. vibrant, healthy, full of colors)",
       "hydration": "Low/Medium/High",
       "exposure": "Low/Medium/High",

@@ -180,6 +180,187 @@ def _process_single_plant(
         cropped_url: Optional[str] = None
         if cropped_bytes:
             logger.info(f"[{garden_id}] Uploading cutout for {plant_name}...")
+            blob_.py
+-------------------
+Core AI processing pipeline for gardens with status 'New'.
+
+Pipeline per garden:
+  New → Processing Garden → Processing Plants → Ready
+
+PlantUpdate status per plant:
+  New → Processing → Ready
+"""
+
+import uuid
+import logging
+from typing import Optional, List
+from sqlalchemy.orm import Session
+import models
+from . import gcs, gemini
+from utils import image as image_utils
+import datetime
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from database import SessionLocal
+
+logger = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+def _set_update_status(db: Session, update_id: int, status: str, commentary: str = None) -> None:
+    update_data = {"status": status}
+    if commentary is not None:
+        update_data["upload_commentry"] = commentary
+
+    db.query(models.GardenUpdate).filter(models.GardenUpdate.id == update_id).update(update_data)
+    # Also update parent garden status to reflect latest progress
+    db_update = db.query(models.GardenUpdate).filter(models.GardenUpdate.id == update_id).first()
+    if db_update:
+        db.query(models.Garden).filter(models.Garden.id == db_update.garden_id).update(
+            {"status": status, "updated_at": datetime.datetime.utcnow()}
+        )
+    db.commit()
+    logger.info(f"Update {update_id} (Garden {db_update.garden_id if db_update else '?'}) → {status}")
+
+
+def _set_plant_update_status(db: Session, plant_update_id: int, status: str) -> None:
+    db.query(models.PlantUpdate).filter(models.PlantUpdate.id == plant_update_id).update(
+        {"status": status}
+    )
+    db.commit()
+
+
+def _download_photo_bytes(photo_url: str) -> Optional[bytes]:
+    """Download a photo from GCS given its public URL."""
+    try:
+        # Extract the blob path from the full GCS URL
+        # URL format: https://storage.googleapis.com/{bucket}/{blob_path}
+        parts = photo_url.split("storage.googleapis.com/", 1)
+        if len(parts) < 2:
+            return None
+        blob_path = parts[1].split("/", 1)[-1]  # strip bucket name
+        return gcs.download_from_gcs(blob_path)
+    except Exception as e:
+        logger.warning(f"Could not download photo {photo_url}: {e}")
+        return None
+
+
+def _find_or_create_plant(db: Session, garden_id: int, plant_name: str, variety: str, condition: str) -> models.Plant:
+    """
+    Case-insensitive match against existing plants in the garden.
+    Creates a new Plant row if no match is found.
+    """
+    existing = (
+        db.query(models.Plant)
+        .filter(models.Plant.garden_id == garden_id)
+        .all()
+    )
+    name_lower = plant_name.strip().lower()
+    for plant in existing:
+        if plant.name.strip().lower() == name_lower:
+            # Update variety/condition if more detail is now available
+            plant.plant_variety = variety or plant.plant_variety
+            plant.condition = condition or plant.condition
+            db.commit()
+            return plant
+
+    # New plant
+    new_plant = models.Plant(
+        garden_id=garden_id,
+        name=plant_name,
+        plant_variety=variety,
+        condition=condition,
+    )
+    db.add(new_plant)
+    db.commit()
+    db.refresh(new_plant)
+    logger.info(f"Created new plant '{plant_name}' (id={new_plant.id}) in garden {garden_id}")
+    return new_plant
+
+
+def _get_last_garden_recommendation(db: Session, garden_id: int, current_update_id: int) -> Optional[str]:
+    """Return the recommendation text from the most recent *previous* GardenUpdate."""
+    last = (
+        db.query(models.GardenUpdate)
+        .filter(
+            models.GardenUpdate.garden_id == garden_id,
+            models.GardenUpdate.id != current_update_id,
+            models.GardenUpdate.recommendation.isnot(None),
+        )
+        .order_by(models.GardenUpdate.created_at.desc())
+        .first()
+    )
+    return last.recommendation if last else None
+
+
+def _get_last_plant_update_details(db: Session, plant_id: int) -> tuple[Optional[str], Optional[str]]:
+    """Return the (recommendation, condition) from the most recent PlantUpdate for this plant."""
+    last = (
+        db.query(models.PlantUpdate)
+        .filter(
+            models.PlantUpdate.plant_id == plant_id,
+            models.PlantUpdate.status == "Ready",
+        )
+        .order_by(models.PlantUpdate.created_at.desc())
+        .first()
+    )
+    if last:
+        return last.recommendation, last.condition_text
+    return None, None
+
+
+# ---------------------------------------------------------------------------
+# Per-plant processing
+# ---------------------------------------------------------------------------
+
+def _process_single_plant(
+    garden_id: int,
+    plant_data: dict,
+    image_contents: list[bytes],
+) -> None:
+    """
+    For one identified plant:
+    1. Crop photo using bounding box → upload to GCS
+    2. Find or create Plant row
+    3. Create PlantUpdate (New → Processing → Ready)
+    """
+    db: Session = SessionLocal()
+    try:
+        plant_name = plant_data.get("name", "Unknown Plant")
+
+        # --- Update Commentary ---
+        logger.info(f"[{garden_id}] Starting plant processing for a plant...")
+        latest_update = db.query(models.GardenUpdate).filter(models.GardenUpdate.garden_id == garden_id).order_by(models.GardenUpdate.created_at.desc()).first()
+        if latest_update:
+            latest_update.upload_commentry = f"analyzing {plant_name}"
+            db.commit()
+
+        variety = plant_data.get("variety", "")
+        condition = plant_data.get("condition", "")
+
+        # --- Crop image ---
+        photo_idx = plant_data.get("photo_index", 0)
+        cropped_bytes: Optional[bytes] = None
+        source = image_contents[photo_idx] if photo_idx < len(image_contents) else (image_contents[0] if image_contents else None)
+
+        if source:
+            if "box_2d" in plant_data:
+                cropped_bytes = image_utils.crop_plant_image(source, plant_data["box_2d"])
+                if not cropped_bytes:
+                    logging.info(f"Could not get a clear crop for '{plant_name}' — will use full photo as fallback.")
+                    cropped_bytes = source
+            else:
+                logging.info(f"No box_2d for '{plant_name}' — using full source photo as cutout.")
+                cropped_bytes = source
+        else:
+            logging.warning(f"No source image available for plant '{plant_name}'.")
+
+        # --- Upload cropped image ---
+        cropped_url: Optional[str] = None
+        if cropped_bytes:
+            logger.info(f"[{garden_id}] Uploading cutout for {plant_name}...")
             blob_name = f"garden_{garden_id}/plant_{uuid.uuid4()}.jpg"
             cropped_url = gcs.upload_to_gcs(cropped_bytes, blob_name)
 
@@ -336,6 +517,10 @@ def process_single_update(db: Session, update: models.GardenUpdate) -> None:
         latest_update.has_weeds = overview.get('has_weeds', False)
         latest_update.has_disease = overview.get('has_disease', False)
         latest_update.needs_sunlight = overview.get('needs_sunlight', False)
+        latest_update.score = overview.get('score')
+        latest_update.sun_exposure_status = overview.get('sun_exposure_status')
+        latest_update.watering_status = overview.get('watering_status')
+        latest_update.soil_quality_status = overview.get('soil_quality_status')
         
         # Also update the main garden summary for the list view
         db_garden = db.query(models.Garden).filter(models.Garden.id == garden_id).first()
