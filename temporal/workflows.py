@@ -8,6 +8,7 @@ with workflow.unsafe.imports_passed_through():
         cut_plant_images,
         gather_plant_details,
         update_garden_flags,
+        generate_garden_visualization,
     )
 
 
@@ -63,6 +64,14 @@ class GardenProcessingWorkflow:
             update_garden_flags,
             update_id,
             start_to_close_timeout=timedelta(minutes=5),
+            retry_policy=NO_RETRY_POLICY,
+        )
+
+        # 5. Generate garden visualization
+        await workflow.execute_activity(
+            generate_garden_visualization,
+            update_id,
+            start_to_close_timeout=timedelta(minutes=15),
             retry_policy=NO_RETRY_POLICY,
         )
 

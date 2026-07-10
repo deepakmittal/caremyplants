@@ -223,3 +223,80 @@ def update_garden_flags(update_id: int) -> None:
         logger.info(f"Update {update_id} successfully processed and marked as 'Ready'.")
     finally:
         db.close()
+
+@activity.defn
+def generate_garden_visualization(update_id: int) -> None:
+    db = _get_db()
+    try:
+        logger.info(f"Activity 5: GENERATE_GARDEN_VISUALIZATION for update {update_id}")
+        activity.heartbeat()
+
+        update = db.query(models.GardenUpdate).filter(models.GardenUpdate.id == update_id).first()
+        if not update:
+            raise ValueError(f"Update {update_id} not found.")
+
+        garden = update.garden
+        if not garden:
+            raise ValueError(f"Garden not found for update {update_id}.")
+
+        # Get the first photo of the garden update
+        photo = db.query(models.GardenPhoto).filter(models.GardenPhoto.update_id == update_id).first()
+        if not photo:
+            raise ValueError(f"No photo found for update {update_id}.")
+
+        # Download the photo
+        image_bytes = _download_photo_bytes(photo.photo_url)
+        if not image_bytes:
+            raise ValueError(f"Could not download photo for update {update_id}.")
+
+        # Get all plants and their latest updates
+        plants = db.query(models.Plant).filter(models.Plant.garden_id == garden.id).all()
+        plants_data = []
+        recommendations = []
+
+        if update.recommendation:
+            recommendations.append(update.recommendation)
+
+        for plant in plants:
+            latest_update = (
+                db.query(models.PlantUpdate)
+                .filter(models.PlantUpdate.plant_id == plant.id)
+                .order_by(models.PlantUpdate.created_at.desc())
+                .first()
+            )
+            if latest_update and latest_update.recommendation:
+                recommendations.append(f"{plant.name}: {latest_update.recommendation}")
+
+        # Re-run plant identification to get bounding boxes
+        image_contents = [image_bytes]
+        existing_plant_names = [p.name for p in plants]
+        plants_list, _ = gemini.identify_plants_with_gemini(image_contents, existing_plants=existing_plant_names)
+
+
+        # Generate the visualization
+        visualization_bytes = gemini.generate_garden_visualization_with_gemini(
+            image_bytes=image_bytes,
+            plants=plants_list,
+            recommendations=recommendations,
+        )
+
+        if not visualization_bytes:
+            raise RuntimeError("AI visualization generation failed.")
+
+        # Upload the visualization to GCS
+        blob_name = f"garden_{garden.id}/visualization_{uuid.uuid4()}.jpg"
+        visualization_url = gcs.upload_to_gcs(visualization_bytes, blob_name)
+
+        # Create a new GardenVisualization record
+        db_visualization = models.GardenVisualization(
+            garden_id=garden.id,
+            update_id=update_id,
+            image_url=visualization_url,
+        )
+        db.add(db_visualization)
+        db.commit()
+
+        logger.info(f"Successfully generated and saved visualization for update {update_id}")
+
+    finally:
+        db.close()
