@@ -10,6 +10,7 @@ from temporal.activities import (
     cut_plant_images,
     gather_plant_details,
     update_garden_flags,
+    generate_garden_visualization,
 )
 
 # Configure logging
@@ -35,6 +36,7 @@ async def main():
             cut_plant_images,
             gather_plant_details,
             update_garden_flags,
+            generate_garden_visualization,
         ],
         activity_executor=ThreadPoolExecutor(max_workers=20),
     )
