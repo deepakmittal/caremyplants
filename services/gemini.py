@@ -46,7 +46,7 @@ def _call_gemini(contents: list) -> dict:
         return {}
 
     try:
-        response = client.generate_content(
+        response = client.models.generate_content(
             model=model_name,
             contents=contents,
         )
@@ -344,7 +344,7 @@ def generate_garden_visualization_with_gemini(
         return None
 
     try:
-        response = client.generate_content(
+        response = client.models.generate_content(
             model=model_name,
             contents=[prompt, part],
         )
