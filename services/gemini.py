@@ -46,7 +46,7 @@ def _call_gemini(contents: list) -> dict:
         return {}
 
     try:
-        response = client.models.generate_content(
+        response = client.generate_content(
             model=model_name,
             contents=contents,
         )
@@ -278,3 +278,89 @@ def analyze_plant_detail(plant_image_bytes: bytes, plant_name: str, last_plant_r
     }}
     """
     return _call_gemini([prompt, part])
+
+def generate_garden_visualization_with_gemini(
+    image_bytes: bytes,
+    plants: List[dict],
+    recommendations: List[str]
+) -> Optional[bytes]:
+    """
+    Generates a garden visualization with product recommendations.
+
+    Args:
+        image_bytes: The original garden photo.
+        plants: A list of dictionaries, where each dictionary represents a plant
+                and contains a 'box_2d' key with the bounding box coordinates.
+        recommendations: A list of recommendations to display on the image.
+
+    Returns:
+        The generated image as bytes, or None if an error occurred.
+    """
+    try:
+        img = Image.open(io.BytesIO(image_bytes))
+        part = _pil_to_part(img)
+    except:
+        return None
+
+    # Construct the prompt with plant locations and recommendations
+    plant_locations = []
+    for i, plant in enumerate(plants):
+        if "box_2d" in plant:
+            plant_locations.append(f"  - Plant {i+1}: at bounding box {plant['box_2d']}")
+
+    recommendations_text = "\n".join(f"- {rec}" for rec in recommendations)
+
+    prompt = f"""
+    Analyze the provided garden photo and the following information to generate a new image with helpful visualizations and recommendations.
+
+    **Objective:** Create an enhanced version of the original image that visually highlights areas for improvement and displays actionable recommendations. The new image should be a photorealistic rendering of the garden with the suggested changes applied.
+
+    **Information:**
+
+    *   **Plant Locations:**
+        {chr(10).join(plant_locations)}
+
+    *   **Recommendations:**
+        {recommendations_text}
+
+    **Instructions for Image Generation:**
+
+    1.  **Photorealistic Rendering:** The output must be a high-quality, photorealistic image, not a cartoon or drawing. It should look like a real photograph of the improved garden.
+    2.  **Apply Recommendations:** Modify the original image to reflect the recommendations. For example:
+        *   If a plant needs watering, show the soil as moist.
+        *   If a plant needs pruning, show it as neatly trimmed.
+        *   If a new tool or product is recommended, visually integrate it into the scene in a natural way (e.g., a watering can next to a thirsty plant, a bag of fertilizer nearby).
+    3.  **Visual Indicators:** Use subtle visual cues to draw attention to the improved areas. You can use arrows, circles, or highlighted regions, but they must be tastefully integrated into the image.
+    4.  **Text Overlay:** Overlay the recommendations as text directly onto the image. The text should be legible, well-placed, and not obscure important parts of the garden.
+
+    **Output:**
+
+    *   Return only the generated image. Do not return any text, JSON, or other data.
+    """
+
+    model_name = "gemini-1.5-flash"  # Or another suitable model
+    client = _get_client()
+    if not client:
+        return None
+
+    try:
+        response = client.generate_content(
+            model=model_name,
+            contents=[prompt, part],
+        )
+
+        if not response or not response.parts:
+            print("Error: Gemini returned an empty response for visualization.")
+            return None
+
+        # Assuming the first part is the image
+        image_part = response.parts[0]
+        if image_part.mime_type.startswith("image/"):
+            return image_part.data
+        else:
+            print(f"Error: Gemini did not return an image. Mime type: {image_part.mime_type}")
+            return None
+
+    except Exception as e:
+        print(f"Exception during Gemini visualization call: {str(e)}")
+        return None

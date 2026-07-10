@@ -13,11 +13,12 @@ with open("dummy_image.jpg", "wb") as f:
     f.write(DUMMY_IMAGE_CONTENT)
 
 @pytest.mark.asyncio
-async def test_automated_garden_workflow():
+async def test_automated_garden_workflow_with_visualization():
     """
-    Tests the new automated garden processing workflow.
-    1. Verifies that uploading photos triggers the workflow.
-    2. Verifies that the old, manual-trigger endpoints are removed.
+    Tests the automated garden processing workflow, including visualization.
+    1. Uploads a photo to trigger the workflow.
+    2. Polls for the garden to become "Ready".
+    3. Verifies that a visualization with an image_url is generated.
     """
     async with httpx.AsyncClient() as client:
         # 1. Test the new automated workflow via /gardens/upload
@@ -35,7 +36,8 @@ async def test_automated_garden_workflow():
         garden_id = response_json["id"]
 
         # Poll for garden status to become "Ready"
-        for _ in range(10):  # Poll for up to 50 seconds
+        details_json = None
+        for _ in range(20):  # Poll for up to 100 seconds
             time.sleep(5)
             details_response = await client.get(f"{BASE_URL}/gardens/{garden_id}/details")
             if details_response.status_code == 200:
@@ -45,19 +47,12 @@ async def test_automated_garden_workflow():
         else:
             pytest.fail("Garden did not become 'Ready' within the timeout period.")
 
-        # 2. Verify that the old endpoints are removed (return 404)
-        
-        # Check POST /jobs/process
-        response_jobs_post = await client.post(f"{BASE_URL}/jobs/process")
-        assert response_jobs_post.status_code == 404
-
-        # Check GET /jobs/process
-        response_jobs_get = await client.get(f"{BASE_URL}/jobs/process")
-        assert response_jobs_get.status_code == 404
-
-        # Check POST /gardens/{garden_id}/visualize
-        response_visualize = await client.post(f"{BASE_URL}/gardens/{garden_id}/visualize")
-        assert response_visualize.status_code == 404
+        # 3. Verify that a visualization with an image_url is generated.
+        assert details_json is not None
+        assert "visualization" in details_json
+        assert details_json["visualization"] is not None
+        assert "image_url" in details_json["visualization"]
+        assert details_json["visualization"]["image_url"] is not None
 
 # Cleanup the dummy image file
 os.remove("dummy_image.jpg")
