@@ -355,17 +355,34 @@ def generate_garden_visualization_with_gemini(
     *   Return only the generated image. Do not return any text, JSON, or other data.
     """
 
-    model_name = "gemini-1.5-flash"  # Or another suitable model
+    model_name = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
     client = _get_client()
     if not client:
         return None
 
-    try:
-        response = client.models.generate_content(
-            model=model_name,
-            contents=[prompt, part],
-        )
+    import time
+    max_retries = 3
+    backoff = 2
+    response = None
 
+    for attempt in range(max_retries):
+        try:
+            response = client.models.generate_content(
+                model=model_name,
+                contents=[prompt, part],
+            )
+            break
+        except Exception as e:
+            if "503" in str(e) or "429" in str(e) or "overloaded" in str(e).lower() or "demand" in str(e).lower():
+                if attempt < max_retries - 1:
+                    print(f"Gemini visualization call failed with transient error: {e}. Retrying in {backoff}s...")
+                    time.sleep(backoff)
+                    backoff *= 2
+                    continue
+            print(f"Exception during Gemini visualization call: {str(e)}")
+            return None
+
+    try:
         if not response or not response.parts:
             print("Error: Gemini returned an empty response for visualization.")
             return None
@@ -379,5 +396,5 @@ def generate_garden_visualization_with_gemini(
             return None
 
     except Exception as e:
-        print(f"Exception during Gemini visualization call: {str(e)}")
+        print(f"Exception parsing Gemini visualization response: {str(e)}")
         return None
