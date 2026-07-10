@@ -45,12 +45,29 @@ def _call_gemini(contents: list) -> dict:
     if not client:
         return {}
 
-    try:
-        response = client.models.generate_content(
-            model=model_name,
-            contents=contents,
-        )
+    import time
+    max_retries = 3
+    backoff = 2
+    response = None
 
+    for attempt in range(max_retries):
+        try:
+            response = client.models.generate_content(
+                model=model_name,
+                contents=contents,
+            )
+            break
+        except Exception as e:
+            if "503" in str(e) or "429" in str(e) or "overloaded" in str(e).lower() or "demand" in str(e).lower():
+                if attempt < max_retries - 1:
+                    print(f"Gemini call failed with transient error: {e}. Retrying in {backoff}s...")
+                    time.sleep(backoff)
+                    backoff *= 2
+                    continue
+            print(f"Exception during Gemini call: {str(e)}")
+            return {}
+
+    try:
         if not response or not response.text:
             print(f"Error: Gemini returned an empty response.")
             return {}
@@ -69,7 +86,7 @@ def _call_gemini(contents: list) -> dict:
             print(f"Error: Failed to parse Gemini response as JSON. Raw text: {text[:500]}...")
             return {}
     except Exception as e:
-        print(f"Exception during Gemini call: {str(e)}")
+        print(f"Exception parsing Gemini response: {str(e)}")
         return {}
 
 def _pil_to_part(img: Image.Image) -> types.Part:
