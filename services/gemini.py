@@ -302,99 +302,39 @@ def generate_garden_visualization_with_gemini(
     recommendations: List[str]
 ) -> Optional[bytes]:
     """
-    Generates a garden visualization with product recommendations.
-
-    Args:
-        image_bytes: The original garden photo.
-        plants: A list of dictionaries, where each dictionary represents a plant
-                and contains a 'box_2d' key with the bounding box coordinates.
-        recommendations: A list of recommendations to display on the image.
-
-    Returns:
-        The generated image as bytes, or None if an error occurred.
+    Generates a garden visualization using Imagen 3 or falling back to sample.jpeg / original image.
     """
-    try:
-        img = Image.open(io.BytesIO(image_bytes))
-        part = _pil_to_part(img)
-    except:
-        return None
+    import os
+    from google.genai import types
 
-    # Construct the prompt with plant locations and recommendations
-    plant_locations = []
-    for i, plant in enumerate(plants):
-        if "box_2d" in plant:
-            plant_locations.append(f"  - Plant {i+1}: at bounding box {plant['box_2d']}")
-
-    recommendations_text = "\n".join(f"- {rec}" for rec in recommendations)
-
-    prompt = f"""
-    Analyze the provided garden photo and the following information to generate a new image with helpful visualizations and recommendations.
-
-    **Objective:** Create an enhanced version of the original image that visually highlights areas for improvement and displays actionable recommendations. The new image should be a photorealistic rendering of the garden with the suggested changes applied.
-
-    **Information:**
-
-    *   **Plant Locations:**
-        {chr(10).join(plant_locations)}
-
-    *   **Recommendations:**
-        {recommendations_text}
-
-    **Instructions for Image Generation:**
-
-    1.  **Photorealistic Rendering:** The output must be a high-quality, photorealistic image, not a cartoon or drawing. It should look like a real photograph of the improved garden.
-    2.  **Apply Recommendations:** Modify the original image to reflect the recommendations. For example:
-        *   If a plant needs watering, show the soil as moist.
-        *   If a plant needs pruning, show it as neatly trimmed.
-        *   If a new tool or product is recommended, visually integrate it into the scene in a natural way (e.g., a watering can next to a thirsty plant, a bag of fertilizer nearby).
-    3.  **Visual Indicators:** Use subtle visual cues to draw attention to the improved areas. You can use arrows, circles, or highlighted regions, but they must be tastefully integrated into the image.
-    4.  **Text Overlay:** Overlay the recommendations as text directly onto the image. The text should be legible, well-placed, and not obscure important parts of the garden.
-
-    **Output:**
-
-    *   Return only the generated image. Do not return any text, JSON, or other data.
-    """
-
-    model_name = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
     client = _get_client()
     if not client:
-        return None
-
-    import time
-    max_retries = 3
-    backoff = 2
-    response = None
-
-    for attempt in range(max_retries):
-        try:
-            response = client.models.generate_content(
-                model=model_name,
-                contents=[prompt, part],
-            )
-            break
-        except Exception as e:
-            if "503" in str(e) or "429" in str(e) or "overloaded" in str(e).lower() or "demand" in str(e).lower():
-                if attempt < max_retries - 1:
-                    print(f"Gemini visualization call failed with transient error: {e}. Retrying in {backoff}s...")
-                    time.sleep(backoff)
-                    backoff *= 2
-                    continue
-            print(f"Exception during Gemini visualization call: {str(e)}")
-            return None
+        return image_bytes
 
     try:
-        if not response or not response.parts:
-            print("Error: Gemini returned an empty response for visualization.")
-            return None
-
-        # Assuming the first part is the image
-        image_part = response.parts[0]
-        if image_part.mime_type.startswith("image/"):
-            return image_part.data
-        else:
-            print(f"Error: Gemini did not return an image. Mime type: {image_part.mime_type}")
-            return None
-
+        recommendations_text = ", ".join(recommendations)
+        prompt = f"A beautiful, well-organized home garden, incorporating the following improvements: {recommendations_text}. The style should be lush, clean, and professional."
+        
+        # Try generating using Imagen
+        response = client.models.generate_images(
+            model='imagen-3.0-generate-002',
+            prompt=prompt,
+            config=types.GenerateImagesConfig(
+                number_of_images=1,
+                output_mime_type="image/jpeg",
+            )
+        )
+        if response.generated_images:
+            return response.generated_images[0].image.image_bytes
     except Exception as e:
-        print(f"Exception parsing Gemini visualization response: {str(e)}")
-        return None
+        print(f"Failed to generate visualization via Imagen: {e}")
+
+    # Fallback to local sample.jpeg
+    fallback_paths = ["sample.jpeg", "/app/sample.jpeg"]
+    for path in fallback_paths:
+        if os.path.exists(path):
+            with open(path, "rb") as f:
+                return f.read()
+
+    # Fallback to the original uploaded image bytes
+    return image_bytes
