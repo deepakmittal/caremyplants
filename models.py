@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, TIMESTAMP, ForeignKey, Table, Text, LargeBinary, Boolean
+from sqlalchemy import Column, Integer, String, TIMESTAMP, ForeignKey, Table, Text, LargeBinary, Boolean, Float, Numeric
 from sqlalchemy.orm import relationship
 from database import Base
 import datetime
@@ -129,3 +129,18 @@ class ProductRecommendation(Base):
     image_url = Column(String(512))
 
     visualization = relationship("GardenVisualization", back_populates="recommendations")
+
+class AICost(Base):
+    __tablename__ = "AI_cost"
+    id = Column(Integer, primary_key=True, index=True)
+    garden_id = Column(Integer, ForeignKey("gardens.id", ondelete="SET NULL"), nullable=True)
+    workflow_id = Column(String(255), nullable=True)
+    input_tokens = Column(Integer, default=0, nullable=False)
+    output_tokens = Column(Integer, default=0, nullable=False)
+    execution_type = Column(String(50), nullable=False) # 'backend' or 'frontend'
+    model_used = Column(String(255), nullable=False)
+    api_cost = Column(Numeric(10, 6), default=0.0, nullable=False)
+    created_at = Column(TIMESTAMP, default=datetime.datetime.utcnow)
+
+    garden = relationship("Garden")
+

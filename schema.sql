@@ -90,3 +90,18 @@ CREATE TABLE plant_updates (
 
 -- Migration: add status to existing plant_updates table
 -- ALTER TABLE plant_updates ADD COLUMN status VARCHAR(50) NOT NULL DEFAULT 'New';
+
+-- AI_cost Table
+CREATE TABLE AI_cost (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    garden_id INT NULL,
+    workflow_id VARCHAR(255) NULL,
+    input_tokens INT NOT NULL DEFAULT 0,
+    output_tokens INT NOT NULL DEFAULT 0,
+    execution_type VARCHAR(50) NOT NULL, -- 'backend' or 'frontend'
+    model_used VARCHAR(255) NOT NULL,
+    api_cost DECIMAL(10, 6) NOT NULL DEFAULT 0.000000,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (garden_id) REFERENCES gardens(id) ON DELETE SET NULL
+);
+
