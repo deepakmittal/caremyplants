@@ -8,9 +8,6 @@ from typing import List, Dict, Any
 from sqlalchemy.orm import Session
 import models
 import schemas
-from services.gemini import assess_garden_health_with_ai
-from services.gcs import download_from_gcs
-from urllib.parse import urlparse
 
 def _get_latest_garden_update(db_garden: models.Garden) -> models.GardenUpdate | None:
     """Retrieves the most recent 'Ready' garden update."""
@@ -47,6 +44,8 @@ def _parse_recommendation(recommendation: str) -> Dict[str, str]:
             parsed[key.strip()] = value.strip()
     return parsed
 
+_HEALTH_CACHE = {}
+
 def calculate_garden_health(db_garden: models.Garden) -> schemas.GardenHealthOverview:
     """
     Calculates the complete health overview for a given garden.
@@ -55,8 +54,8 @@ def calculate_garden_health(db_garden: models.Garden) -> schemas.GardenHealthOve
     latest_garden_update = _get_latest_garden_update(db_garden)
     total_plants = len(plants)
     
-    if total_plants == 0:
-        # Return a default empty state if there are no plants
+    # 1. Early exit if the garden has no plants or is not fully processed yet
+    if total_plants == 0 or db_garden.status != 'Ready' or not latest_garden_update:
         return schemas.GardenHealthOverview(
             sanctuaryVitality=schemas.SanctuaryVitality(
                 score=1,
@@ -66,23 +65,27 @@ def calculate_garden_health(db_garden: models.Garden) -> schemas.GardenHealthOve
             metrics=[]
         )
 
-    # --- Download Garden Images ---
-    image_bytes_list = []
-    for photo in db_garden.photos:
-        try:
-            parsed_url = urlparse(photo.photo_url)
-            blob_name = parsed_url.path.lstrip('/')
-            # The blob name is everything after the bucket name in the path
-            blob_name = blob_name.split('/', 1)[1]
-            image_bytes_list.append(download_from_gcs(blob_name))
-        except Exception as e:
-            print(f"Error downloading image {photo.photo_url}: {e}")
-            continue
+    # 2. Check memory cache to avoid redundant calculations
+    latest_update_time = latest_garden_update.created_at.isoformat() if latest_garden_update.created_at else "none"
+    cache_key = (db_garden.id, latest_garden_update.id, latest_update_time, total_plants)
+    
+    if cache_key in _HEALTH_CACHE:
+        return _HEALTH_CACHE[cache_key]
 
-    # --- Get AI Health Assessment ---
+    # 3. Load health score and metrics from database if available
+    import json
     ai_assessment = {}
-    if image_bytes_list:
-        ai_assessment = assess_garden_health_with_ai(image_bytes_list)
+    if latest_garden_update.health_score is not None:
+        ai_assessment["score"] = latest_garden_update.health_score
+        if latest_garden_update.health_metrics:
+            try:
+                ai_assessment["metrics"] = json.loads(latest_garden_update.health_metrics)
+            except Exception as parse_err:
+                print(f"Error parsing health_metrics JSON from DB: {parse_err}")
+
+    # 4. Use defaults if not present in database
+    ai_assessment.setdefault("score", 3)
+    ai_assessment.setdefault("metrics", {})
 
     # --- Sanctuary Vitality Calculation ---
     care_needed_plants_count = 0
@@ -173,7 +176,9 @@ def calculate_garden_health(db_garden: models.Garden) -> schemas.GardenHealthOve
     metrics.append(create_metric("VITALITY", vitality_status, vitality_status == "Struggling", []))
 
 
-    return schemas.GardenHealthOverview(
+    result = schemas.GardenHealthOverview(
         sanctuaryVitality=sanctuary_vitality,
         metrics=metrics
     )
+    _HEALTH_CACHE[cache_key] = result
+    return result

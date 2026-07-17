@@ -21,6 +21,34 @@ try:
     print("Connecting to database and creating tables...")
     Base.metadata.create_all(bind=engine)
     print("Database tables verified/created successfully.")
+    
+    # Auto-migration check for box_2d column on plant_updates
+    from sqlalchemy import text
+    try:
+        with engine.connect() as conn:
+            res = conn.execute(text("SHOW COLUMNS FROM plant_updates LIKE 'box_2d';"))
+            if not res.fetchone():
+                print("Adding box_2d column to plant_updates table...")
+                conn.execute(text("ALTER TABLE plant_updates ADD COLUMN box_2d VARCHAR(255) NULL;"))
+                conn.commit()
+                print("Column box_2d added successfully.")
+
+            # Auto-migration check for health_score and health_metrics on garden_updates
+            res_score = conn.execute(text("SHOW COLUMNS FROM garden_updates LIKE 'health_score';"))
+            if not res_score.fetchone():
+                print("Adding health_score column to garden_updates table...")
+                conn.execute(text("ALTER TABLE garden_updates ADD COLUMN health_score INT NULL;"))
+                conn.commit()
+                print("Column health_score added successfully.")
+
+            res_metrics = conn.execute(text("SHOW COLUMNS FROM garden_updates LIKE 'health_metrics';"))
+            if not res_metrics.fetchone():
+                print("Adding health_metrics column to garden_updates table...")
+                conn.execute(text("ALTER TABLE garden_updates ADD COLUMN health_metrics TEXT NULL;"))
+                conn.commit()
+                print("Column health_metrics added successfully.")
+    except Exception as migration_error:
+        print(f"WARNING: Could not apply database migration for columns: {migration_error}")
 except Exception as e:
     print(f"WARNING: Could not connect to database or create tables on startup: {e}")
     print("Continuing startup... DB connection will be retried on first request.")
@@ -59,6 +87,104 @@ def hello():
 @app.get("/ping")
 def ping():
     return {"message": "pong"}
+
+@app.get("/db/status")
+async def get_db_status():
+    # Try connecting to the database first
+    try:
+        from sqlalchemy import text
+        from database import SessionLocal
+        db = SessionLocal()
+        db.execute(text("SELECT 1"))
+        db.close()
+        return {"status": "online", "state": "RUNNABLE", "running": True}
+    except Exception as db_err:
+        print(f"Database connection check failed: {db_err}")
+        
+    # If connection fails and we are on Cloud Run, query the Google Cloud SQL Admin API
+    if os.getenv('K_SERVICE') is not None:
+        try:
+            import urllib.request
+            import json
+            # 1. Get access token from metadata server
+            req_token = urllib.request.Request(
+                "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token",
+                headers={"Metadata-Flavor": "Google"}
+            )
+            with urllib.request.urlopen(req_token, timeout=5) as response:
+                token_data = json.loads(response.read().decode('utf-8'))
+                access_token = token_data.get("access_token")
+                
+            # 2. Query Cloud SQL Admin API
+            parts = os.getenv("INSTANCE_CONNECTION_NAME", "crawler-488903:us-central1:care-my-plants-v2").split(':')
+            project = parts[0]
+            instance = parts[-1]
+            
+            url = f"https://sqladmin.googleapis.com/sql/v1beta4/projects/{project}/instances/{instance}"
+            req_get = urllib.request.Request(
+                url,
+                headers={"Authorization": f"Bearer {access_token}"}
+            )
+            with urllib.request.urlopen(req_get, timeout=5) as response:
+                sql_data = json.loads(response.read().decode('utf-8'))
+                state = sql_data.get("state", "UNKNOWN")
+                policy = sql_data.get("settings", {}).get("activationPolicy", "UNKNOWN")
+                return {
+                    "status": "offline",
+                    "state": state,
+                    "policy": policy,
+                    "running": policy == "ALWAYS" and state == "RUNNABLE"
+                }
+        except Exception as gcp_err:
+            print(f"Failed to fetch Cloud SQL status from Google API: {gcp_err}")
+            
+    return {"status": "offline", "state": "STOPPED", "running": False}
+
+@app.post("/db/start")
+async def start_db():
+    if os.getenv('K_SERVICE') is not None:
+        try:
+            import urllib.request
+            import json
+            
+            # 1. Get access token from metadata server
+            req_token = urllib.request.Request(
+                "http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token",
+                headers={"Metadata-Flavor": "Google"}
+            )
+            with urllib.request.urlopen(req_token, timeout=5) as response:
+                token_data = json.loads(response.read().decode('utf-8'))
+                access_token = token_data.get("access_token")
+            
+            # 2. Patch Cloud SQL instance settings
+            parts = os.getenv("INSTANCE_CONNECTION_NAME", "crawler-488903:us-central1:care-my-plants-v2").split(':')
+            project = parts[0]
+            instance = parts[-1]
+            
+            url = f"https://sqladmin.googleapis.com/sql/v1beta4/projects/{project}/instances/{instance}"
+            data = json.dumps({
+                "settings": {
+                    "activationPolicy": "ALWAYS"
+                }
+            }).encode('utf-8')
+            
+            req_patch = urllib.request.Request(
+                url,
+                data=data,
+                headers={
+                    "Authorization": f"Bearer {access_token}",
+                    "Content-Type": "application/json"
+                },
+                method="PATCH"
+            )
+            with urllib.request.urlopen(req_patch, timeout=5) as response:
+                res_data = json.loads(response.read().decode('utf-8'))
+                return {"status": "success", "message": "Database starting", "response": res_data}
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Failed to start database: {str(e)}")
+            
+    return {"status": "success", "message": "Local environment simulated DB start"}
+
 
 @app.get("/colour")
 def colour():

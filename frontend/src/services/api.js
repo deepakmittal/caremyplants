@@ -1,6 +1,8 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:8000'; // Assuming backend runs on 8000
+const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:8000'
+    : window.location.origin;
 
 const api = axios.create({
     baseURL: API_BASE_URL,
@@ -47,5 +49,15 @@ export const getUserGardens = async (userId) => {
     return response.data;
 };
 
+export const getDbStatus = async () => {
+    const response = await api.get('/db/status');
+    return response.data;
+};
+
+export const startDb = async () => {
+    const response = await api.post('/db/start');
+    return response.data;
+};
 
 export default api;
+

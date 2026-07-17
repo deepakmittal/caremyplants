@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Camera, Plus, Leaf, LogOut, ChevronRight, Loader2, Image as ImageIcon, ChevronLeft, Sparkles, ArrowLeft, CheckCircle2, Droplets, Sun, Sprout, TrendingUp, Box, Scissors, Check, X, Star } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { loginWithGoogle, uploadGardenPhotos, getUserGardens, getGardenDetails } from './services/api';
+import { loginWithGoogle, uploadGardenPhotos, getUserGardens, getGardenDetails, getDbStatus, startDb } from './services/api';
 import Carousel from './components/Carousel';
 import GoogleLoginButton from './components/GoogleLoginButton';
 
@@ -18,7 +18,6 @@ const StarRating = ({ score }) => {
     </div>
   );
 };
-
 const App = () => {
   // Auth and Navigation State
   const [user, setUser] = useState(() => JSON.parse(localStorage.getItem('garden_user')));
@@ -37,7 +36,70 @@ const App = () => {
 
   // UI State
   const [activeMetric, setActiveMetric] = useState(null);
-  
+  const [dbStatus, setDbStatus] = useState({ online: true, state: 'RUNNING', loading: false });
+
+  const checkDb = async () => {
+    try {
+      const data = await getDbStatus();
+      if (data.status === 'offline') {
+        setDbStatus({ online: false, state: data.state || 'OFFLINE', loading: false });
+      } else {
+        setDbStatus({ online: true, state: 'RUNNING', loading: false });
+      }
+    } catch (err) {
+      console.error("Failed to check database status", err);
+      setDbStatus({ online: true, state: 'RUNNING', loading: false });
+    }
+  };
+
+  const handleStartDb = async () => {
+    setDbStatus(prev => ({ ...prev, loading: true }));
+    try {
+      await startDb();
+      let attempts = 0;
+      const interval = setInterval(async () => {
+        attempts++;
+        try {
+          const data = await getDbStatus();
+          if (data.status === 'online') {
+            clearInterval(interval);
+            setDbStatus({ online: true, state: 'RUNNING', loading: false });
+            if (user) {
+              fetchGardens();
+            }
+          }
+        } catch (e) {
+          console.error(e);
+        }
+        if (attempts > 30) {
+          clearInterval(interval);
+          setDbStatus(prev => ({ ...prev, loading: false }));
+          alert("Database startup timed out. Please try again.");
+        }
+      }, 5000);
+    } catch (err) {
+      alert("Failed to start database: " + err.message);
+      setDbStatus(prev => ({ ...prev, loading: false }));
+    }
+  };
+
+  const fetchGardens = async () => {
+    try {
+      if (user?.user_id) {
+        const data = await getUserGardens(user.user_id);
+        setGardens(data);
+        setDbStatus({ online: true, state: 'RUNNING', loading: false });
+      }
+    } catch (err) {
+      console.error("Failed to fetch gardens", err);
+      checkDb();
+    }
+  };
+
+  useEffect(() => {
+    checkDb();
+  }, []);
+
   // Initial Auth Sync and Navigation
   useEffect(() => {
     if (user) {
@@ -56,36 +118,24 @@ const App = () => {
 
     const interval = setInterval(async () => {
       try {
-        // Refetch the whole list of gardens
         await fetchGardens();
       } catch (error) {
         console.error("Failed to poll for garden status", error);
       }
-    }, 5000); // Poll every 5 seconds
+    }, 5000);
 
     return () => clearInterval(interval);
   }, [gardens]);
 
-
   // Navigate to correct page based on garden count
   useEffect(() => {
+    if (!dbStatus.online) return;
     if (user && gardens.length > 0 && currentPage === 'login') {
       setCurrentPage('gardens');
     } else if (user && gardens.length === 0 && currentPage === 'login') {
       setCurrentPage('create_garden');
     }
-  }, [gardens]);
-
-  const fetchGardens = async () => {
-    try {
-      if (user?.user_id) {
-        const data = await getUserGardens(user.user_id);
-        setGardens(data);
-      }
-    } catch (err) {
-      console.error("Failed to fetch gardens", err);
-    }
-  };
+  }, [gardens, dbStatus.online]);
 
   const handleGoogleLogin = async () => {
     setLoading(true);
@@ -143,7 +193,6 @@ const App = () => {
   };
 
   // --- Sub-Components (Pages) ---
-
   const LoginPage = () => (
     <div className="min-h-screen flex items-center justify-center p-6">
       <motion.div
@@ -165,7 +214,34 @@ const App = () => {
         </div>
         <h1 className="text-5xl font-extrabold mb-4 tracking-tight">CareMyPlants</h1>
         <p className="text-text-muted mb-10 text-lg">AI-powered garden intelligence for your home.</p>
-        <GoogleLoginButton onClick={handleGoogleLogin} loading={loading} />
+        
+        {!dbStatus.online ? (
+          <div className="bg-red-500/10 border border-red-500/20 rounded-2xl p-6 text-left mb-6">
+            <h3 className="text-red-400 font-bold text-lg mb-2 flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse"></span>
+              Database is Offline
+            </h3>
+            <p className="text-sm text-text-muted mb-6 leading-relaxed">
+              The database is currently shut down to save costs. Please start the database to access your gardens.
+            </p>
+            <button
+              onClick={handleStartDb}
+              disabled={dbStatus.loading}
+              className="w-full py-4 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold flex items-center justify-center gap-2 transition-all disabled:opacity-50"
+            >
+              {dbStatus.loading ? (
+                <>
+                  <Loader2 size={20} className="animate-spin mr-2" />
+                  Starting database...
+                </>
+              ) : (
+                'Start Database'
+              )}
+            </button>
+          </div>
+        ) : (
+          <GoogleLoginButton onClick={handleGoogleLogin} loading={loading} />
+        )}
       </motion.div>
     </div>
   );
@@ -197,6 +273,34 @@ const App = () => {
             </button>
           </div>
         </header>
+
+        {!dbStatus.online && (
+          <div className="bg-red-500/10 border border-red-500/20 rounded-[32px] p-8 mb-12 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <div>
+              <h3 className="text-red-400 font-bold text-2xl mb-2 flex items-center gap-3">
+                <span className="w-3.5 h-3.5 rounded-full bg-red-500 animate-pulse"></span>
+                Database is Offline
+              </h3>
+              <p className="text-text-muted text-base">
+                The database is currently shut down. Turn it on to view and manage your gardens.
+              </p>
+            </div>
+            <button
+              onClick={handleStartDb}
+              disabled={dbStatus.loading}
+              className="btn-primary py-4 px-8 text-lg flex items-center gap-3 transition-all disabled:opacity-50 whitespace-nowrap"
+            >
+              {dbStatus.loading ? (
+                <>
+                  <Loader2 size={20} className="animate-spin" />
+                  Starting...
+                </>
+              ) : (
+                'Start Database'
+              )}
+            </button>
+          </div>
+        )}
 
         <Carousel>
           {gardens.map((garden) => {
@@ -297,6 +401,33 @@ const App = () => {
             </div>
           </div>
         </header>
+        {!dbStatus.online && (
+          <div className="bg-red-500/10 border border-red-500/20 rounded-[32px] p-8 mb-12 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <div>
+              <h3 className="text-red-400 font-bold text-2xl mb-2 flex items-center gap-3">
+                <span className="w-3.5 h-3.5 rounded-full bg-red-500 animate-pulse"></span>
+                Database is Offline
+              </h3>
+              <p className="text-[#1A3C34]/80 text-base">
+                The database is currently shut down. Turn it on to view and update your garden details.
+              </p>
+            </div>
+            <button
+              onClick={handleStartDb}
+              disabled={dbStatus.loading}
+              className="px-6 py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl flex items-center gap-3 transition-all disabled:opacity-50 whitespace-nowrap"
+            >
+              {dbStatus.loading ? (
+                <>
+                  <Loader2 size={20} className="animate-spin" />
+                  Starting...
+                </>
+              ) : (
+                'Start Database'
+              )}
+            </button>
+          </div>
+        )}
 
         {loading ? (
           <div className="flex flex-col items-center justify-center py-20 flex-grow">

@@ -19,7 +19,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { theme } from './src/theme';
-import { getDetailedGardens, uploadGardenPhotos, deleteGarden } from './src/services/api';
+import { getDetailedGardens, uploadGardenPhotos, deleteGarden, getDbStatus, startDb } from './src/services/api';
 import { 
   Leaf, ChevronRight, ArrowLeft, Droplets, Sun, Plus, Image as ImageIcon, Sparkles, MapPin, Trash2,
   CheckCircle2, HeartPulse, Sprout, Wind, Archive, Scissors 
@@ -251,9 +251,58 @@ export default function App() {
 
   const [gardens, setGardens] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [dbStatus, setDbStatus] = useState({ online: true, state: 'RUNNING', loading: false });
+
+  const checkDb = async () => {
+    try {
+      const data = await getDbStatus();
+      if (data.status === 'offline') {
+        setDbStatus({ online: false, state: data.state || 'OFFLINE', loading: false });
+      } else {
+        setDbStatus({ online: true, state: 'RUNNING', loading: false });
+      }
+    } catch (err) {
+      console.error("Failed to check database status", err);
+      setDbStatus({ online: true, state: 'RUNNING', loading: false });
+    }
+  };
+
+  const handleStartDb = async () => {
+    setDbStatus(prev => ({ ...prev, loading: true }));
+    try {
+      await startDb();
+      let attempts = 0;
+      const interval = setInterval(async () => {
+        attempts++;
+        try {
+          const data = await getDbStatus();
+          if (data.status === 'online') {
+            clearInterval(interval);
+            setDbStatus({ online: true, state: 'RUNNING', loading: false });
+            fetchData();
+          }
+        } catch (e) {
+          console.error(e);
+        }
+        if (attempts > 30) {
+          clearInterval(interval);
+          setDbStatus(prev => ({ ...prev, loading: false }));
+          alert("Database startup timed out. Please try again.");
+        }
+      }, 5000);
+    } catch (err) {
+      alert("Failed to start database: " + err.message);
+      setDbStatus(prev => ({ ...prev, loading: false }));
+    }
+  };
+
+  useEffect(() => {
+    checkDb();
+  }, []);
   const [selectedGarden, setSelectedGarden] = useState(null);
   const [selectedPlant, setSelectedPlant] = useState(null);
   const initialLoadDone = useRef(false);
+  const isFetchingRef = useRef(false);
   const [scrollX, setScrollX] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -298,7 +347,7 @@ export default function App() {
       } catch (error) {
         console.error("Failed to poll for garden status", error);
       }
-    }, 5000); // Poll every 5 seconds
+    }, 20000); // Poll every 20 seconds
 
     return () => clearInterval(interval);
   }, [gardens]);
@@ -340,7 +389,7 @@ export default function App() {
         alert("Photos uploaded successfully! The AI is analyzing them in the background.");
       } catch (err) {
         console.error("Upload failed", err);
-        alert("Failed to upload photos. Please try again.");
+        alert("Failed to upload photos: " + err.message + (err.response ? "\n" + JSON.stringify(err.response.data) : ""));
       } finally {
         setUploadingState(false);
       }
@@ -367,7 +416,7 @@ export default function App() {
       }
     } catch (err) {
       console.error("Upload failed", err);
-      alert("Failed to upload garden. Please try again.");
+      alert("Failed to upload garden: " + err.message + (err.response ? "\n" + JSON.stringify(err.response.data) : ""));
     } finally {
       setUploadingState(false);
     }
@@ -440,11 +489,30 @@ export default function App() {
   };
 
   const fetchData = async (silent = false) => {
+    if (isFetchingRef.current) {
+      return;
+    }
     try {
+      isFetchingRef.current = true;
       if (!silent) setLoading(true);
       const data = await getDetailedGardens(4);
       const sorted = [...data].sort((a, b) => new Date(b.last_accessed_at || 0) - new Date(a.last_accessed_at || 0));
+      
+      // If we already have gardens loaded, check if anything changed to trigger a refresh
+      if (gardens.length > 0) {
+        const oldStr = JSON.stringify(gardens);
+        const newStr = JSON.stringify(sorted);
+        if (oldStr !== newStr) {
+          setGardens(sorted);
+          if (typeof window !== 'undefined' && window.location && typeof window.location.reload === 'function') {
+            window.location.reload();
+            return;
+          }
+        }
+      }
+
       setGardens(sorted);
+      setDbStatus({ online: true, state: 'RUNNING', loading: false });
       
       if (selectedGarden) {
         const updatedSelected = sorted.find(g => g.id === selectedGarden.id);
@@ -461,8 +529,10 @@ export default function App() {
       }
     } catch (error) {
       console.error(error);
+      checkDb();
     } finally {
       if (!silent) setLoading(false);
+      isFetchingRef.current = false;
     }
   };
 
@@ -476,6 +546,9 @@ export default function App() {
   }
 
   const getAnalysisMessage = () => {
+    if (selectedGarden?.status === 'Failed') {
+      return selectedGarden?.upload_commentry || 'There was an issue in the backend, but your garden will be created shortly.';
+    }
     return selectedGarden?.upload_commentry || 'Photo Analysis in progress...';
   };
 
@@ -548,6 +621,27 @@ export default function App() {
             </View>
             <TouchableOpacity style={styles.btnIcon} onPress={() => setIsUploading(true)}><Plus size={24} color={theme.colors.tertiary} /></TouchableOpacity>
           </View>
+          
+          {!dbStatus.online && (
+            <View style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', borderColor: 'rgba(239, 68, 68, 0.2)', borderWidth: 1, borderRadius: 24, padding: 20, marginHorizontal: theme.spacing.margin, marginBottom: 20 }}>
+              <Text style={{ color: '#ef4444', fontFamily: 'Manrope_700Bold', fontSize: 18, marginBottom: 4 }}>Database is Offline</Text>
+              <Text style={{ color: theme.colors.outline, fontFamily: 'Manrope_400Regular', fontSize: 14, marginBottom: 12 }}>
+                The database is currently shut down. Turn it on to view and manage your gardens.
+              </Text>
+              <TouchableOpacity
+                onPress={handleStartDb}
+                disabled={dbStatus.loading}
+                style={{ backgroundColor: '#10b981', borderRadius: 12, paddingVertical: 12, alignItems: 'center', justifyContent: 'center' }}
+              >
+                {dbStatus.loading ? (
+                  <ActivityIndicator size="small" color="#ffffff" />
+                ) : (
+                  <Text style={{ color: '#ffffff', fontFamily: 'Manrope_700Bold', fontSize: 14 }}>Start Database</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          )}
+
           {gardens.length > 0 ? (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: theme.spacing.margin }} snapToInterval={CARD_WIDTH + 16} decelerationRate="fast" onScroll={(e) => setScrollX(e.nativeEvent.contentOffset.x)} scrollEventThrottle={16}>
               {gardens.map((garden, index) => <GardenCard key={garden.id} garden={garden} index={index} onPress={handleGardenPress} onDelete={handleDeleteGarden} />)}
@@ -572,6 +666,27 @@ export default function App() {
             {selectedGarden.photos && selectedGarden.photos.length > 0 ? <Image source={{ uri: selectedGarden.photos[0].photo_url }} style={styles.heroImage} resizeMode="cover" /> : <View style={[styles.heroImage, { backgroundColor: theme.colors.surfaceContainerHigh }]} />}
             <View style={styles.heroOverlay}><Text style={styles.heroTitle}>{selectedGarden.name}</Text>{!!selectedGarden.location && <Text style={styles.heroLocation}>{selectedGarden.location}</Text>}</View>
           </View>
+
+          {!dbStatus.online && (
+            <View style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', borderColor: 'rgba(239, 68, 68, 0.2)', borderWidth: 1, borderRadius: 24, padding: 20, marginHorizontal: theme.spacing.margin, marginTop: 20 }}>
+              <Text style={{ color: '#ef4444', fontFamily: 'Manrope_700Bold', fontSize: 18, marginBottom: 4 }}>Database is Offline</Text>
+              <Text style={{ color: theme.colors.outline, fontFamily: 'Manrope_400Regular', fontSize: 14, marginBottom: 12 }}>
+                The database is currently shut down. Turn it on to load updated plant data.
+              </Text>
+              <TouchableOpacity
+                onPress={handleStartDb}
+                disabled={dbStatus.loading}
+                style={{ backgroundColor: '#10b981', borderRadius: 12, paddingVertical: 12, alignItems: 'center', justifyContent: 'center' }}
+              >
+                {dbStatus.loading ? (
+                  <ActivityIndicator size="small" color="#ffffff" />
+                ) : (
+                  <Text style={{ color: '#ffffff', fontFamily: 'Manrope_700Bold', fontSize: 14 }}>Start Database</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          )}
+
           {selectedGarden.status !== 'Ready' && (
             <View style={styles.analysisContainer}>
               <ActivityIndicator size="small" color={theme.colors.vibrantPink} />

@@ -79,6 +79,8 @@ class GardenUpdate(Base):
     has_weeds = Column(Boolean, default=False)
     has_disease = Column(Boolean, default=False)
     needs_sunlight = Column(Boolean, default=False)
+    health_score = Column(Integer, nullable=True)
+    health_metrics = Column(Text, nullable=True)
     created_at = Column(TIMESTAMP, default=datetime.datetime.utcnow)
 
     garden = relationship("Garden", back_populates="updates")
@@ -102,6 +104,7 @@ class PlantUpdate(Base):
     condition_text = Column(Text)
     recommendation = Column(Text)
     image_url = Column(String(512))
+    box_2d = Column(String(255))
     # Status lifecycle: 'New' -> 'Processing' -> 'Ready'
     status = Column(String(50), default="New", nullable=False)
     created_at = Column(TIMESTAMP, default=datetime.datetime.utcnow)

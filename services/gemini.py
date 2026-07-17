@@ -28,7 +28,7 @@ else:
     load_dotenv() # Fallback to default behavior
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.1-flash-lite")
 
 def _get_client():
     """Return a configured Gemini client."""
@@ -40,7 +40,7 @@ def _get_client():
 
 def _call_gemini(contents: list) -> dict:
     """Helper to call Gemini and parse JSON response."""
-    model_name = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
+    model_name = os.getenv("GEMINI_MODEL", "gemini-3.1-flash-lite")
     client = _get_client()
     if not client:
         return {}
@@ -58,10 +58,16 @@ def _call_gemini(contents: list) -> dict:
             )
             break
         except Exception as e:
-            if "503" in str(e) or "429" in str(e) or "overloaded" in str(e).lower() or "demand" in str(e).lower():
+            if "503" in str(e) or "429" in str(e) or "overloaded" in str(e).lower() or "demand" in str(e).lower() or "quota" in str(e).lower():
                 if attempt < max_retries - 1:
-                    print(f"Gemini call failed with transient error: {e}. Retrying in {backoff}s...")
-                    time.sleep(backoff)
+                    import re
+                    match = re.search(r'(?:retry in|retryDelay[\'\"]?:\s*[\'\"]?)(\d+(?:\.\d+)?)', str(e))
+                    if match:
+                        sleep_time = int(float(match.group(1))) + 2
+                    else:
+                        sleep_time = backoff
+                    print(f"Gemini call failed with transient/quota error. Retrying in {sleep_time}s...")
+                    time.sleep(sleep_time)
                     backoff *= 2
                     continue
             print(f"Exception during Gemini call: {str(e)}")
@@ -338,3 +344,187 @@ def generate_garden_visualization_with_gemini(
 
     # Fallback to the original uploaded image bytes
     return image_bytes
+
+
+def analyze_plants_detail_batch(plants: list) -> list:
+    """
+    Detailed diagnosis for a batch of plants in a single Gemini call.
+    Each plant dict in `plants` should contain:
+      - 'image_bytes': bytes
+      - 'name': str
+      - 'last_condition': Optional[str]
+      - 'last_recommendation': Optional[str]
+      - 'temp_id': any unique identifier (e.g. index or DB ID)
+    """
+    if not plants:
+        return []
+
+    contents = []
+    plant_descriptions = []
+
+    for idx, plant in enumerate(plants):
+        try:
+            img = Image.open(io.BytesIO(plant["image_bytes"]))
+            part = _pil_to_part(img)
+            contents.append(part)
+            
+            plant_descriptions.append(
+                f"- Image {idx+1} corresponds to plant '{plant['name']}' (ID: {plant['temp_id']}).\n"
+                f"  Previous Condition: {plant.get('last_condition') or 'None'}\n"
+                f"  Previous Recommendation: {plant.get('last_recommendation') or 'None'}"
+            )
+        except Exception as e:
+            print(f"Error preparing batch image for plant {plant.get('name')}: {e}")
+            continue
+
+    if not contents:
+        return []
+
+    plant_descs_str = "\n".join(plant_descriptions)
+
+    prompt = f"""
+    You are analyzing a batch of plant images. Here is the mapping of each image to its plant info:
+    
+    {plant_descs_str}
+
+    For each plant image, perform a detailed health diagnosis:
+    1. Check if the image contains a valid plant (is_valid_plant: boolean)
+    2. Assess soil quality
+    3. Identify any diseases or pests (disease)
+    4. Assess the pot status (pot_assessment)
+    5. Assess if pruning is needed (pruning_needed)
+    6. Compare the plant's current state with the 'Previous Condition' to identify improvements or regressions (growth_comparison and changes_from_previous)
+    7. Provide a health/care recommendation
+
+    Return ONLY a JSON list of objects, one for each plant. The objects MUST contain the 'temp_id' matching the ID provided in the list above:
+    [
+      {{
+        "temp_id": <id>,
+        "is_valid_plant": true,
+        "soil_quality": "...",
+        "disease": "...",
+        "pot_assessment": "...",
+        "pruning_needed": "...",
+        "growth_comparison": "...",
+        "changes_from_previous": "...",
+        "recommendation": "..."
+      }}
+    ]
+    """
+    
+    contents.insert(0, prompt)
+    results = _call_gemini(contents)
+    if isinstance(results, dict):
+        for val in results.values():
+            if isinstance(val, list):
+                return val
+        return []
+    elif isinstance(results, list):
+        return results
+    return []
+
+
+def analyze_garden_combined(image_list: List[bytes], existing_plants: Optional[List[str]] = None) -> dict:
+    """
+    Combines analyze_garden_overview and identify_plants_with_gemini into a single Gemini call.
+    """
+    parts = []
+    for img_bytes in image_list:
+        try:
+            img = Image.open(io.BytesIO(img_bytes))
+            parts.append(_pil_to_part(img))
+        except:
+            continue
+
+    if not parts:
+        return {}
+
+    existing_plants_text = ""
+    if existing_plants:
+        existing_plants_text = f"\nHere is a list of existing plants in this garden: {', '.join(existing_plants)}.\nIf you identify a plant that matches one of these existing plants, you MUST use the exact existing name. If it is a new plant, give it a new name."
+
+    prompt = f"""
+    Analyze these garden photos and provide a combined overview and plant identification.
+    {existing_plants_text}
+
+    Provide:
+    1.  **Overview Health Metrics:**
+        - hydration (Low/Medium/High)
+        - exposure (Low/Medium/High)
+        - vibrancy (Low/Medium/High)
+        - immediate_changes
+        - growth_trend
+        - disease_overview
+        - general_suggestions
+        - needs_watering (boolean)
+        - needs_fertilizer (boolean)
+        - has_pests (boolean)
+        - has_weeds (boolean)
+        - has_disease (boolean)
+        - needs_sunlight (boolean)
+        - **health_score**: An integer from 1 to 5 representing overall garden health (5 is flourishing, 1 is critical).
+        - **health_metrics**: A JSON sub-object with categorizations for:
+          - WATERING: `Overwatered`, `Properly Watered`, `Underwatered`
+          - SUN_EXPOSURE: `Too Sunny`, `Sunny`, `Dark`
+          - SOIL_QUALITY: `Rich`, `Balanced`, `Poor`
+          - VITALITY: `Thriving`, `Stable`, `Struggling`
+          - LEAF_CARE: `Pristine`, `Dusty`, `Diseased`
+          - POT_STATUS: `Spacious`, `Adequate`, `Cramped`
+          - PRUNING: `Well-Maintained`, `Needs Light Pruning`, `Overgrown`
+
+    2.  **Identified Plants:**
+        Exhaustively identify EVERY individual plant visible in these garden photos. 
+        Include plants in the foreground, background, and those partially obscured. 
+        For each plant provide:
+        - Common Name and Variety.
+        - Condition: Small comma separated list (e.g., "vibrant, healthy").
+        - photo_index: 0-based index of the photo.
+        - box_2d: bounding box [ymin, xmin, ymax, xmax] (0-1000).
+        - confidence: a float between 0 and 1 representing your confidence in this identification.
+
+    Return ONLY a JSON object in the following format:
+    {{
+      "overview": {{
+        "summary": "comma separated summary (e.g. vibrant, healthy, full of colors)",
+        "hydration": "Low/Medium/High",
+        "exposure": "Low/Medium/High",
+        "vibrancy": "Low/Medium/High",
+        "temperature": "e.g. 24°C",
+        "humidity": "e.g. 60%",
+        "immediate_changes": "...",
+        "growth_trend": "...",
+        "disease_overview": "...",
+        "general_suggestions": "...",
+        "needs_watering": true,
+        "needs_fertilizer": false,
+        "has_pests": false,
+        "has_weeds": true,
+        "has_disease": false,
+        "needs_sunlight": true,
+        "health_score": 4,
+        "health_metrics": {{
+          "WATERING": "Properly Watered",
+          "SUN_EXPOSURE": "Sunny",
+          "SOIL_QUALITY": "Balanced",
+          "VITALITY": "Stable",
+          "LEAF_CARE": "Pristine",
+          "POT_STATUS": "Adequate",
+          "PRUNING": "Well-Maintained"
+        }}
+      }},
+      "suggested_garden_name": "...",
+      "plants": [
+        {{
+          "name": "...",
+          "variety": "...",
+          "condition": "...",
+          "photo_index": 0,
+          "box_2d": [ymin, xmin, ymax, xmax],
+          "confidence": 0.95
+        }}
+      ]
+    }}
+    """
+    return _call_gemini([prompt] + parts)
+
+

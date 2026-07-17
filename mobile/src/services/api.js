@@ -30,9 +30,14 @@ export const uploadGardenPhotos = async (photos, gardenName, userId, location) =
             if (photo.file) {
                 formData.append('photos', photo.file);
             } else {
-                const response = await fetch(photo.uri);
-                const blob = await response.blob();
-                formData.append('photos', blob, photo.fileName || `photo_${Date.now()}.jpg`);
+                try {
+                    const response = await fetch(photo.uri);
+                    const blob = await response.blob();
+                    formData.append('photos', blob, photo.fileName || `photo_${Date.now()}.jpg`);
+                } catch (fetchError) {
+                    console.error("Failed to fetch photo uri:", photo.uri, fetchError);
+                    throw new Error(`Failed to process selected image: ${fetchError.message}`);
+                }
             }
         }
     } else {
@@ -129,13 +134,32 @@ export const getGardenEnvironment = async (gardenId) => {
         throw error;
     }
 };
-
 export const deleteGarden = async (gardenId) => {
     try {
         const response = await api.delete(`/gardens/${gardenId}`);
         return response.data;
     } catch (error) {
         console.error('Error deleting garden:', error);
+        throw error;
+    }
+};
+
+export const getDbStatus = async () => {
+    try {
+        const response = await api.get('/db/status');
+        return response.data;
+    } catch (error) {
+        console.error('Error checking DB status:', error);
+        throw error;
+    }
+};
+
+export const startDb = async () => {
+    try {
+        const response = await api.post('/db/start');
+        return response.data;
+    } catch (error) {
+        console.error('Error starting DB:', error);
         throw error;
     }
 };

@@ -8,9 +8,10 @@ from temporal.workflows import GardenProcessingWorkflow
 from temporal.activities import (
     gather_garden_details,
     cut_plant_images,
-    gather_plant_details,
+    gather_plants_details_batch,
     update_garden_flags,
     generate_garden_visualization,
+    mark_workflow_failed,
 )
 
 # Configure logging
@@ -34,9 +35,10 @@ async def main():
         activities=[
             gather_garden_details,
             cut_plant_images,
-            gather_plant_details,
+            gather_plants_details_batch,
             update_garden_flags,
             generate_garden_visualization,
+            mark_workflow_failed,
         ],
         activity_executor=ThreadPoolExecutor(max_workers=20),
     )
