@@ -378,6 +378,104 @@ def generate_garden_visualization(update_id: int) -> None:
 
 
 @activity.defn
+def generate_recommendation_visualizations(update_id: int) -> None:
+    """
+    Activity 6: Generates three 'Enhance Your Garden' recommendation images:
+      1. More Colours  – colourful pots + seasonal flowers
+      2. Clean It Up   – organised, pruned, cleaned garden
+      3. More Floor Space – vertical storage via rack and wall brackets
+    Each image is uploaded to GCS and its URL is saved in GardenVisualization.
+    """
+    db = _get_db()
+    try:
+        logger.info(f"Activity 6: GENERATE_RECOMMENDATION_VISUALIZATIONS for update {update_id}")
+        activity.heartbeat()
+
+        update = db.query(models.GardenUpdate).filter(models.GardenUpdate.id == update_id).first()
+        if not update:
+            raise ValueError(f"Update {update_id} not found.")
+
+        garden = update.garden
+        if not garden:
+            raise ValueError(f"Garden not found for update {update_id}.")
+
+        # Get the first photo of this garden update
+        photo = db.query(models.GardenPhoto).filter(models.GardenPhoto.update_id == update_id).first()
+        if not photo:
+            logger.warning(f"No photo found for update {update_id}. Skipping recommendation visualizations.")
+            return
+
+        image_bytes = _download_photo_bytes(photo.photo_url)
+        if not image_bytes:
+            logger.warning(f"Could not download photo for update {update_id}. Skipping recommendation visualizations.")
+            return
+
+        # --- Prompts for each visualization ---
+        MORE_COLOURS_PROMPT = (
+            "A lush home garden photo, same layout as the uploaded image, but some plain pots are replaced with "
+            "TILLAGE Plastic Multicolor Lightweight Planters (vibrant red, yellow, blue, green pots). "
+            "Additionally, add 2 new pots with colourful seasonal flowers — like marigolds and petunias — "
+            "blooming brightly. The garden should look more lively and vibrant."
+        )
+
+        CLEAN_UP_PROMPT = (
+            "The same home garden photo but cleaned up: all pots neatly aligned and evenly spaced, "
+            "plants pruned with no dead leaves or overgrown stems, fallen leaves swept away, "
+            "pots wiped clean and looking brand new. The garden looks tidy, organized, and well-maintained."
+        )
+
+        MORE_FLOOR_SPACE_PROMPT = (
+            "The same home garden but reorganized to maximize floor space: some potted plants are moved "
+            "onto a white ecofynd multi-tier outdoor plant rack (vertical tiered shelf). "
+            "If the garden is on a balcony or terrace, 2-3 pots are also hung on wall-mounted heavy-duty "
+            "metal brackets attached to the railing or wall. The floor has significantly more open space, "
+            "making the garden look spacious and organized."
+        )
+
+        prompts = {
+            "more_colours_url": MORE_COLOURS_PROMPT,
+            "clean_up_url": CLEAN_UP_PROMPT,
+            "more_floor_space_url": MORE_FLOOR_SPACE_PROMPT,
+        }
+
+        # Find or create visualization record
+        db_visualization = db.query(models.GardenVisualization).filter(
+            models.GardenVisualization.garden_id == garden.id
+        ).first()
+        if not db_visualization:
+            db_visualization = models.GardenVisualization(garden_id=garden.id)
+            db.add(db_visualization)
+            db.commit()
+            db.refresh(db_visualization)
+
+        for field_name, prompt in prompts.items():
+            activity.heartbeat()
+            logger.info(f"Generating visualization '{field_name}' for garden {garden.id}...")
+            try:
+                vis_bytes = gemini.generate_garden_visualization_with_gemini(
+                    image_bytes=image_bytes,
+                    plants=[],
+                    recommendations=[prompt],
+                )
+                if vis_bytes:
+                    blob_name = f"garden_{garden.id}/enhance_{field_name}_{uuid.uuid4()}.jpg"
+                    url = gcs.upload_to_gcs(vis_bytes, blob_name)
+                    setattr(db_visualization, field_name, url)
+                    db.commit()
+                    logger.info(f"Saved '{field_name}' visualization URL for garden {garden.id}")
+                else:
+                    logger.warning(f"No bytes returned for '{field_name}'. Skipping.")
+            except Exception as vis_err:
+                logger.error(f"Error generating '{field_name}' visualization: {vis_err}")
+
+        logger.info(f"Recommendation visualizations complete for update {update_id}")
+
+    finally:
+        db.close()
+
+
+
+@activity.defn
 def mark_workflow_failed(update_id: int) -> None:
     db = _get_db()
     try:

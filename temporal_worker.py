@@ -11,6 +11,7 @@ from temporal.activities import (
     gather_plants_details_batch,
     update_garden_flags,
     generate_garden_visualization,
+    generate_recommendation_visualizations,
     mark_workflow_failed,
 )
 
@@ -38,6 +39,7 @@ async def main():
             gather_plants_details_batch,
             update_garden_flags,
             generate_garden_visualization,
+            generate_recommendation_visualizations,
             mark_workflow_failed,
         ],
         activity_executor=ThreadPoolExecutor(max_workers=20),

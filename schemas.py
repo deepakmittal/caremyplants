@@ -36,6 +36,9 @@ class ProductRecommendation(BaseModel):
 
 class GardenVisualization(BaseModel):
     image_url: str
+    more_colours_url: Optional[str] = None
+    clean_up_url: Optional[str] = None
+    more_floor_space_url: Optional[str] = None
     recommendations: List[ProductRecommendation] = []
     created_at: datetime
 

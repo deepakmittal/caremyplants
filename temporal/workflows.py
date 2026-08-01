@@ -9,6 +9,7 @@ with workflow.unsafe.imports_passed_through():
         gather_plants_details_batch,
         update_garden_flags,
         generate_garden_visualization,
+        generate_recommendation_visualizations,
         mark_workflow_failed,
     )
 
@@ -67,6 +68,14 @@ class GardenProcessingWorkflow:
                 generate_garden_visualization,
                 update_id,
                 start_to_close_timeout=timedelta(minutes=15),
+                retry_policy=NO_RETRY_POLICY,
+            )
+
+            # 6. Generate 'Enhance Your Garden' recommendation visualizations
+            await workflow.execute_activity(
+                generate_recommendation_visualizations,
+                update_id,
+                start_to_close_timeout=timedelta(minutes=20),
                 retry_policy=NO_RETRY_POLICY,
             )
 

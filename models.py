@@ -117,6 +117,10 @@ class GardenVisualization(Base):
     id = Column(Integer, primary_key=True, index=True)
     garden_id = Column(Integer, ForeignKey("gardens.id", ondelete="CASCADE"), nullable=False, unique=True)
     image_url = Column(String(512))
+    # Enhance Your Garden recommendation visualizations
+    more_colours_url = Column(String(512), nullable=True)
+    clean_up_url = Column(String(512), nullable=True)
+    more_floor_space_url = Column(String(512), nullable=True)
     created_at = Column(TIMESTAMP, default=datetime.datetime.utcnow)
 
     garden = relationship("Garden", back_populates="visualization")

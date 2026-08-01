@@ -47,6 +47,15 @@ try:
                 conn.execute(text("ALTER TABLE garden_updates ADD COLUMN health_metrics TEXT NULL;"))
                 conn.commit()
                 print("Column health_metrics added successfully.")
+
+            # Auto-migration check for Enhance Your Garden URL columns on garden_visualizations
+            for col_name in ("more_colours_url", "clean_up_url", "more_floor_space_url"):
+                res_col = conn.execute(text(f"SHOW COLUMNS FROM garden_visualizations LIKE '{col_name}';"))
+                if not res_col.fetchone():
+                    print(f"Adding {col_name} column to garden_visualizations table...")
+                    conn.execute(text(f"ALTER TABLE garden_visualizations ADD COLUMN {col_name} VARCHAR(512) NULL;"))
+                    conn.commit()
+                    print(f"Column {col_name} added successfully.")
     except Exception as migration_error:
         print(f"WARNING: Could not apply database migration for columns: {migration_error}")
 except Exception as e:

@@ -133,6 +133,81 @@ const MetricTileGrid = ({ metrics, onMetricPress }) => {
   );
 };
 
+// --- ENHANCE YOUR GARDEN SECTION ---
+
+const ENHANCE_ITEMS = [
+  {
+    key: 'more_colours_url',
+    title: 'More Colours',
+    description: 'Vibrant multicolour planters and seasonal blooms to brighten up your space.',
+    emoji: '🌈',
+    accent: '#FF6B6B',
+  },
+  {
+    key: 'clean_up_url',
+    title: 'Clean It Up',
+    description: 'Neatly arranged, pruned, and spotlessly clean — your garden at its best.',
+    emoji: '✨',
+    accent: '#4ECDC4',
+  },
+  {
+    key: 'more_floor_space_url',
+    title: 'More Floor Space',
+    description: 'Clever vertical storage with racks and wall brackets to open up your garden.',
+    emoji: '📐',
+    accent: '#A78BFA',
+  },
+];
+
+const EnhanceYourGardenSection = ({ visualization }) => {
+  if (!visualization) return null;
+  const hasAny = ENHANCE_ITEMS.some(item => visualization[item.key]);
+  if (!hasAny) return null;
+
+  return (
+    <View style={styles.enhanceSection}>
+      <View style={styles.enhanceSectionHeader}>
+        <View style={styles.enhanceTitleRow}>
+          <Sparkles size={20} color="#A78BFA" />
+          <Text style={styles.enhanceSectionLabel}>AI DESIGN STUDIO</Text>
+        </View>
+        <Text style={styles.enhanceSectionTitle}>Enhance Your Garden</Text>
+        <Text style={styles.enhanceSectionSubtitle}>See how your space could look with a few smart changes.</Text>
+      </View>
+
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: 20, gap: 16, paddingBottom: 4 }}
+        snapToInterval={width * 0.78 + 16}
+        decelerationRate="fast"
+      >
+        {ENHANCE_ITEMS.map((item) => {
+          const url = visualization[item.key];
+          if (!url) return null;
+          return (
+            <View key={item.key} style={[styles.enhanceCard, { borderTopColor: item.accent }]}>
+              <Image
+                source={{ uri: url }}
+                style={styles.enhanceCardImage}
+                resizeMode="cover"
+              />
+              <View style={[styles.enhanceCardBadge, { backgroundColor: item.accent + '22', borderColor: item.accent + '44' }]}>
+                <Text style={styles.enhanceCardEmoji}>{item.emoji}</Text>
+                <Text style={[styles.enhanceCardBadgeText, { color: item.accent }]}>{item.title}</Text>
+              </View>
+              <View style={styles.enhanceCardBody}>
+                <Text style={styles.enhanceCardTitle}>{item.title}</Text>
+                <Text style={styles.enhanceCardDesc}>{item.description}</Text>
+              </View>
+            </View>
+          );
+        })}
+      </ScrollView>
+    </View>
+  );
+};
+
 // --- NEW COMPONENTS END ---
 
 
@@ -716,6 +791,12 @@ export default function App() {
               <View style={[styles.loadingContainer, { width: width - 48, height: 300 }]}><Leaf size={40} color={theme.colors.outline} opacity={0.3} /><Text style={styles.loadingText}>No residents yet</Text></View>
             )}
           </ScrollView>
+
+          {/* Enhance Your Garden Section */}
+          {selectedGarden.status === 'Ready' && selectedGarden.visualization && (
+            <EnhanceYourGardenSection visualization={selectedGarden.visualization} />
+          )}
+
         </ScrollView>
       )}
 
@@ -1048,5 +1129,93 @@ const styles = StyleSheet.create({
     color: 'white',
     fontFamily: 'Manrope_700Bold',
     fontSize: 16,
+  },
+
+  // --- Enhance Your Garden Section ---
+  enhanceSection: {
+    marginTop: 28,
+    marginBottom: 28,
+  },
+  enhanceSectionHeader: {
+    paddingHorizontal: 20,
+    marginBottom: 16,
+  },
+  enhanceTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
+  },
+  enhanceSectionLabel: {
+    fontFamily: 'Manrope_700Bold',
+    fontSize: 11,
+    letterSpacing: 1.5,
+    color: '#A78BFA',
+  },
+  enhanceSectionTitle: {
+    fontFamily: 'Manrope_700Bold',
+    fontSize: 26,
+    color: '#1a3c34',
+    lineHeight: 32,
+    marginTop: 2,
+  },
+  enhanceSectionSubtitle: {
+    fontFamily: 'Manrope_400Regular',
+    fontSize: 14,
+    color: '#717976',
+    marginTop: 4,
+    lineHeight: 20,
+  },
+  enhanceCard: {
+    width: width * 0.78,
+    backgroundColor: '#ffffff',
+    borderRadius: 20,
+    overflow: 'hidden',
+    borderTopWidth: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 5,
+  },
+  enhanceCardImage: {
+    width: '100%',
+    height: 220,
+    backgroundColor: '#f0f0f0',
+  },
+  enhanceCardBadge: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  enhanceCardEmoji: {
+    fontSize: 14,
+  },
+  enhanceCardBadgeText: {
+    fontFamily: 'Manrope_700Bold',
+    fontSize: 11,
+    letterSpacing: 0.5,
+  },
+  enhanceCardBody: {
+    padding: 16,
+  },
+  enhanceCardTitle: {
+    fontFamily: 'Manrope_700Bold',
+    fontSize: 18,
+    color: '#1a3c34',
+    marginBottom: 4,
+  },
+  enhanceCardDesc: {
+    fontFamily: 'Manrope_400Regular',
+    fontSize: 13,
+    color: '#717976',
+    lineHeight: 19,
   },
 });
