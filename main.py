@@ -370,8 +370,8 @@ async def upload_garden_photos(
             db.refresh(db_garden)
 
     # ALL photos are now uploaded and DB records created.
-    # Set status to "Ready to Process" so the cronjob can finally pick it up safely.
-    db_update.status = "Ready to Process"
+    # Set status to "Processing" to prevent the cronjob from picking it up.
+    db_update.status = "Processing"
     db.commit()
 
     # Trigger Temporal workflow asynchronously
@@ -382,6 +382,9 @@ async def upload_garden_photos(
         await start_garden_processing_workflow(db_update.id)
     except Exception as e:
         logging.getLogger("garden").error(f"Failed to trigger Temporal workflow for update_id {db_update.id}: {e}", exc_info=True)
+        # If Temporal fails, revert to cronjob-based processing
+        db_update.status = "Ready to Process"
+        db.commit()
 
     response = schemas.GardenResponse.from_orm(db_garden)
     response.garden_update_id = db_update.id
@@ -414,8 +417,8 @@ async def push_photos_to_update(
         )
         db.add(db_photo)
     
-    # Set status to Ready to Process so cronjob picks it up
-    db_update.status = "Ready to Process"
+    # Set status to "Processing" to prevent the cronjob from picking it up
+    db_update.status = "Processing"
     db.commit()
 
     # Trigger Temporal workflow asynchronously
@@ -426,6 +429,9 @@ async def push_photos_to_update(
         await start_garden_processing_workflow(update_id)
     except Exception as e:
         logging.getLogger("garden").error(f"Failed to trigger Temporal workflow for update_id {update_id}: {e}", exc_info=True)
+        # If Temporal fails, revert to cronjob-based processing
+        db_update.status = "Ready to Process"
+        db.commit()
     
     return {"message": "Photos added and processed", "update_id": update_id, "count": len(photos)}
 
