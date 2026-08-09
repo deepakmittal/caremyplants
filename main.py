@@ -309,6 +309,7 @@ async def create_garden(
 @app.post("/gardens/upload", response_model=schemas.GardenResponse)
 async def upload_garden_photos(
     photos: List[UploadFile] = File(...),
+    background_tasks: BackgroundTasks,
     garden_id: Optional[int] = Form(None),
     garden_name: Optional[str] = Form(None),
     user_id: Optional[int] = Form(None),
@@ -345,13 +346,13 @@ async def upload_garden_photos(
     db.commit()
     db.refresh(db_update)
 
-    # Standardize on asynchronous processing: upload photos to GCS 
+    # Standardize on asynchronous processing: upload photos to GCS
     # and let the cronjob handle AI analysis.
     for photo in photos:
         content = await photo.read()
         unique_filename = f"garden_{db_garden.id}/{uuid.uuid4()}_{photo.filename}"
         url = gcs.upload_to_gcs(content, unique_filename)
-        
+
         db_photo = models.GardenPhoto(
             garden_id=db_garden.id,
             update_id=db_update.id,
@@ -369,19 +370,13 @@ async def upload_garden_photos(
             db.commit()
             db.refresh(db_garden)
 
-    # ALL photos are now uploaded and DB records created.
-    # Set status to "Ready to Process" so the cronjob can finally pick it up safely.
-    db_update.status = "Ready to Process"
+    # Set status to "Processing" and trigger the workflow
+    db_update.status = "Processing"
     db.commit()
 
-    # Trigger Temporal workflow asynchronously
-    try:
-        from temporal.client import start_garden_processing_workflow
-        import logging
-        logging.getLogger("garden").info(f"Triggering Temporal workflow for update_id {db_update.id}")
-        await start_garden_processing_workflow(db_update.id)
-    except Exception as e:
-        logging.getLogger("garden").error(f"Failed to trigger Temporal workflow for update_id {db_update.id}: {e}", exc_info=True)
+    # Trigger Temporal workflow in the background
+    from temporal.client import start_garden_processing_workflow
+    background_tasks.add_task(start_garden_processing_workflow, db_update.id)
 
     response = schemas.GardenResponse.from_orm(db_garden)
     response.garden_update_id = db_update.id
@@ -393,6 +388,7 @@ async def upload_garden_photos(
 async def push_photos_to_update(
     update_id: int,
     photos: List[UploadFile] = File(...),
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db)
 ):
     from services import gcs
@@ -400,7 +396,7 @@ async def push_photos_to_update(
     if not db_update:
         raise HTTPException(status_code=404, detail="Garden update not found")
     
-    # Standardize on asynchronous processing: upload photos to GCS 
+    # Standardize on asynchronous processing: upload photos to GCS
     # and let the cronjob handle AI analysis.
     for photo in photos:
         content = await photo.read()
@@ -414,18 +410,13 @@ async def push_photos_to_update(
         )
         db.add(db_photo)
     
-    # Set status to Ready to Process so cronjob picks it up
-    db_update.status = "Ready to Process"
+    # Set status to Processing so cronjob picks it up
+    db_update.status = "Processing"
     db.commit()
 
-    # Trigger Temporal workflow asynchronously
-    try:
-        from temporal.client import start_garden_processing_workflow
-        import logging
-        logging.getLogger("garden").info(f"Triggering Temporal workflow for update_id {update_id}")
-        await start_garden_processing_workflow(update_id)
-    except Exception as e:
-        logging.getLogger("garden").error(f"Failed to trigger Temporal workflow for update_id {update_id}: {e}", exc_info=True)
+    # Trigger Temporal workflow in the background
+    from temporal.client import start_garden_processing_workflow
+    background_tasks.add_task(start_garden_processing_workflow, update_id)
     
     return {"message": "Photos added and processed", "update_id": update_id, "count": len(photos)}
 
@@ -626,7 +617,7 @@ def update_garden_access(garden_id: int, db: Session = Depends(get_db)):
     """Update the last_accessed_at timestamp for a garden."""
     garden = db.query(models.Garden).filter(models.Garden.id == garden_id).first()
     if not garden:
-        raise HTTPException(status_code=404, detail="Garden not found")
+        raise HTTPException(status_code=404, detail="Garden not. found")
     garden.last_accessed_at = datetime.datetime.utcnow()
     db.commit()
     return {"status": "ok"}
